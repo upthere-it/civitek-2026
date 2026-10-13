@@ -1,0 +1,824 @@
+{
+  "meta": {
+    "versione": "1.0.0",
+    "valuta": "monete di gioco",
+    "regola_valore": "base_value = round(retail_eur / 4 x moltiplicatore_rarità); dove il retail EUR manca, stima di game design (value_source).",
+    "moltiplicatore_rarita": {
+      "common": 1.0,
+      "popular": 1.15,
+      "hyped": 1.6,
+      "limited": 2.5
+    },
+    "marchi": "TUTTI FITTIZI. Silhouette e palette sono ispirate a modelli reali ma non devono riprodurre loghi, strisce, swoosh o altri segni distintivi.",
+    "sprite": "Icone 32x32 per l'UI, una per silhouette, colorate a runtime con la palette (upper/accent/sole). Gli sprite dei falsi sono IDENTICI agli originali.",
+    "numero_item": 29
+  },
+  "silhouettes": {
+    "court_low": "Scarpa da basket bassa, linea pulita (tipo campo da basket anni '80)",
+    "court_mid": "Basket a collo medio con alette laterali e retina",
+    "court_high": "Basket alta con collo sopra la caviglia",
+    "terrace": "Bassa e sottile in camoscio, suola piatta color gomma, tre accenti laterali generici (NON tre strisce)",
+    "runner_retro": "Runner anni 2000 a strati, suola media con dettagli argento",
+    "runner_max": "Runner con suola molto alta/ammortizzata",
+    "slim_runner": "Runner anni '70 molto bassa e sottile",
+    "slim_motorsport": "Scarpa da pilota bassissima, punta arrotondata, suola sottile",
+    "chunky": "Runner massiccia con suola scolpita e grossa",
+    "trail": "Scarpa da trail con lacci rapidi e suola scolpita",
+    "skate": "Skate shoe bassa con banda laterale generica (NON la jazz stripe)",
+    "canvas_high": "Tela alta con punta in gomma",
+    "slide": "Ciabatta recovery con cinturino largo e suola a bolle",
+    "slipper": "Pantofola-mocassino con bordo in lana",
+    "clog": "Sabot chiuso davanti, aperto dietro, suola in sughero",
+    "upthere_one": "Silhouette originale Upthere: inventarla da zero, è il pezzo firma del villaggio"
+  },
+  "items": [
+    {
+      "id": "volta-court-82-bianca",
+      "brand": "Volta",
+      "name": "Court 82",
+      "display_name": "Volta Court 82",
+      "colorway": "Bianco totale",
+      "silhouette": "court_low",
+      "sprite_key": "court_low",
+      "palette": {
+        "upper": "#f4f4f4",
+        "accent": "#e6e6e6",
+        "sole": "#ffffff"
+      },
+      "tier": "base",
+      "rarity": "common",
+      "base_value": 30,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop",
+        "starter"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "nike-air-force-1-07"
+      ],
+      "flavor": "La scarpa che sta bene con tutto. Il punto di partenza."
+    },
+    {
+      "id": "volta-court-82-nera",
+      "brand": "Volta",
+      "name": "Court 82",
+      "display_name": "Volta Court 82",
+      "colorway": "Nero totale",
+      "silhouette": "court_low",
+      "sprite_key": "court_low",
+      "palette": {
+        "upper": "#1d1d1f",
+        "accent": "#2b2b2e",
+        "sole": "#1d1d1f"
+      },
+      "tier": "base",
+      "rarity": "common",
+      "base_value": 30,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop",
+        "starter"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "nike-air-force-1-07"
+      ],
+      "flavor": "Stessa scarpa, mood diverso."
+    },
+    {
+      "id": "volta-duo-low",
+      "brand": "Volta",
+      "name": "Duo Low",
+      "display_name": "Volta Duo Low",
+      "colorway": "Bianco/Nero",
+      "silhouette": "court_low",
+      "sprite_key": "court_low",
+      "palette": {
+        "upper": "#f4f4f4",
+        "accent": "#1d1d1f",
+        "sole": "#ffffff"
+      },
+      "tier": "base",
+      "rarity": "common",
+      "base_value": 30,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop",
+        "starter"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "nike-dunk-low-retro"
+      ],
+      "flavor": "Ex regina dell'hype, oggi la vedi in ogni corridoio."
+    },
+    {
+      "id": "terra-calcio-og",
+      "brand": "Terra",
+      "name": "Calcio OG",
+      "display_name": "Terra Calcio OG",
+      "colorway": "Nero/Bianco/Gomma",
+      "silhouette": "terrace",
+      "sprite_key": "terrace",
+      "palette": {
+        "upper": "#1d1d1f",
+        "accent": "#f4f4f4",
+        "sole": "#b5835a"
+      },
+      "tier": "base",
+      "rarity": "common",
+      "base_value": 30,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop",
+        "starter"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "adidas-samba-og"
+      ],
+      "flavor": "Sottile, con la suola color gomma. Un classico."
+    },
+    {
+      "id": "nordline-53",
+      "brand": "Nordline",
+      "name": "53",
+      "display_name": "Nordline 53",
+      "colorway": "Bianco/Argento",
+      "silhouette": "runner_retro",
+      "sprite_key": "runner_retro",
+      "palette": {
+        "upper": "#f4f4f4",
+        "accent": "#c0c4cc",
+        "sole": "#e8e8e8"
+      },
+      "tier": "base",
+      "rarity": "common",
+      "base_value": 30,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop",
+        "starter"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "new-balance-530"
+      ],
+      "flavor": "Runner anni 2000, comoda tutto il giorno."
+    },
+    {
+      "id": "telo-70-alta",
+      "brand": "Telo",
+      "name": "70 Alta",
+      "display_name": "Telo 70 Alta",
+      "colorway": "Nero",
+      "silhouette": "canvas_high",
+      "sprite_key": "canvas_high",
+      "palette": {
+        "upper": "#1d1d1f",
+        "accent": "#f2ead8",
+        "sole": "#f2ead8"
+      },
+      "tier": "base",
+      "rarity": "common",
+      "base_value": 24,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop",
+        "starter"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "converse-chuck-70"
+      ],
+      "flavor": "Tela e gomma, dal 1970."
+    },
+    {
+      "id": "rampa-classica",
+      "brand": "Rampa",
+      "name": "Classica",
+      "display_name": "Rampa Classica",
+      "colorway": "Nero/Bianco",
+      "silhouette": "skate",
+      "sprite_key": "skate",
+      "palette": {
+        "upper": "#1d1d1f",
+        "accent": "#f4f4f4",
+        "sole": "#f4f4f4"
+      },
+      "tier": "base",
+      "rarity": "common",
+      "base_value": 22,
+      "value_source": "stima_game_design",
+      "sources": [
+        "shop",
+        "starter"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "vans-old-skool"
+      ],
+      "flavor": "La skate shoe per eccellenza."
+    },
+    {
+      "id": "nuvola-10",
+      "brand": "Nuvola",
+      "name": "10",
+      "display_name": "Nuvola 10",
+      "colorway": "Bianco nuvola",
+      "silhouette": "runner_max",
+      "sprite_key": "runner_max",
+      "palette": {
+        "upper": "#f4f4f4",
+        "accent": "#9fd3f0",
+        "sole": "#ffffff"
+      },
+      "tier": "base",
+      "rarity": "common",
+      "base_value": 40,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "hoka-clifton-10"
+      ],
+      "flavor": "Suola altissima, sembra di camminare su una nuvola."
+    },
+    {
+      "id": "kaze-113",
+      "brand": "Kaze",
+      "name": "113",
+      "display_name": "Kaze 113",
+      "colorway": "Bianco/Argento",
+      "silhouette": "runner_retro",
+      "sprite_key": "runner_retro",
+      "palette": {
+        "upper": "#f4f4f4",
+        "accent": "#b9bec7",
+        "sole": "#dfe3e8"
+      },
+      "tier": "trend",
+      "rarity": "popular",
+      "base_value": 32,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "asics-gel-1130"
+      ],
+      "flavor": "La runner retrò del momento."
+    },
+    {
+      "id": "terra-sprint-72",
+      "brand": "Terra",
+      "name": "Sprint 72",
+      "display_name": "Terra Sprint 72",
+      "colorway": "Granata",
+      "silhouette": "slim_runner",
+      "sprite_key": "slim_runner",
+      "palette": {
+        "upper": "#7a1f2b",
+        "accent": "#f4f4f4",
+        "sole": "#e8dcc8"
+      },
+      "tier": "trend",
+      "rarity": "popular",
+      "base_value": 29,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "adidas-sl-72-og"
+      ],
+      "flavor": "Sottilissima, anni '70: quella che viene dopo la Calcio."
+    },
+    {
+      "id": "terra-indoor",
+      "brand": "Terra",
+      "name": "Indoor",
+      "display_name": "Terra Indoor",
+      "colorway": "Bordeaux/Rosa",
+      "silhouette": "terrace",
+      "sprite_key": "terrace",
+      "palette": {
+        "upper": "#6d1a2a",
+        "accent": "#f2b8c6",
+        "sole": "#b5835a"
+      },
+      "tier": "trend",
+      "rarity": "popular",
+      "base_value": 35,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "adidas-gazelle-indoor"
+      ],
+      "flavor": "Scamosciata e colorata."
+    },
+    {
+      "id": "nordline-20l",
+      "brand": "Nordline",
+      "name": "20L",
+      "display_name": "Nordline 20L",
+      "colorway": "Nero",
+      "silhouette": "slim_runner",
+      "sprite_key": "slim_runner",
+      "palette": {
+        "upper": "#1d1d1f",
+        "accent": "#5a5a5f",
+        "sole": "#3a3a3d"
+      },
+      "tier": "trend",
+      "rarity": "popular",
+      "base_value": 40,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "new-balance-204l"
+      ],
+      "flavor": "Bassa e sottile, il nuovo che avanza."
+    },
+    {
+      "id": "volta-vento-5",
+      "brand": "Volta",
+      "name": "Vento 5",
+      "display_name": "Volta Vento 5",
+      "colorway": "Grigio freddo",
+      "silhouette": "runner_retro",
+      "sprite_key": "runner_retro",
+      "palette": {
+        "upper": "#a7adb5",
+        "accent": "#d9dce0",
+        "sole": "#f4f4f4"
+      },
+      "tier": "trend",
+      "rarity": "popular",
+      "base_value": 46,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "nike-zoom-vomero-5"
+      ],
+      "flavor": "Tecnica, con l'aria da runner del 2010."
+    },
+    {
+      "id": "nordline-906",
+      "brand": "Nordline",
+      "name": "906",
+      "display_name": "Nordline 906",
+      "colorway": "Sale marino",
+      "silhouette": "chunky",
+      "sprite_key": "chunky",
+      "palette": {
+        "upper": "#ece6da",
+        "accent": "#c9c2b4",
+        "sole": "#f4f1ea"
+      },
+      "tier": "trend",
+      "rarity": "popular",
+      "base_value": 55,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "new-balance-9060"
+      ],
+      "flavor": "La chunky più desiderata."
+    },
+    {
+      "id": "vetta-x6",
+      "brand": "Vetta",
+      "name": "X6",
+      "display_name": "Vetta X6",
+      "colorway": "Bianco luna",
+      "silhouette": "trail",
+      "sprite_key": "trail",
+      "palette": {
+        "upper": "#f4f4f4",
+        "accent": "#c7ccd3",
+        "sole": "#9aa1ab"
+      },
+      "tier": "trend",
+      "rarity": "popular",
+      "base_value": 52,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "salomon-xt-6"
+      ],
+      "flavor": "Nata per la montagna, la usi in città."
+    },
+    {
+      "id": "rampa-gonfia",
+      "brand": "Rampa",
+      "name": "Gonfia",
+      "display_name": "Rampa Gonfia",
+      "colorway": "Nero/Bianco",
+      "silhouette": "skate",
+      "sprite_key": "skate",
+      "palette": {
+        "upper": "#1d1d1f",
+        "accent": "#f4f4f4",
+        "sole": "#f4f4f4"
+      },
+      "tier": "trend",
+      "rarity": "popular",
+      "base_value": 27,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "vans-knu-skool"
+      ],
+      "flavor": "Skate anni '90 imbottita, perfetta coi jeans larghi."
+    },
+    {
+      "id": "lanetta-pantofola",
+      "brand": "Lanetta",
+      "name": "Pantofola",
+      "display_name": "Lanetta Pantofola",
+      "colorway": "Castagna",
+      "silhouette": "slipper",
+      "sprite_key": "slipper",
+      "palette": {
+        "upper": "#a8693b",
+        "accent": "#e8d6b8",
+        "sole": "#5a3a22"
+      },
+      "tier": "trend",
+      "rarity": "popular",
+      "base_value": 40,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "ugg-tasman"
+      ],
+      "flavor": "Pantofola da fuori casa. Sì, si può."
+    },
+    {
+      "id": "sughero-clog",
+      "brand": "Sughero",
+      "name": "Clog",
+      "display_name": "Sughero Clog",
+      "colorway": "Visone",
+      "silhouette": "clog",
+      "sprite_key": "clog",
+      "palette": {
+        "upper": "#8a7a6a",
+        "accent": "#c4b5a2",
+        "sole": "#6b5444"
+      },
+      "tier": "trend",
+      "rarity": "popular",
+      "base_value": 43,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "birkenstock-boston"
+      ],
+      "flavor": "Sabot scamosciato da campus."
+    },
+    {
+      "id": "volta-onda-plus",
+      "brand": "Volta",
+      "name": "Onda+",
+      "display_name": "Volta Onda+",
+      "colorway": "Nero onda",
+      "silhouette": "runner_max",
+      "sprite_key": "runner_max",
+      "palette": {
+        "upper": "#1d1d1f",
+        "accent": "#6b3fa0",
+        "sole": "#2b2b2e"
+      },
+      "tier": "trend",
+      "rarity": "popular",
+      "base_value": 55,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "nike-air-max-plus"
+      ],
+      "flavor": "Aggressiva, da strada."
+    },
+    {
+      "id": "kaze-14",
+      "brand": "Kaze",
+      "name": "14",
+      "display_name": "Kaze 14",
+      "colorway": "Argento/Blu",
+      "silhouette": "runner_retro",
+      "sprite_key": "runner_retro",
+      "palette": {
+        "upper": "#c0c4cc",
+        "accent": "#3b6fb6",
+        "sole": "#e8e8e8"
+      },
+      "tier": "trend",
+      "rarity": "popular",
+      "base_value": 49,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "shop"
+      ],
+      "fakeable": false,
+      "drop_weight": 0,
+      "reference_ids": [
+        "asics-gel-kayano-14"
+      ],
+      "flavor": "Per chi ne sa."
+    },
+    {
+      "id": "pista-corsa-og",
+      "brand": "Pista",
+      "name": "Corsa OG",
+      "display_name": "Pista Corsa OG",
+      "colorway": "Nero/Bianco",
+      "silhouette": "slim_motorsport",
+      "sprite_key": "slim_motorsport",
+      "palette": {
+        "upper": "#1d1d1f",
+        "accent": "#f4f4f4",
+        "sole": "#1d1d1f"
+      },
+      "tier": "hype",
+      "rarity": "hyped",
+      "base_value": 44,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "drop"
+      ],
+      "fakeable": true,
+      "drop_weight": 3,
+      "reference_ids": [
+        "puma-speedcat-og"
+      ],
+      "flavor": "Sottile come una scarpa da pilota. Esaurita a ogni restock."
+    },
+    {
+      "id": "shiro-66",
+      "brand": "Shiro",
+      "name": "66",
+      "display_name": "Shiro 66",
+      "colorway": "Giallo/Nero",
+      "silhouette": "slim_runner",
+      "sprite_key": "slim_runner",
+      "palette": {
+        "upper": "#f2c230",
+        "accent": "#1d1d1f",
+        "sole": "#e8dcc8"
+      },
+      "tier": "hype",
+      "rarity": "hyped",
+      "base_value": 64,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "drop"
+      ],
+      "fakeable": true,
+      "drop_weight": 3,
+      "reference_ids": [
+        "onitsuka-tiger-mexico-66"
+      ],
+      "flavor": "Gialla con le strisce nere: impossibile non notarla."
+    },
+    {
+      "id": "volta-mente-slide",
+      "brand": "Volta",
+      "name": "Mente Slide",
+      "display_name": "Volta Mente Slide",
+      "colorway": "Nero/Cromo",
+      "silhouette": "slide",
+      "sprite_key": "slide",
+      "palette": {
+        "upper": "#1d1d1f",
+        "accent": "#c9ccd1",
+        "sole": "#e04a2f"
+      },
+      "tier": "hype",
+      "rarity": "hyped",
+      "base_value": 38,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "drop"
+      ],
+      "fakeable": true,
+      "drop_weight": 3,
+      "reference_ids": [
+        "nike-mind-001-slide"
+      ],
+      "flavor": "La ciabatta virale. Si porta con le calze."
+    },
+    {
+      "id": "salto-1-alta",
+      "brand": "Salto",
+      "name": "1 Alta",
+      "display_name": "Salto 1 Alta",
+      "colorway": "Rosso/Nero/Bianco",
+      "silhouette": "court_high",
+      "sprite_key": "court_high",
+      "palette": {
+        "upper": "#c8102e",
+        "accent": "#1d1d1f",
+        "sole": "#f4f4f4"
+      },
+      "tier": "hype",
+      "rarity": "hyped",
+      "base_value": 72,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "drop"
+      ],
+      "fakeable": true,
+      "drop_weight": 2,
+      "reference_ids": [
+        "air-jordan-1-retro-high-og"
+      ],
+      "flavor": "La più iconica del basket."
+    },
+    {
+      "id": "salto-4-club",
+      "brand": "Salto",
+      "name": "4 Club",
+      "display_name": "Salto 4 Club",
+      "colorway": "Vela/Nero/Rosso",
+      "silhouette": "court_mid",
+      "sprite_key": "court_mid",
+      "palette": {
+        "upper": "#efe9dd",
+        "accent": "#1d1d1f",
+        "sole": "#c8102e"
+      },
+      "tier": "hype",
+      "rarity": "hyped",
+      "base_value": 84,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "drop"
+      ],
+      "fakeable": true,
+      "drop_weight": 2,
+      "reference_ids": [
+        "air-jordan-4-retro-flight-club"
+      ],
+      "flavor": "La scarpa dei sogni."
+    },
+    {
+      "id": "falco-grid-9",
+      "brand": "Falco",
+      "name": "Grid 9",
+      "display_name": "Falco Grid 9",
+      "colorway": "Grigio/Blu",
+      "silhouette": "runner_retro",
+      "sprite_key": "runner_retro",
+      "palette": {
+        "upper": "#a7adb5",
+        "accent": "#2a4d8f",
+        "sole": "#e8e8e8"
+      },
+      "tier": "hype",
+      "rarity": "hyped",
+      "base_value": 64,
+      "value_source": "riferimento_retail_eur",
+      "sources": [
+        "drop"
+      ],
+      "fakeable": true,
+      "drop_weight": 2,
+      "reference_ids": [
+        "saucony-progrid-omni-9"
+      ],
+      "flavor": "Scoperta sui social, ancora poco diffusa."
+    },
+    {
+      "id": "salto-11-spazio",
+      "brand": "Salto",
+      "name": "11 Spazio",
+      "display_name": "Salto 11 Spazio",
+      "colorway": "Nero/Blu",
+      "silhouette": "court_high",
+      "sprite_key": "court_high",
+      "palette": {
+        "upper": "#1d1d1f",
+        "accent": "#2f3fa8",
+        "sole": "#f4f4f4"
+      },
+      "tier": "limited",
+      "rarity": "limited",
+      "base_value": 130,
+      "value_source": "stima_game_design",
+      "sources": [
+        "drop"
+      ],
+      "fakeable": true,
+      "drop_weight": 1,
+      "reference_ids": [
+        "air-jordan-11-space-jam-2026"
+      ],
+      "flavor": "Uscita evento. Pochissime in giro."
+    },
+    {
+      "id": "salto-4-notte",
+      "brand": "Salto",
+      "name": "4 Notte",
+      "display_name": "Salto 4 Notte",
+      "colorway": "Nero/Rosso",
+      "silhouette": "court_mid",
+      "sprite_key": "court_mid",
+      "palette": {
+        "upper": "#1d1d1f",
+        "accent": "#c8102e",
+        "sole": "#9a9a9a"
+      },
+      "tier": "limited",
+      "rarity": "limited",
+      "base_value": 130,
+      "value_source": "stima_game_design",
+      "sources": [
+        "drop"
+      ],
+      "fakeable": true,
+      "drop_weight": 1,
+      "reference_ids": [
+        "air-jordan-4-og-bred-2026"
+      ],
+      "flavor": "Colorway leggendaria."
+    },
+    {
+      "id": "upthere-one",
+      "brand": "Upthere",
+      "name": "One",
+      "display_name": "Upthere One",
+      "colorway": "Edizione Villaggio",
+      "silhouette": "upthere_one",
+      "sprite_key": "upthere_one",
+      "palette": {
+        "upper": "#490D50",
+        "accent": "#E292C4",
+        "sole": "#F4F4F4"
+      },
+      "tier": "upthere",
+      "rarity": "limited",
+      "base_value": 90,
+      "value_source": "stima_game_design",
+      "sources": [
+        "drop"
+      ],
+      "fakeable": true,
+      "drop_weight": 2,
+      "reference_ids": [],
+      "flavor": "Creata da Upthere. Il primo nome nel suo passaporto è il nostro."
+    }
+  ]
+}

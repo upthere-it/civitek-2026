@@ -1,0 +1,1000 @@
+{
+ "note": "Manifest per il loader Phaser (scena Boot). Percorsi relativi alla root servita dal client. originY = piede del personaggio nel primo frame.",
+ "spritesheets": [
+  {
+   "key": "skin_0_idle_down",
+   "path": "assets/avatar/body/skin_0_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 894
+  },
+  {
+   "key": "skin_0_idle_side",
+   "path": "assets/avatar/body/skin_0_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 954
+  },
+  {
+   "key": "skin_0_idle_up",
+   "path": "assets/avatar/body/skin_0_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 735
+  },
+  {
+   "key": "skin_0_walk_down",
+   "path": "assets/avatar/body/skin_0_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1247
+  },
+  {
+   "key": "skin_0_walk_side",
+   "path": "assets/avatar/body/skin_0_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1233
+  },
+  {
+   "key": "skin_0_walk_up",
+   "path": "assets/avatar/body/skin_0_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7344,
+   "group": "avatar_body",
+   "bytes": 1201
+  },
+  {
+   "key": "skin_1_idle_down",
+   "path": "assets/avatar/body/skin_1_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 923
+  },
+  {
+   "key": "skin_1_idle_side",
+   "path": "assets/avatar/body/skin_1_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 977
+  },
+  {
+   "key": "skin_1_idle_up",
+   "path": "assets/avatar/body/skin_1_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 769
+  },
+  {
+   "key": "skin_1_walk_down",
+   "path": "assets/avatar/body/skin_1_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1227
+  },
+  {
+   "key": "skin_1_walk_side",
+   "path": "assets/avatar/body/skin_1_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1272
+  },
+  {
+   "key": "skin_1_walk_up",
+   "path": "assets/avatar/body/skin_1_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7344,
+   "group": "avatar_body",
+   "bytes": 1181
+  },
+  {
+   "key": "skin_2_idle_down",
+   "path": "assets/avatar/body/skin_2_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 935
+  },
+  {
+   "key": "skin_2_idle_side",
+   "path": "assets/avatar/body/skin_2_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 985
+  },
+  {
+   "key": "skin_2_idle_up",
+   "path": "assets/avatar/body/skin_2_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 771
+  },
+  {
+   "key": "skin_2_walk_down",
+   "path": "assets/avatar/body/skin_2_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1237
+  },
+  {
+   "key": "skin_2_walk_side",
+   "path": "assets/avatar/body/skin_2_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1277
+  },
+  {
+   "key": "skin_2_walk_up",
+   "path": "assets/avatar/body/skin_2_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7344,
+   "group": "avatar_body",
+   "bytes": 1196
+  },
+  {
+   "key": "skin_3_idle_down",
+   "path": "assets/avatar/body/skin_3_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 905
+  },
+  {
+   "key": "skin_3_idle_side",
+   "path": "assets/avatar/body/skin_3_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 982
+  },
+  {
+   "key": "skin_3_idle_up",
+   "path": "assets/avatar/body/skin_3_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 785
+  },
+  {
+   "key": "skin_3_walk_down",
+   "path": "assets/avatar/body/skin_3_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1232
+  },
+  {
+   "key": "skin_3_walk_side",
+   "path": "assets/avatar/body/skin_3_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1277
+  },
+  {
+   "key": "skin_3_walk_up",
+   "path": "assets/avatar/body/skin_3_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7344,
+   "group": "avatar_body",
+   "bytes": 1189
+  },
+  {
+   "key": "skin_4_idle_down",
+   "path": "assets/avatar/body/skin_4_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 910
+  },
+  {
+   "key": "skin_4_idle_side",
+   "path": "assets/avatar/body/skin_4_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 963
+  },
+  {
+   "key": "skin_4_idle_up",
+   "path": "assets/avatar/body/skin_4_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 783
+  },
+  {
+   "key": "skin_4_walk_down",
+   "path": "assets/avatar/body/skin_4_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1214
+  },
+  {
+   "key": "skin_4_walk_side",
+   "path": "assets/avatar/body/skin_4_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1283
+  },
+  {
+   "key": "skin_4_walk_up",
+   "path": "assets/avatar/body/skin_4_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7344,
+   "group": "avatar_body",
+   "bytes": 1190
+  },
+  {
+   "key": "hair_cappellino_idle_down",
+   "path": "assets/avatar/layers/hair_cappellino_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.4062,
+   "group": "avatar_layer",
+   "bytes": 288
+  },
+  {
+   "key": "hair_cappellino_idle_side",
+   "path": "assets/avatar/layers/hair_cappellino_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.4062,
+   "group": "avatar_layer",
+   "bytes": 296
+  },
+  {
+   "key": "hair_cappellino_idle_up",
+   "path": "assets/avatar/layers/hair_cappellino_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.4844,
+   "group": "avatar_layer",
+   "bytes": 316
+  },
+  {
+   "key": "hair_cappellino_walk_down",
+   "path": "assets/avatar/layers/hair_cappellino_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.4062,
+   "group": "avatar_layer",
+   "bytes": 328
+  },
+  {
+   "key": "hair_cappellino_walk_side",
+   "path": "assets/avatar/layers/hair_cappellino_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.4062,
+   "group": "avatar_layer",
+   "bytes": 329
+  },
+  {
+   "key": "hair_cappellino_walk_up",
+   "path": "assets/avatar/layers/hair_cappellino_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.4844,
+   "group": "avatar_layer",
+   "bytes": 369
+  },
+  {
+   "key": "hair_corti_idle_down",
+   "path": "assets/avatar/layers/hair_corti_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.4375,
+   "group": "avatar_layer",
+   "bytes": 323
+  },
+  {
+   "key": "hair_corti_idle_side",
+   "path": "assets/avatar/layers/hair_corti_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.4688,
+   "group": "avatar_layer",
+   "bytes": 327
+  },
+  {
+   "key": "hair_corti_idle_up",
+   "path": "assets/avatar/layers/hair_corti_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.4844,
+   "group": "avatar_layer",
+   "bytes": 281
+  },
+  {
+   "key": "hair_corti_walk_down",
+   "path": "assets/avatar/layers/hair_corti_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.4375,
+   "group": "avatar_layer",
+   "bytes": 347
+  },
+  {
+   "key": "hair_corti_walk_side",
+   "path": "assets/avatar/layers/hair_corti_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.4688,
+   "group": "avatar_layer",
+   "bytes": 373
+  },
+  {
+   "key": "hair_corti_walk_up",
+   "path": "assets/avatar/layers/hair_corti_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.4844,
+   "group": "avatar_layer",
+   "bytes": 320
+  },
+  {
+   "key": "hair_lunghi_idle_down",
+   "path": "assets/avatar/layers/hair_lunghi_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5781,
+   "group": "avatar_layer",
+   "bytes": 385
+  },
+  {
+   "key": "hair_lunghi_idle_side",
+   "path": "assets/avatar/layers/hair_lunghi_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5781,
+   "group": "avatar_layer",
+   "bytes": 322
+  },
+  {
+   "key": "hair_lunghi_idle_up",
+   "path": "assets/avatar/layers/hair_lunghi_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5781,
+   "group": "avatar_layer",
+   "bytes": 342
+  },
+  {
+   "key": "hair_lunghi_walk_down",
+   "path": "assets/avatar/layers/hair_lunghi_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5781,
+   "group": "avatar_layer",
+   "bytes": 437
+  },
+  {
+   "key": "hair_lunghi_walk_side",
+   "path": "assets/avatar/layers/hair_lunghi_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5781,
+   "group": "avatar_layer",
+   "bytes": 375
+  },
+  {
+   "key": "hair_lunghi_walk_up",
+   "path": "assets/avatar/layers/hair_lunghi_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5781,
+   "group": "avatar_layer",
+   "bytes": 395
+  },
+  {
+   "key": "hoodie_idle_down",
+   "path": "assets/avatar/layers/hoodie_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.625,
+   "group": "avatar_layer",
+   "bytes": 408
+  },
+  {
+   "key": "hoodie_idle_side",
+   "path": "assets/avatar/layers/hoodie_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.625,
+   "group": "avatar_layer",
+   "bytes": 423
+  },
+  {
+   "key": "hoodie_idle_up",
+   "path": "assets/avatar/layers/hoodie_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.625,
+   "group": "avatar_layer",
+   "bytes": 381
+  },
+  {
+   "key": "hoodie_walk_down",
+   "path": "assets/avatar/layers/hoodie_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.625,
+   "group": "avatar_layer",
+   "bytes": 532
+  },
+  {
+   "key": "hoodie_walk_side",
+   "path": "assets/avatar/layers/hoodie_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.625,
+   "group": "avatar_layer",
+   "bytes": 543
+  },
+  {
+   "key": "hoodie_walk_up",
+   "path": "assets/avatar/layers/hoodie_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.625,
+   "group": "avatar_layer",
+   "bytes": 510
+  },
+  {
+   "key": "pants_idle_down",
+   "path": "assets/avatar/layers/pants_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_layer",
+   "bytes": 314
+  },
+  {
+   "key": "pants_idle_side",
+   "path": "assets/avatar/layers/pants_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_layer",
+   "bytes": 333
+  },
+  {
+   "key": "pants_idle_up",
+   "path": "assets/avatar/layers/pants_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_layer",
+   "bytes": 341
+  },
+  {
+   "key": "pants_walk_down",
+   "path": "assets/avatar/layers/pants_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_layer",
+   "bytes": 514
+  },
+  {
+   "key": "pants_walk_side",
+   "path": "assets/avatar/layers/pants_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_layer",
+   "bytes": 529
+  },
+  {
+   "key": "pants_walk_up",
+   "path": "assets/avatar/layers/pants_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7344,
+   "group": "avatar_layer",
+   "bytes": 475
+  },
+  {
+   "key": "shoes_idle_down",
+   "path": "assets/avatar/layers/shoes_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_layer",
+   "bytes": 210
+  },
+  {
+   "key": "shoes_idle_side",
+   "path": "assets/avatar/layers/shoes_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_layer",
+   "bytes": 227
+  },
+  {
+   "key": "shoes_idle_up",
+   "path": "assets/avatar/layers/shoes_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_layer",
+   "bytes": 209
+  },
+  {
+   "key": "shoes_walk_down",
+   "path": "assets/avatar/layers/shoes_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_layer",
+   "bytes": 314
+  },
+  {
+   "key": "shoes_walk_side",
+   "path": "assets/avatar/layers/shoes_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_layer",
+   "bytes": 315
+  },
+  {
+   "key": "shoes_walk_up",
+   "path": "assets/avatar/layers/shoes_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7344,
+   "group": "avatar_layer",
+   "bytes": 313
+  },
+  {
+   "key": "npc_rogue_idle",
+   "path": "assets/vendor/pixel-crawler/npc/rogue_idle.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 1.0,
+   "group": "npc",
+   "bytes": 1342
+  },
+  {
+   "key": "npc_wizard_idle",
+   "path": "assets/vendor/pixel-crawler/npc/wizard_idle.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 1.0,
+   "group": "npc",
+   "bytes": 1507
+  },
+  {
+   "key": "npc_tavern_a_idle",
+   "path": "assets/vendor/pixel-crawler/npc/tavern_a_idle.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "npc",
+   "bytes": 1537
+  },
+  {
+   "key": "npc_tavern_b_idle",
+   "path": "assets/vendor/pixel-crawler/npc/tavern_b_idle.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "npc",
+   "bytes": 1537
+  },
+  {
+   "key": "npc_peasant_a_idle",
+   "path": "assets/vendor/pixel-crawler/npc/peasant_a_idle.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "npc",
+   "bytes": 1706
+  },
+  {
+   "key": "npc_peasant_a_walk",
+   "path": "assets/vendor/pixel-crawler/npc/peasant_a_walk.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "npc",
+   "bytes": 2351
+  }
+ ],
+ "images": [
+  {
+   "key": "tiles_floors",
+   "path": "assets/vendor/pixel-crawler/tiles/floors.png",
+   "width": 400,
+   "height": 416,
+   "tileSize": 16,
+   "bytes": 21966
+  },
+  {
+   "key": "tiles_water",
+   "path": "assets/vendor/pixel-crawler/tiles/water.png",
+   "width": 400,
+   "height": 400,
+   "tileSize": 16,
+   "bytes": 12937
+  },
+  {
+   "key": "buildings_props",
+   "path": "assets/vendor/pixel-crawler/buildings/props.png",
+   "width": 400,
+   "height": 400,
+   "tileSize": 16,
+   "bytes": 8364
+  },
+  {
+   "key": "buildings_roofs_upthere",
+   "path": "assets/vendor/pixel-crawler/buildings/roofs_upthere.png",
+   "width": 400,
+   "height": 400,
+   "tileSize": 16,
+   "bytes": 10299
+  },
+  {
+   "key": "buildings_shadows",
+   "path": "assets/vendor/pixel-crawler/buildings/shadows.png",
+   "width": 400,
+   "height": 400,
+   "tileSize": 16,
+   "bytes": 1634
+  },
+  {
+   "key": "buildings_walls",
+   "path": "assets/vendor/pixel-crawler/buildings/walls.png",
+   "width": 672,
+   "height": 800,
+   "tileSize": 16,
+   "bytes": 22524
+  },
+  {
+   "key": "props_farm",
+   "path": "assets/vendor/pixel-crawler/props/farm.png",
+   "width": 400,
+   "height": 400,
+   "tileSize": null,
+   "bytes": 22698
+  },
+  {
+   "key": "props_furniture",
+   "path": "assets/vendor/pixel-crawler/props/furniture.png",
+   "width": 800,
+   "height": 864,
+   "tileSize": null,
+   "bytes": 29445
+  },
+  {
+   "key": "props_rocks",
+   "path": "assets/vendor/pixel-crawler/props/rocks.png",
+   "width": 208,
+   "height": 304,
+   "tileSize": null,
+   "bytes": 8436
+  },
+  {
+   "key": "props_shadows",
+   "path": "assets/vendor/pixel-crawler/props/shadows.png",
+   "width": 400,
+   "height": 400,
+   "tileSize": null,
+   "bytes": 3965
+  },
+  {
+   "key": "props_vegetation",
+   "path": "assets/vendor/pixel-crawler/props/vegetation.png",
+   "width": 400,
+   "height": 432,
+   "tileSize": null,
+   "bytes": 32871
+  },
+  {
+   "key": "props_trees_model_01_size_03",
+   "path": "assets/vendor/pixel-crawler/props/trees/model_01_size_03.png",
+   "width": 208,
+   "height": 192,
+   "tileSize": null,
+   "bytes": 19583
+  },
+  {
+   "key": "props_trees_model_01_size_04",
+   "path": "assets/vendor/pixel-crawler/props/trees/model_01_size_04.png",
+   "width": 368,
+   "height": 256,
+   "tileSize": null,
+   "bytes": 47337
+  },
+  {
+   "key": "props_trees_model_02_size_03",
+   "path": "assets/vendor/pixel-crawler/props/trees/model_02_size_03.png",
+   "width": 144,
+   "height": 160,
+   "tileSize": null,
+   "bytes": 8168
+  },
+  {
+   "key": "props_trees_model_03_size_03",
+   "path": "assets/vendor/pixel-crawler/props/trees/model_03_size_03.png",
+   "width": 192,
+   "height": 288,
+   "tileSize": null,
+   "bytes": 15338
+  },
+  {
+   "key": "brand_pixel_logo_pixel_24",
+   "path": "assets/brand/pixel/logo_pixel_24.png",
+   "width": 70,
+   "height": 18,
+   "tileSize": null,
+   "bytes": 297
+  },
+  {
+   "key": "brand_pixel_logo_pixel_32",
+   "path": "assets/brand/pixel/logo_pixel_32.png",
+   "width": 93,
+   "height": 24,
+   "tileSize": null,
+   "bytes": 351
+  },
+  {
+   "key": "brand_pixel_sign_autenticatore",
+   "path": "assets/brand/pixel/sign_autenticatore.png",
+   "width": 80,
+   "height": 29,
+   "tileSize": null,
+   "bytes": 634
+  },
+  {
+   "key": "brand_pixel_sign_bacheca",
+   "path": "assets/brand/pixel/sign_bacheca.png",
+   "width": 64,
+   "height": 29,
+   "tileSize": null,
+   "bytes": 555
+  },
+  {
+   "key": "brand_pixel_sign_banca",
+   "path": "assets/brand/pixel/sign_banca.png",
+   "width": 80,
+   "height": 37,
+   "tileSize": null,
+   "bytes": 683
+  },
+  {
+   "key": "brand_pixel_sign_enoteca",
+   "path": "assets/brand/pixel/sign_enoteca.png",
+   "width": 80,
+   "height": 29,
+   "tileSize": null,
+   "bytes": 606
+  },
+  {
+   "key": "brand_pixel_sign_negozio",
+   "path": "assets/brand/pixel/sign_negozio.png",
+   "width": 64,
+   "height": 19,
+   "tileSize": null,
+   "bytes": 394
+  },
+  {
+   "key": "brand_pixel_sign_palco",
+   "path": "assets/brand/pixel/sign_palco.png",
+   "width": 64,
+   "height": 19,
+   "tileSize": null,
+   "bytes": 382
+  }
+ ],
+ "atlases": [
+  {
+   "key": "shoes",
+   "image": "assets/shoes/items_atlas.png",
+   "json": "assets/shoes/items_atlas.json",
+   "bytes": 10735
+  }
+ ],
+ "excluded_from_boot": [
+  "assets/avatar/avatar_manifest.json (metadati)",
+  "assets/shoes/items/*.png (icone singole: usare l'atlas)",
+  "assets/shoes/silhouettes/*.png (maschere di lavoro)",
+  "assets/PREVIEW_*.png",
+  "assets/vendor/pixel-crawler/characters/* (sorgenti per rigenerare l'avatar)",
+  "assets/vendor/pixel-crawler/buildings/roofs.png (sorgente: in gioco roofs_upthere.png)"
+ ],
+ "total_boot_bytes": 334953
+}

@@ -1,0 +1,110 @@
+{
+  "frame": {
+    "width": 64,
+    "height": 64
+  },
+  "animations": {
+    "idle_down": {
+      "frames": 4,
+      "frameRate": 6,
+      "flipForOtherSide": false
+    },
+    "idle_side": {
+      "frames": 4,
+      "frameRate": 6,
+      "flipForOtherSide": true
+    },
+    "idle_up": {
+      "frames": 4,
+      "frameRate": 6,
+      "flipForOtherSide": false
+    },
+    "walk_down": {
+      "frames": 6,
+      "frameRate": 10,
+      "flipForOtherSide": false
+    },
+    "walk_side": {
+      "frames": 6,
+      "frameRate": 10,
+      "flipForOtherSide": true
+    },
+    "walk_up": {
+      "frames": 6,
+      "frameRate": 10,
+      "flipForOtherSide": false
+    }
+  },
+  "body": [
+    "body/skin_{tone}_idle_down.png",
+    "body/skin_{tone}_idle_side.png",
+    "body/skin_{tone}_idle_up.png",
+    "body/skin_{tone}_walk_down.png",
+    "body/skin_{tone}_walk_side.png",
+    "body/skin_{tone}_walk_up.png"
+  ],
+  "layers": {
+    "pants": [
+      "layers/pants_idle_down.png",
+      "layers/pants_idle_side.png",
+      "layers/pants_idle_up.png",
+      "layers/pants_walk_down.png",
+      "layers/pants_walk_side.png",
+      "layers/pants_walk_up.png"
+    ],
+    "shoes": [
+      "layers/shoes_idle_down.png",
+      "layers/shoes_idle_side.png",
+      "layers/shoes_idle_up.png",
+      "layers/shoes_walk_down.png",
+      "layers/shoes_walk_side.png",
+      "layers/shoes_walk_up.png"
+    ],
+    "hoodie": [
+      "layers/hoodie_idle_down.png",
+      "layers/hoodie_idle_side.png",
+      "layers/hoodie_idle_up.png",
+      "layers/hoodie_walk_down.png",
+      "layers/hoodie_walk_side.png",
+      "layers/hoodie_walk_up.png"
+    ],
+    "hair_corti": [
+      "layers/hair_corti_idle_down.png",
+      "layers/hair_corti_idle_side.png",
+      "layers/hair_corti_idle_up.png",
+      "layers/hair_corti_walk_down.png",
+      "layers/hair_corti_walk_side.png",
+      "layers/hair_corti_walk_up.png"
+    ],
+    "hair_lunghi": [
+      "layers/hair_lunghi_idle_down.png",
+      "layers/hair_lunghi_idle_side.png",
+      "layers/hair_lunghi_idle_up.png",
+      "layers/hair_lunghi_walk_down.png",
+      "layers/hair_lunghi_walk_side.png",
+      "layers/hair_lunghi_walk_up.png"
+    ],
+    "hair_cappellino": [
+      "layers/hair_cappellino_idle_down.png",
+      "layers/hair_cappellino_idle_side.png",
+      "layers/hair_cappellino_idle_up.png",
+      "layers/hair_cappellino_walk_down.png",
+      "layers/hair_cappellino_walk_side.png",
+      "layers/hair_cappellino_walk_up.png"
+    ]
+  },
+  "draw_order": [
+    "body",
+    "pants",
+    "shoes",
+    "hoodie",
+    "hair"
+  ],
+  "tint": {
+    "pants": "fisso #2d3a5a (jeans)",
+    "shoes": "palette.upper della scarpa più preziosa posseduta (default #f4f4f4)",
+    "hoodie": "avatar.outfit_colors[outfit]",
+    "hair": "avatar.hair_colors[hair_color]"
+  },
+  "note": "Layer PLACEHOLDER generati automaticamente da Body_A: vanno ritoccati in Aseprite."
+}

@@ -1,0 +1,274 @@
+{
+  "meta": {
+    "nota": "Nomi e battute sono proposte (decisione D6 in PLAN.md). Testi brevi, tono da ragazzi, niente volgarità.",
+    "sprite": "sprite.type = sheet → chiave in apps/client/public/assets/manifest.json; sprite.type = avatar → composto con i layer dell'avatar (vedi docs/ASSETS.md)"
+  },
+  "system_players": [
+    {
+      "player_id": 1,
+      "role": "TREASURY",
+      "name": "Banca Upthere",
+      "zone": "banca",
+      "sprite_key": "npc_tavern_b_idle",
+      "sprite": {
+        "type": "sheet",
+        "key": "npc_tavern_b_idle",
+        "flipX": false
+      },
+      "purpose": "Tesoreria dell'economia chiusa. Annuncia e vende i drop: le scarpe dei drop hanno Upthere come primo proprietario.",
+      "lines": {
+        "idle": [
+          "Qui nasce la storia delle scarpe migliori.",
+          "Ogni drop parte da noi: primo anello certificato."
+        ],
+        "drop_open": [
+          "Drop aperto! {qty} paia di {item} a {price} monete. Una a testa."
+        ],
+        "drop_soldout": [
+          "Finite. Al prossimo drop tra {min} minuti."
+        ]
+      }
+    },
+    {
+      "player_id": 2,
+      "role": "SHOP",
+      "name": "Il Negozio",
+      "zone": "negozio",
+      "sprite_key": "npc_tavern_a_idle",
+      "sprite": {
+        "type": "sheet",
+        "key": "npc_tavern_a_idle",
+        "flipX": false
+      },
+      "purpose": "Vende le scarpe base e trend a base_value. Conia gli asset (MINT) e li trasferisce al compratore.",
+      "lines": {
+        "idle": [
+          "Prezzi giusti, scarpe vere. Niente sorprese.",
+          "Ogni paio esce da qui con il passaporto già aperto."
+        ]
+      }
+    },
+    {
+      "player_id": 3,
+      "role": "STALL",
+      "name": "Tony Affari",
+      "zone": "bancarella",
+      "sprite_key": "npc_rogue_idle",
+      "sprite": {
+        "type": "sheet",
+        "key": "npc_rogue_idle",
+        "flipX": false
+      },
+      "purpose": "Vende FALSI di scarpe hype/limited/Upthere One a metà prezzo. Sprite identici agli originali; il passaporto mostra l'origine non certificata.",
+      "lines": {
+        "idle": [
+          "Psst. Roba buona a metà prezzo.",
+          "Originali, giuro. Più o meno."
+        ],
+        "offer": [
+          "{item} a {price}. Affare del giorno, solo per te."
+        ],
+        "after_sale": [
+          "Grazie, eh. Il passaporto? Dettagli."
+        ]
+      }
+    },
+    {
+      "player_id": 4,
+      "role": "LEGEND",
+      "name": "MC Suola",
+      "zone": "palco",
+      "sprite_key": "avatar",
+      "sprite": {
+        "type": "avatar",
+        "skin": 3,
+        "hair_style": "cappellino",
+        "hair_color": "#f2c230",
+        "outfit_color": "#1d1d1f",
+        "shoes_color": "#c8102e",
+        "note": "costruito con i layer dell'avatar: stesso stile dei giocatori, ma riconoscibile"
+      },
+      "purpose": "Per 15 monete indossa la scarpa per 10 secondi: due anelli nel passaporto (LEGEND_IN/LEGEND_OUT) e +40% di valore.",
+      "lines": {
+        "idle": [
+          "Le indosso dieci secondi e la tua scarpa entra nella storia.",
+          "Non conta che le ho messe. Conta che si può dimostrare."
+        ],
+        "wearing": [
+          "Un attimo che faccio due foto…"
+        ],
+        "returned": [
+          "Ecco qua. Ora nel passaporto ci sono anch'io."
+        ],
+        "cooldown": [
+          "Calma, ho appena finito con un altro paio. Torna tra poco."
+        ]
+      }
+    }
+  ],
+  "service_npcs": [
+    {
+      "id": "authenticator",
+      "name": "Dott.ssa Hash",
+      "zone": "autenticatore",
+      "sprite_key": "npc_wizard_idle",
+      "sprite": {
+        "type": "sheet",
+        "key": "npc_wizard_idle",
+        "flipX": false
+      },
+      "purpose": "Per 3 monete verifica una scarpa del giocatore: controlla che la catena parta da un MINT certificato.",
+      "lines": {
+        "idle": [
+          "Dammi 3 monete e ti dico la verità su quella scarpa."
+        ],
+        "genuine": [
+          "Autentica. Ogni passaggio torna, dal primo all'ultimo."
+        ],
+        "fake": [
+          "Falsa. Il passaporto non parte da un produttore certificato. Vale 2 monete, mi spiace."
+        ]
+      }
+    },
+    {
+      "id": "dop_wine_shop",
+      "name": "Enoteca DOP Digital",
+      "zone": "enoteca",
+      "sprite_key": "npc_peasant_a_idle",
+      "sprite": {
+        "type": "sheet",
+        "key": "npc_peasant_a_idle",
+        "flipX": false
+      },
+      "purpose": "Ponte verso DOP Digital: mostra il passaporto (demo) di una bottiglia di vino con la stessa UI delle scarpe.",
+      "lines": {
+        "idle": [
+          "Le scarpe hanno un passaporto. Anche il vino.",
+          "Inquadra la bottiglia: stessa storia, dal vigneto al tavolo."
+        ]
+      },
+      "demo_bottle": {
+        "label": "ESEMPIO DIMOSTRATIVO",
+        "name": "Bottiglia demo DOP Digital",
+        "timeline": [
+          {
+            "step": "Vigneto",
+            "detail": "Vendemmia e lotto di provenienza",
+            "certified": true
+          },
+          {
+            "step": "Cantina",
+            "detail": "Vinificazione e imbottigliamento",
+            "certified": true
+          },
+          {
+            "step": "Etichetta elettronica",
+            "detail": "Ingredienti, valori nutrizionali, info ambientali via QR",
+            "certified": true
+          },
+          {
+            "step": "Distributore",
+            "detail": "Passaggio di proprietà",
+            "certified": true
+          },
+          {
+            "step": "Enoteca",
+            "detail": "Passaggio di proprietà",
+            "certified": true
+          },
+          {
+            "step": "Tu",
+            "detail": "Inquadri il QR e vedi tutta la storia",
+            "certified": true
+          }
+        ],
+        "cta": {
+          "text": "Scopri DOP Digital",
+          "url": "https://dopdigital.it/"
+        }
+      }
+    }
+  ],
+  "bots": [
+    {
+      "player_id": 10,
+      "nickname": "Lince17",
+      "style": "compra_sottoprezzo",
+      "sprite": {
+        "type": "avatar",
+        "random_traits": true,
+        "seed": 10
+      }
+    },
+    {
+      "player_id": 11,
+      "nickname": "Gufo08",
+      "style": "vende_trend",
+      "sprite": {
+        "type": "avatar",
+        "random_traits": true,
+        "seed": 11
+      }
+    },
+    {
+      "player_id": 12,
+      "nickname": "Volpe33",
+      "style": "collezionista_hype",
+      "sprite": {
+        "type": "avatar",
+        "random_traits": true,
+        "seed": 12
+      }
+    },
+    {
+      "player_id": 13,
+      "nickname": "Orso21",
+      "style": "compra_sottoprezzo",
+      "sprite": {
+        "type": "avatar",
+        "random_traits": true,
+        "seed": 13
+      }
+    },
+    {
+      "player_id": 14,
+      "nickname": "Riccio45",
+      "style": "vende_base",
+      "sprite": {
+        "type": "avatar",
+        "random_traits": true,
+        "seed": 14
+      }
+    },
+    {
+      "player_id": 15,
+      "nickname": "Lontra12",
+      "style": "collezionista_hype",
+      "sprite": {
+        "type": "avatar",
+        "random_traits": true,
+        "seed": 15
+      }
+    },
+    {
+      "player_id": 16,
+      "nickname": "Corvo56",
+      "style": "vende_trend",
+      "sprite": {
+        "type": "avatar",
+        "random_traits": true,
+        "seed": 16
+      }
+    },
+    {
+      "player_id": 17,
+      "nickname": "Geco90",
+      "style": "compra_sottoprezzo",
+      "sprite": {
+        "type": "avatar",
+        "random_traits": true,
+        "seed": 17
+      }
+    }
+  ]
+}
