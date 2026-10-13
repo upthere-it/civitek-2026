@@ -3,3 +3,7 @@ export * from './types';
 export * from './events';
 export * from './settings';
 export * from './valuation';
+export * from './wardrobe';
+export * from './village';
+export * from './protocol';
+export * from './errors';

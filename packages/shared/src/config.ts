@@ -101,6 +101,13 @@ export interface WorldCfg {
   visible_radius_px: number;
   max_players_per_room: number;
   emotes: string[];
+  /** Mappa Tiled, relativa a apps/client/public/ */
+  map: string;
+  walk_speed_px_s: number;
+  camera_zoom: number;
+  emote_duration_ms: number;
+  /** Oltre questa distanza dal server il client riallinea il proprio avatar. */
+  reconcile_px: number;
 }
 
 export interface GameConfig {

@@ -347,6 +347,11 @@ game_config = {
         "max_players_per_room": 150,
         "emotes": ["👋", "🔥", "😂", "👟", "💸", "🤝"],
         "tap_npc_behaviour": "l'avatar cammina fino all'NPC e il pannello si apre all'arrivo",
+        "map": "assets/maps/village.json",
+        "walk_speed_px_s": 72,
+        "camera_zoom": 2,
+        "emote_duration_ms": 2500,
+        "reconcile_px": 24,
     },
     "chain": {
         "enabled": True,

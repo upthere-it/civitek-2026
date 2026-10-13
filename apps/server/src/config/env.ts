@@ -34,3 +34,13 @@ export function dbParams(): DbParams {
     database: process.env.DB_NAME ?? 'sneaker_passport_dev',
   };
 }
+
+/** Segreto per ricavare i codici di recupero dal device (vedi game/identity.ts). Obbligatorio in produzione. */
+export function recoverySecret(): string {
+  const secret = process.env.RECOVERY_SECRET;
+  if (secret && secret.length >= 32) return secret;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('RECOVERY_SECRET mancante o più corto di 32 caratteri: obbligatorio in produzione');
+  }
+  return 'sviluppo-non-usare-in-produzione-0123456789';
+}
