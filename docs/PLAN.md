@@ -5,17 +5,17 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 ## Milestone
 
 ### M0 — Fondamenta (mer 14/10)
-- [ ] Monorepo `apps/server`, `apps/client`, `packages/shared`, script npm (vedi CLAUDE.md)
-- [ ] `sql/001–003`: schema, `fn_setting`, procedure interne, `sp_listing_buy`
-- [ ] `tools/seed-from-json.ts`: `items`, `game_settings`, giocatori di sistema, `GRANT` della tesoreria
-- [ ] `packages/shared/valuation.ts` con test sugli esempi di GAME_DESIGN §8
-- [ ] `economy.invariants.spec` (I1–I6) verde su DB di test
-- [ ] `ChainNotary` + `MockNotary` + `ChainWorker` funzionanti (gli eventi passano a `CONFIRMED`)
+- [x] Monorepo `apps/server`, `apps/client`, `packages/shared`, script npm (vedi CLAUDE.md)
+- [x] `sql/001–005`: schema, `fn_setting`, procedure interne, `sp_listing_create`/`sp_listing_buy`, outbox chain, `sp_economy_check`
+- [x] `tools/seed-from-json.ts`: `items`, `game_settings`, giocatori di sistema, `GRANT` della tesoreria
+- [x] `packages/shared/valuation.ts` con test sugli esempi di GAME_DESIGN §8
+- [x] `economy.invariants.spec` (I1–I6) verde su DB di test
+- [x] `ChainNotary` + `MockNotary` + `ChainWorker` funzionanti (gli eventi passano a `CONFIRMED`)
 
 **Accettazione**: `npm test` verde; un acquisto da bacheca simulato via test produce ledger, catena hash e certificazione mock corretti.
 
 ### M1 — Entrare nel villaggio (gio 15/10)
-- [ ] Landing, `device_id`, handshake, `sp_player_get_or_create` (nickname, 100 monete, scarpa regalo)
+- [ ] Landing, `device_id`, handshake, `sp_player_get_or_create` (nickname, 100 monete, scarpa regalo) — la SP è già fatta e testata in M0
 - [ ] Boot che carica tutto da `apps/client/public/assets/manifest.json`
 - [ ] Schermata avatar (3 tratti) con il compositore a layer descritto in `docs/ASSETS.md`
 - [ ] Tilemap del villaggio in Tiled (tile da 16 px) con gli asset di `vendor/pixel-crawler`, secondo la mappa di GAME_DESIGN §4
@@ -93,7 +93,35 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 | ~~D4~~ | ✅ **Chiusa (13/10)**: Pixel Crawler Free Pack (Anokolisa), uso commerciale ammesso. Avatar e icone delle scarpe sono placeholder generati; il ritocco in Aseprite è facoltativo | Simone | — | — |
 | D5 | Testo della pagina privacy (revisione interna) | Simone | 20/10 | testo bozza di Claude Code |
 | D6 | Nomi definitivi degli NPC (proposte in `npcs.json`) | Simone | 19/10 | nomi proposti |
+| D7 | `humanOwnersCount` nel valore percepito: conta i **passaggi** verso umani (scelta attuale: anche il ping-pong A→B→A pesa) oppure i giocatori **distinti**? | Simone | 16/10 | passaggi |
+| D8 | Tentativi della certificazione: oggi `max_attempts` (5) × `batch_interval_ms` (2 s) vuol dire che 10 s di testnet giù mandano gli eventi in `FAILED` per sempre. Proposta: backoff (`chain_next_attempt_at`) oppure job che rimette in coda i `FAILED` ogni N minuti | Simone | con D1 | backoff |
+| D9 | Budget "primo caricamento < 1 MB": Phaser 3 da solo pesa 322 KB gzip (1,2 MB minificato), che `ASSETS.md` §8 non conta. Con asset (~330 KB) e font (~88 KB) si arriva a ~740 KB gzip prima di tilemap e suoni. Il budget è sul trasferito (gzip/brotli) o sul peso dei file? Se serve margine: build custom di Phaser senza Matter/fisica | Simone | 19/10 | gzip, margine da tenere d'occhio in M5 |
 
 ## Note di sessione
 
 _(Claude Code: aggiungi qui una riga per sessione con data, milestone, cosa è stato fatto e i problemi aperti.)_
+
+- **13/10 — M0 completata.**
+  - **Fatto**:
+    - monorepo npm workspaces: `packages/shared` CJS; server NestJS 11 CJS con `tsc` e `node --watch`, senza `@nestjs/cli`; client Vite 8 + Phaser 3.90 in WebGL;
+    - SQL 001–005 e seed generato e idempotente; `db:migrate`, `db:seed` e `db:reset` con guardia sul nome del DB;
+    - `DbService.call`: SpError e retry del deadlock;
+    - sync di `game_settings` all'avvio;
+    - `ChainWorker` con intervallo da config e conferma ritentata se il DB cade dopo la notarizzazione;
+    - `sp_player_get_or_create` anticipata da M1, perché serve ai test.
+  - **Test**:
+    - `npm test`: 20 test di shared + 22 del server, verdi 6 volte di fila;
+    - stress fuori dalla suite: 200 registrazioni e 150 acquisti incrociati su 50 connessioni, 0 deadlock e 0 violazioni;
+    - server compilato avviato sul DB dev: certifica il regalo con il ritardo mock reale;
+    - client provato in Chromium headless (viewport iPhone 13): WebGL attivo e Chillax caricato. Su telefono reale va provato in M1.
+  - **Trovato e corretto**:
+    - deadlock nella `_sp_append_event` di riferimento: `SET v = (SELECT …)` in una SP prende gap lock. Ora la testa della catena sta in `assets.head_hash`, e la convenzione in CLAUDE.md è aggiornata;
+    - `fn_setting` ora va in errore se manca una chiave, invece di restituire NULL e far passare i controlli;
+    - `_sp_move_coins` rifiuta emissioni che non siano GRANT e giocatori inesistenti;
+    - I1 controlla anche il saldo di ogni giocatore contro il ledger;
+    - I4 controlla anche `head_hash`;
+    - `document.fonts.ready` non basta per il testo nel canvas (ASSETS.md §7 corretto).
+  - **Aperto**:
+    - D7, D8, D9;
+    - in produzione `fn_setting` richiede SUPER oppure `log_bin_trust_function_creators=1`;
+    - su GitHub va impostato `main` come branch di default.

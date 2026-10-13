@@ -36,7 +36,9 @@ sneaker-passport/
 ├── sql/
 │   ├── 001_schema.sql
 │   ├── 002_functions.sql
-│   ├── 003_procedures.sql
+│   ├── 003_procedures.sql     procedure interne, giocatore, bacheca
+│   ├── 004_chain_procedures.sql
+│   ├── 005_economy_check.sql  invarianti I1–I6
 │   └── seed/                  generato da tools/seed-from-json.ts
 ├── packages/shared/src/       events.ts, types.ts, valuation.ts, config.ts
 ├── apps/server/src/
@@ -140,6 +142,7 @@ CREATE TABLE assets (
   auth_verified TINYINT(1) NOT NULL DEFAULT 0, -- badge ✅ Autentica
   legend_count  TINYINT UNSIGNED NOT NULL DEFAULT 0,
   locked_until  DATETIME(6) NULL,              -- prestito a MC Suola
+  head_hash     CHAR(64) NULL,                 -- hash dell'ultimo anello (vedi _sp_append_event)
   created_at    DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   UNIQUE KEY uq_assets_public (public_id),
   UNIQUE KEY uq_assets_item_serial (item_id, serial, is_fake),
@@ -246,9 +249,12 @@ BEGIN
   DECLARE v_now    DATETIME(6) DEFAULT NOW(6);
   DECLARE v_hash   CHAR(64);
   DECLARE v_status VARCHAR(10) DEFAULT 'NONE';
+  DECLARE v_humans INT;
 
-  SET v_prev = (SELECT hash FROM asset_events
-                 WHERE asset_id = p_asset_id ORDER BY id DESC LIMIT 1);
+  -- testa della catena dalla riga dell'asset, già bloccata dal chiamante: lock sulla PK, nessun range
+  -- su asset_events (con SET v_prev = (SELECT … ORDER BY id DESC LIMIT 1) i mint concorrenti andavano
+  -- in deadlock sul gap in fondo all'indice: vedi la nota sotto)
+  SELECT head_hash INTO v_prev FROM assets WHERE id = p_asset_id FOR UPDATE;
 
   SET v_hash = SHA2(CONCAT_WS('|', p_asset_id, p_event, IFNULL(p_from, ''), p_to, p_price,
                               IFNULL(v_prev, ''), DATE_FORMAT(v_now, '%Y-%m-%d %H:%i:%s.%f')), 256);
@@ -256,13 +262,14 @@ BEGIN
   -- regola: ogni MINT autentico + ogni evento (non FAKE_MINT) con almeno un umano
   IF p_event = 'MINT' THEN
     SET v_status = 'PENDING';
-  ELSEIF p_event <> 'FAKE_MINT'
-     AND EXISTS (SELECT 1 FROM players WHERE id IN (p_from, p_to) AND is_system = 0) THEN
-    SET v_status = 'PENDING';
+  ELSEIF p_event <> 'FAKE_MINT' THEN
+    SELECT COUNT(*) INTO v_humans FROM players WHERE id IN (p_from, p_to) AND is_system = 0;
+    IF v_humans > 0 THEN SET v_status = 'PENDING'; END IF;
   END IF;
 
   INSERT INTO asset_events (asset_id, event, from_id, to_id, price, prev_hash, hash, created_at, chain_status)
   VALUES (p_asset_id, p_event, p_from, p_to, p_price, v_prev, v_hash, v_now, v_status);
+  UPDATE assets SET head_hash = v_hash WHERE id = p_asset_id;
 END$$
 
 -- Sposta monete e scrive il ledger. Il CHECK coins >= 0 blocca i saldi negativi.
@@ -298,6 +305,13 @@ BEGIN
 END$$
 ```
 
+**Letture e lock nelle SP (MySQL 8).** `SET v = (SELECT …)` dentro una stored procedure è una lettura con lock condiviso, anche con binlog ROW (verificato con `performance_schema.data_locks`). Su un range o su una riga che non c'è prende anche i gap lock. In M0 i test di registrazione simultanea andavano in deadlock proprio così: due mint prendevano lo stesso gap in fondo a `ix_ev_asset` e poi ci inserivano. Per questo:
+- la testa della catena sta in `assets.head_hash`;
+- le letture che possono mancare, i conteggi e i range usano `SELECT agg(…) INTO`, senza lock, dopo aver preso i lock della transazione;
+- `SET v = (SELECT …)` resta solo per PK su righe esistenti e già bloccate.
+
+Lo stress test (200 registrazioni e 150 acquisti incrociati su 50 connessioni) chiude con 0 deadlock.
+
 Per i falsi il numero di serie viene dallo stesso contatore dell'originale: il falso "sembra" un numero valido. Il vincolo `UNIQUE (item_id, serial, is_fake)` lo permette.
 
 ### Procedura pubblica di riferimento: acquisto da bacheca
@@ -327,7 +341,7 @@ BEGIN
   SET v_coins = (SELECT coins FROM players WHERE id = p_buyer_id);
   IF v_coins < v_price THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'NO_FUNDS'; END IF;
 
-  SET v_inv = (SELECT COUNT(*) FROM assets WHERE owner_id = p_buyer_id);
+  SELECT COUNT(*) INTO v_inv FROM assets WHERE owner_id = p_buyer_id;  -- senza lock: niente gap su ix_assets_owner
   IF v_inv >= CAST(fn_setting('player.max_inventory') AS UNSIGNED) THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'INVENTORY_FULL';
   END IF;
@@ -362,13 +376,14 @@ DELIMITER ;
 
 | Procedura | Cosa fa | Errori |
 |---|---|---|
-| `sp_player_get_or_create(device_hash, nickname_candidate, recovery_hash)` | Trova il giocatore dal device o lo crea: `GRANT` di 100 monete + `_sp_mint` della scarpa regalo a prezzo 0 | `NICKNAME_TAKEN` (il server riprova con un altro nickname) |
+| `sp_player_get_or_create(device_hash, nickname_candidate, recovery_hash)` ✅ M0 | Trova il giocatore dal device o lo crea: `GRANT` di 100 monete + `_sp_mint` della scarpa regalo a prezzo 0. Restituisce `player_id`, `created`, `gift_asset_id` | `NICKNAME_TAKEN` / `RECOVERY_TAKEN` (il server riprova con un altro valore), `DEVICE_TAKEN` (stesso device in parallelo: il server richiama la SP) |
 | `sp_player_set_avatar(player, skin, hair, hair_color, outfit)` | Solo se l'avatar non è ancora impostato. Gli indici sono validati contro `game_settings` | `AVATAR_ALREADY_SET`, `AVATAR_INVALID` |
 | `sp_player_recover(recovery_hash, device_hash)` | Associa il device al giocatore esistente | `CODE_NOT_FOUND` |
 | `sp_shop_buy(player, item)` | Item con `"shop"` tra le sources: `_sp_move_coins(player→1, SHOP)` + `_sp_mint(minted_by 2)` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
-| `sp_listing_create(player, asset, price)` | Prezzo tra `listing_min_price` e `valore percepito × listing_max_multiplier` (il valore lo passa il server, calcolato da `shared`) | `NOT_OWNER`, `ASSET_LOCKED`, `PRICE_OUT_OF_RANGE`, duplicato → `ALREADY_LISTED` |
+| `sp_listing_create(player, asset, price, perceived_value)` ✅ M0 | Prezzo tra `listing_min_price` e `perceived_value × listing_max_multiplier` (il valore lo passa il server, calcolato da `shared`) | `NOT_OWNER`, `ASSET_LOCKED`, `PRICE_OUT_OF_RANGE`, duplicato → `ALREADY_LISTED` |
 | `sp_listing_cancel(player, listing)` | | `NOT_OWNER`, `LISTING_CLOSED` |
-| `sp_listing_buy(listing, buyer)` | Vedi sopra | |
+| `sp_listing_buy(listing, buyer)` ✅ M0 | Vedi sopra | `LISTING_NOT_FOUND`, `LISTING_CLOSED`, `SELF_BUY`, `NOT_OWNER`, `ASSET_LOCKED`, `NO_FUNDS`, `INVENTORY_FULL`, `PLAYER_NOT_FOUND` |
+| `sp_treasury_seed(amount)` ✅ M0 | `GRANT` iniziale della tesoreria, una sola volta (il seed è rilanciabile) | |
 | `sp_bot_buy(listing, bot)` | Come `listing_buy`, ma paga la tesoreria (`BOT_BUY`) e non c'è commissione. Controlla la soglia di tesoreria | `TREASURY_LOW` |
 | `sp_stall_restock(item)` | `_sp_mint(to 3, minted_by 3, is_fake 1)` | |
 | `sp_stall_buy(player, asset)` | `STALL` verso la tesoreria, `TRANSFER 3→player` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
@@ -378,11 +393,11 @@ DELIMITER ;
 | `sp_drop_open(item, quantity, window_sec)` | Crea il drop | |
 | `sp_drop_claim(drop, player)` | `DROP` verso la tesoreria, `_sp_mint(minted_by 1, drop_id)`, `sold + 1`, `assets.drop_serial = sold` | `DROP_CLOSED`, `DROP_SOLDOUT`, `DROP_ALREADY_CLAIMED`, `NO_FUNDS`, `INVENTORY_FULL` |
 | `sp_bot_restock(bot, item)` | `_sp_mint(to bot, minted_by 2)` | |
-| `sp_chain_recover_sending()` | All'avvio: `SENDING` → `PENDING` (rischio accettato: un hash notarizzato due volte) | |
-| `sp_chain_claim_batch(limit, batch_id)` | `UPDATE … SET SENDING, chain_batch, attempts+1 WHERE PENDING ORDER BY id LIMIT n`, poi `SELECT` del batch | |
-| `sp_chain_mark_confirmed(batch_id, tx)` | `CONFIRMED` + `chain_tx`. Restituisce `asset_id`, `from_id`, `to_id` per le notifiche | |
-| `sp_chain_mark_failed(batch_id, error, max_attempts)` | Torna `PENDING`, oppure `FAILED` oltre `max_attempts` | |
-| `sp_economy_check()` | Esegue gli invarianti I1–I6 e restituisce le violazioni | |
+| `sp_chain_recover_sending()` ✅ M0 | All'avvio: `SENDING` → `PENDING` (rischio accettato: un hash notarizzato due volte) | |
+| `sp_chain_claim_batch(limit, batch_id)` ✅ M0 | `UPDATE … SET SENDING, chain_batch, attempts+1 WHERE PENDING ORDER BY id LIMIT n`, poi `SELECT` del batch | |
+| `sp_chain_mark_confirmed(batch_id, tx)` ✅ M0 | `CONFIRMED` + `chain_tx`. Restituisce `asset_id`, `from_id`, `to_id` per le notifiche | |
+| `sp_chain_mark_failed(batch_id, error, max_attempts)` ✅ M0 | Torna `PENDING`, oppure `FAILED` oltre `max_attempts` | |
+| `sp_economy_check()` ✅ M0 | Esegue gli invarianti I1–I6 e restituisce le violazioni | |
 | `sp_anonymize_inactive(days)` | Per i giocatori inattivi: azzera `device_hash`, `recovery_hash` e avatar, cancella `player_devices`, imposta `anonymized_at`. Le catene restano integre | |
 
 Nota sul calcolo del valore. Il valore percepito si calcola in **TypeScript** (`shared/valuation.ts`), non in SQL, ed è l'unica implementazione. Le SP che ne hanno bisogno (limiti di prezzo, bot) lo ricevono dal server come parametro, già calcolato sugli stessi dati letti nella transazione.

@@ -8,9 +8,20 @@ Gioco web per la conferenza del 23/10/2026: un mercato di sneaker in pixel art d
 - Asset → `docs/ASSETS.md` (anteprime: `apps/client/public/assets/PREVIEW_*.png`)
 - Piano e decisioni aperte → `docs/PLAN.md`
 
+**Avvio in locale** (Node ≥ 22.12, MySQL ≥ 8.0.16)
+```bash
+cp .env.example .env          # credenziali MySQL
+npm install
+npm run db:reset              # crea sneaker_passport_dev: migrazioni + seed
+npm test                      # shared + server (usa sneaker_passport_test, che viene azzerato)
+npm run dev:server            # :3000
+npm run dev:client            # Vite, raggiungibile dal telefono sulla stessa rete
+```
+
 **Rigenerare dati e asset**
 ```bash
 python3 tools/build_data.py                      # data/*.json
+npm run db:seed                                  # sql/seed/001_seed.sql dai JSON, poi applicato
 python3 tools/assets/gen_shoes.py data/game_items.json apps/client/public/assets/shoes
 # avatar: vedi docs/ASSETS.md §3
 ```

@@ -1,0 +1,32 @@
+{
+  "name": "sneaker-passport",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Sneaker Passport — Upthere × DOP Digital",
+  "workspaces": [
+    "packages/shared",
+    "apps/server",
+    "apps/client"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "npm run build -w @sp/shared && npm run build -w @sp/server && npm run build -w @sp/client",
+    "dev:server": "npm run build -w @sp/shared && npm run dev -w @sp/server",
+    "dev:client": "npm run dev -w @sp/client",
+    "test": "npm test -w @sp/shared && npm test -w @sp/server",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tools/tsconfig.json",
+    "db:migrate": "tsx tools/db.ts migrate",
+    "db:seed": "tsx tools/seed-from-json.ts && tsx tools/db.ts seed",
+    "db:reset": "tsx tools/seed-from-json.ts && tsx tools/db.ts reset",
+    "loadtest": "node -e \"console.error('loadtest: da creare in M5 (tools/loadtest.yml)'); process.exit(1)\"",
+    "sim:economy": "node -e \"console.error('sim:economy: da creare in M5 (tools/sim-economy.ts)'); process.exit(1)\""
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "mysql2": "3.24.6",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3"
+  }
+}

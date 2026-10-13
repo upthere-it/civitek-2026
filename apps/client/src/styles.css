@@ -1,0 +1,26 @@
+/* I colori --up-* vengono da game_config.json → brand.colors (impostati in main.ts). */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--up-accent-900, #000);
+  color: #fff;
+  font-family: var(--up-font-body);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+#game,
+#ui {
+  position: fixed;
+  inset: 0;
+}
+
+#ui {
+  pointer-events: none; /* i pannelli riattivano pointer-events dove servono */
+}
+
+canvas {
+  image-rendering: pixelated;
+}

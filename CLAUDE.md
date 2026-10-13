@@ -78,15 +78,26 @@ Ci sono già stati problemi con Jest + ESM, quindi il server resta **CommonJS**.
 ## Convenzioni
 
 - Le stored procedure pubbliche `sp_*` gestiscono la transazione. Quelle interne `_sp_*` **non** aprono transazioni: in MySQL uno `START TRANSACTION` annidato fa un commit implicito.
-- Per leggere un valore che può mancare usa `SET v = (SELECT … LIMIT 1)`, non `SELECT … INTO`, così eviti i warning "no data".
+- Letture dentro le SP (MySQL 8, verificato sui lock reali; dettagli in testa a `sql/003_procedures.sql`):
+  - `SET v = (SELECT …)` è una lettura **con lock condiviso**, anche con binlog ROW. Su un range o su una riga che manca prende i gap lock, e due transazioni che poi inseriscono nello stesso gap vanno in deadlock. Usala solo per PK/unique su righe che esistono, meglio se già bloccate;
+  - per valori che possono mancare, conteggi e range usa `SELECT MAX(…)/COUNT(*) … INTO v`: nessun lock e sempre una riga, quindi niente warning "no data". Fallo dopo aver preso i lock, perché lo snapshot nasce alla prima lettura consistente della transazione;
+  - la testa della catena di un asset sta in `assets.head_hash`: non si legge l'ultimo evento da `asset_events`.
 - Errori delle SP: `SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'UPPER_SNAKE'` (es. `NOT_OWNER`, `NO_FUNDS`). Ogni codice corrisponde 1:1 a un codice errore del gateway e a un messaggio UI in italiano.
-- Deadlock (errore 1213): il gateway riprova una volta, poi restituisce `BUSY`.
+- Deadlock (errore 1213): `DbService.call` riprova una volta, poi lancia `SpError('BUSY')`. Lo stesso vale per il timeout dei lock (1205).
 - Eventi socket nel formato `dominio.azione` (es. `listing.buy`), con payload validati lato server.
-- Migrazioni SQL numerate in `sql/` (`001_schema.sql`, `002_procedures.sql`, …). Il seed in `sql/seed/` è generato da `data/*.json` con uno script.
+- Migrazioni SQL numerate in `sql/` (`001_schema.sql`, `002_functions.sql`, …). Una migrazione già applicata non si modifica: se ne aggiunge una nuova (il runner controlla il checksum). I file girano sia con `npm run db:migrate` sia a mano con il client `mysql`.
+- Il seed `sql/seed/001_seed.sql` è generato da `data/*.json` (`tools/seed-from-json.ts`) ed è idempotente. All'avvio il server riallinea comunque `game_settings` a `game_config.json`.
+- `fn_setting` è una FUNCTION: con il binlog attivo crearla richiede SUPER oppure `log_bin_trust_function_creators = 1` (vedi `sql/002_functions.sql`).
 
-## Comandi da creare
+## Comandi
 
-`npm run dev:server` · `npm run dev:client` · `npm test` · `npm run db:migrate` · `npm run db:seed` · `npm run db:reset` (solo dev/staging) · `npm run loadtest` · `npm run sim:economy`
+`npm run dev:server` · `npm run dev:client` · `npm test` · `npm run typecheck` · `npm run build` · `npm run db:migrate` · `npm run db:seed` · `npm run db:reset` (solo database `*_dev`, `*_test`, `*_staging`)
+
+Da creare in M5: `npm run loadtest` · `npm run sim:economy`.
+
+`npm test` azzera e ricrea il database di test (`DB_TEST_NAME`, default `sneaker_passport_test`): serve un MySQL 8 raggiungibile con le credenziali di `.env` (vedi `.env.example`).
+
+Versioni bloccate per CommonJS: NestJS **11** (la 12 è solo ESM), TypeScript **6.0** (ts-jest non supporta la 7), Phaser **3.90**.
 
 ## Definition of Done (per ogni milestone)
 

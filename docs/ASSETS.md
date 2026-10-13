@@ -238,7 +238,7 @@ Contrasti WCAG, calcolati:
 - `--up-font-display` (Chillax): titoli, CTA, nome della scarpa nel passaporto. 600 per i titoli, 500 per i sottotitoli.
 - `--up-font-body` (DM Sans): tutto il resto.
 
-Se serve testo dentro il canvas Phaser (i nickname sopra gli avatar), si crea solo dopo `document.fonts.ready`, altrimenti Phaser lo disegna col font di fallback e non lo aggiorna più.
+Se serve testo dentro il canvas Phaser (i nickname sopra gli avatar), si crea solo a font caricati, altrimenti Phaser lo disegna col font di fallback e non lo aggiorna più. `document.fonts.ready` da solo non basta: un `@font-face` che nessun elemento del DOM usa non viene scaricato. Va richiesto esplicitamente, per esempio `await document.fonts.load('600 16px Chillax')` (vedi `apps/client/src/main.ts`).
 
 **Logo.**
 - Landing, HUD e reveal usano l'SVG: `logo_upthere_white.svg` su fondi primary o accent-900, `logo_upthere_primary.svg` su fondi chiari.

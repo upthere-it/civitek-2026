@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "isolatedModules": true,
+    "types": ["node", "jest"],
+    // typecheck e test sul sorgente di shared; la build usa invece il pacchetto compilato (tsconfig.build.json)
+    "paths": { "@sp/shared": ["../../packages/shared/src/index.ts"] }
+  },
+  "include": ["src", "test"]
+}
