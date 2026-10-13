@@ -18,7 +18,7 @@ Per correttezza mettiamo comunque il credito nella pagina `/privacy`: "Pixel art
 
 Crediti da mettere in `/privacy`: "Pixel art: Pixel Crawler di Anokolisa · Font: Chillax di Indian Type Foundry (Fontshare), DM Sans (SIL OFL)".
 
-Il pack originale completo, con i sorgenti `.aseprite`, è in `vendor/` e **non** viene servito al client.
+Il pack originale completo, con i sorgenti `.aseprite`, è in `vendor/Pixel_Crawler_-_Free_Pack_2_11.zip` e **non** viene servito al client. Gli script in `tools/assets/` leggono il pack estratto: decomprimilo fuori dal repo prima di usarli.
 
 ## 2. Struttura
 
@@ -27,6 +27,7 @@ apps/client/public/assets/
 ├── manifest.json            tutto quello che la scena Boot deve caricare (~330 KB)
 ├── PREVIEW_avatar.png       anteprima delle combinazioni avatar
 ├── PREVIEW_items.png        anteprima delle 29 icone scarpe
+├── PREVIEW_roofs.png        confronto tetti originali / ricolorati Upthere (§6)
 ├── avatar/
 │   ├── body/                skin_{0..4}_{idle|walk}_{down|side|up}.png    (corpo, 5 toni di pelle)
 │   ├── layers/              {pants|shoes|hoodie|hair_corti|hair_lunghi|hair_cappellino}_{anim}_{dir}.png
@@ -73,6 +74,7 @@ Ogni avatar è composto da 5 sprite sovrapposti nello stesso punto. Tutti hanno 
 - **Direzione**: gli sheet `side` guardano a **destra**; la sinistra si ottiene con `flipX`.
 - **Origine**: `(0.5, 0.75)`, così il punto di ancoraggio cade sui piedi.
 - **Tint**: gli overlay sono in scala di grigi con contorno nero. `setTint` di Phaser moltiplica i colori, quindi le ombre restano e il contorno resta nero. `PREVIEW_avatar.png` è stato generato simulando esattamente questo comportamento.
+- **Solo WebGL**: in Phaser 3 il tint funziona solo col renderer WebGL. Col renderer Canvas gli overlay restano grigi. Nella config del gioco va quindi `type: Phaser.WEBGL`, non `AUTO`: tutti i browser target supportano WebGL.
 
 ### Caricamento (scena Boot)
 
@@ -90,8 +92,9 @@ Dopo il load, un'animazione per ogni texture dell'avatar, con chiave = chiave de
 export function registerAvatarAnims(scene: Phaser.Scene) {
   const { animations } = gameConfig.avatar;
   for (const tex of scene.textures.getTextureKeys()) {
-    if (!/^(skin_\d|pants|shoes|hoodie|hair_)/.test(tex)) continue;
-    const anim = tex.includes('_idle_') ? 'idle' : 'walk';
+    const match = /^(?:skin_\d|pants|shoes|hoodie|hair_[a-z]+)_(idle|walk)_(?:down|side|up)$/.exec(tex);
+    if (!match) continue;   // ancorata: 'shoes' da solo è l'atlas delle icone, non un layer
+    const anim = match[1] as 'idle' | 'walk';
     scene.anims.create({ key: tex, frames: scene.anims.generateFrameNumbers(tex),
       frameRate: animations[anim].frameRate, repeat: -1 });
   }
