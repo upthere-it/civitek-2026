@@ -28,13 +28,12 @@ interface WorldPlayer {
   profile: PlayerProfile;
   /** Versione del profilo: se cambia (es. colore scarpe) si rimanda a chi lo vede già. */
   profileRev: number;
+  /** Cresce a ogni partenza e a ogni arrivo: solo allora gli spettatori ricevono qualcosa. */
+  motionRev: number;
 }
 
 interface Seen {
-  x: number;
-  y: number;
-  facing: Facing;
-  moving: boolean;
+  motionRev: number;
   profileRev: number;
 }
 
@@ -78,7 +77,7 @@ export class WorldService {
     const { spawn, grid } = this.village;
     const jitter = () => randomInt(-grid.tile, grid.tile + 1);
     const start = nearestWalkable(grid, { x: spawn.x + jitter(), y: spawn.y + jitter() }) ?? spawn;
-    this.players.set(id, { id, x: start.x, y: start.y, path: [], facing: 'down', moving: false, profile, profileRev: 0 });
+    this.players.set(id, { id, x: start.x, y: start.y, path: [], facing: 'down', moving: false, profile, profileRev: 0, motionRev: 0 });
     this.seen.set(id, new Map());
     return { x: start.x, y: start.y };
   }
@@ -103,6 +102,7 @@ export class WorldService {
     if (!path) return null;
     p.path = path;
     p.moving = path.length > 0;
+    p.motionRev++;
     return path.length ? path[path.length - 1] : { x: p.x, y: p.y };
   }
 
@@ -110,7 +110,9 @@ export class WorldService {
   step(dtSec: number): void {
     const dist = this.cfg.config.world.walk_speed_px_s * dtSec;
     for (const p of this.players.values()) {
-      if (p.moving) p.moving = advance(p, dist);
+      if (!p.moving) continue;
+      p.moving = advance(p, dist);
+      if (!p.moving) p.motionRev++; // arrivato: lo si comunica una volta
     }
   }
 
@@ -126,15 +128,19 @@ export class WorldService {
     for (const p of this.players.values()) {
       if (p.id !== viewerId && (p.x - viewer.x) ** 2 + (p.y - viewer.y) ** 2 > r2) continue;
       visible.add(p.id);
-      const x = Math.round(p.x);
-      const y = Math.round(p.y);
       const prev = seen.get(p.id);
       const profileChanged = !prev || prev.profileRev !== p.profileRev;
-      if (prev && !profileChanged && prev.x === x && prev.y === y && prev.facing === p.facing && prev.moving === p.moving) {
-        continue;
-      }
-      players.push({ id: p.id, x, y, facing: p.facing, moving: p.moving, ...(profileChanged ? { profile: p.profile } : {}) });
-      seen.set(p.id, { x, y, facing: p.facing, moving: p.moving, profileRev: p.profileRev });
+      if (prev && !profileChanged && prev.motionRev === p.motionRev) continue;
+      players.push({
+        id: p.id,
+        x: Math.round(p.x),
+        y: Math.round(p.y),
+        facing: p.facing,
+        moving: p.moving,
+        ...(p.moving ? { path: p.path.map((q): [number, number] => [Math.round(q.x), Math.round(q.y)]) } : {}),
+        ...(profileChanged ? { profile: p.profile } : {}),
+      });
+      seen.set(p.id, { motionRev: p.motionRev, profileRev: p.profileRev });
     }
     const gone: number[] = [];
     for (const id of seen.keys()) {

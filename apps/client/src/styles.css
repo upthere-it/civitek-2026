@@ -1,4 +1,4 @@
-/* I colori --up-* vengono da game_config.json → brand.colors (impostati in main.ts). */
+/* I colori --up-* vengono da game_config.json → brand.colors (impostati in main.ts). Contrasti: docs/ASSETS.md §7. */
 html,
 body {
   margin: 0;
@@ -9,6 +9,8 @@ body {
   font-family: var(--up-font-body);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 #game,
@@ -18,9 +20,273 @@ body {
 }
 
 #ui {
-  pointer-events: none; /* i pannelli riattivano pointer-events dove servono */
+  pointer-events: none; /* le schermate e i controlli riattivano pointer-events */
 }
 
 canvas {
   image-rendering: pixelated;
+}
+
+/* ---------------------------------------------------------------- bottoni (>= 44 px) */
+.btn {
+  min-height: 48px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--up-font-display);
+  font-weight: 600;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+}
+
+.btn-primary {
+  background: var(--up-primary);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: var(--up-accent-400);
+  color: var(--up-primary);
+}
+
+/* ---------------------------------------------------------------- schermate */
+.screen {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.title {
+  font-family: var(--up-font-display);
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+}
+
+.landing {
+  background: var(--up-primary);
+  justify-content: center;
+  gap: 32px;
+}
+
+.landing .logo {
+  width: min(56vw, 220px);
+}
+
+.landing .title {
+  font-size: clamp(26px, 7.5vw, 40px);
+  line-height: 1.15;
+  max-width: 14em;
+}
+
+.progress {
+  width: min(60vw, 240px);
+  height: 4px;
+  border-radius: 2px;
+  background: var(--up-primary-700);
+  overflow: hidden;
+  transition: opacity 0.4s;
+}
+
+.progress.done {
+  opacity: 0;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--up-accent-400);
+  transition: width 0.2s;
+}
+
+/* avatar: titolo in alto, anteprima nel canvas al centro, controlli in un pannello in basso */
+.avatar {
+  justify-content: space-between;
+  pointer-events: none;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.avatar-title {
+  font-size: 24px;
+}
+
+.sheet {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 480px;
+  background: var(--up-primary);
+  border-radius: 24px;
+  padding: 14px 16px 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sheet h2 {
+  margin: 2px 0 0;
+  font-family: var(--up-font-display);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--up-accent-400);
+}
+
+.sheet .btn {
+  margin-top: 8px;
+  align-self: stretch;
+}
+
+.sheet .btn-primary {
+  background: var(--up-accent-400);
+  color: var(--up-primary);
+}
+
+.swatches,
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  background: var(--c);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 0.25);
+  cursor: pointer;
+}
+
+.swatch[aria-checked='true'],
+.chip[aria-checked='true'] {
+  border-color: var(--up-accent-400);
+}
+
+.chip {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background: var(--up-primary-700);
+  color: #fff;
+  font: 500 15px var(--up-font-body);
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------- HUD */
+.hud {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: max(10px, env(safe-area-inset-top)) 10px max(12px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.hud-top,
+.hud-bottom {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.hud-bottom {
+  justify-content: flex-end;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.pill {
+  pointer-events: auto;
+  flex-shrink: 0;
+  background: var(--up-accent-900);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.pill.name {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--up-font-display);
+  color: var(--up-accent-400);
+}
+
+.hud-top .spacer {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.emote-toggle,
+.emote {
+  pointer-events: auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--up-primary);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.emote-bar {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--up-accent-900);
+}
+
+.emote-bar[hidden] {
+  display: none;
+}
+
+.emote {
+  background: transparent;
+}
+
+/* ---------------------------------------------------------------- avvisi */
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  max-width: 86vw;
+  background: #fff;
+  color: var(--up-primary);
+  border-left: 4px solid var(--up-warn);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-weight: 600;
+  transition: opacity 0.4s;
+}
+
+.toast.out {
+  opacity: 0;
+}
+
+.blocker {
+  background: var(--up-accent-900);
+  justify-content: center;
+  gap: 20px;
+  text-align: center;
+  font-size: 18px;
 }

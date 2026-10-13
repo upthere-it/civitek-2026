@@ -33,9 +33,15 @@ if os.path.isdir(bp):
             images.append({"key":f"brand_pixel_{f[:-4]}","path":f"assets/brand/pixel/{f}","width":w,"height":h,"tileSize":None,"bytes":os.path.getsize(p)})
 atlas={"key":"shoes","image":"assets/shoes/items_atlas.png","json":"assets/shoes/items_atlas.json",
        "bytes":os.path.getsize(f"{A}/shoes/items_atlas.png")+os.path.getsize(f"{A}/shoes/items_atlas.json")}
-total=sum(s["bytes"] for s in sheets)+sum(i["bytes"] for i in images)+atlas["bytes"]
+tilemaps=[]
+md=f"{A}/maps"
+if os.path.isdir(md):
+    for f in sorted(os.listdir(md)):
+        if f.endswith(".json"):
+            tilemaps.append({"key":f[:-5],"path":f"assets/maps/{f}","bytes":os.path.getsize(f"{md}/{f}")})
+total=sum(s["bytes"] for s in sheets)+sum(i["bytes"] for i in images)+atlas["bytes"]+sum(t["bytes"] for t in tilemaps)
 m={"note":"Manifest per il loader Phaser (scena Boot). Percorsi relativi alla root servita dal client. originY = piede del personaggio nel primo frame.",
-   "spritesheets":sheets,"images":images,"atlases":[atlas],
+   "spritesheets":sheets,"images":images,"atlases":[atlas],"tilemaps":tilemaps,
    "excluded_from_boot":["assets/avatar/avatar_manifest.json (metadati)","assets/shoes/items/*.png (icone singole: usare l'atlas)","assets/shoes/silhouettes/*.png (maschere di lavoro)","assets/PREVIEW_*.png","assets/vendor/pixel-crawler/characters/* (sorgenti per rigenerare l'avatar)","assets/vendor/pixel-crawler/buildings/roofs.png (sorgente: in gioco roofs_upthere.png)"],
    "total_boot_bytes":total}
 json.dump(m, open(f"{A}/manifest.json","w"), indent=1, ensure_ascii=False)
@@ -44,5 +50,6 @@ by={}
 for s in sheets: by[s["group"]]=by.get(s["group"],0)+s["bytes"]
 for i in images: k=i["path"].split("/")[1] if i["path"].startswith("assets/brand") else i["path"].split("/")[3]; by[k]=by.get(k,0)+i["bytes"]
 by["shoes_atlas"]=atlas["bytes"]
+by["tilemaps"]=sum(t["bytes"] for t in tilemaps)
 print({k:round(v/1024) for k,v in by.items()})
 print([ (s["key"],s["originY"]) for s in sheets if s["group"]=="npc"])

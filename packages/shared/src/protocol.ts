@@ -53,11 +53,17 @@ export interface PlayerSnapshot {
   y: number;
   facing: Facing;
   moving: boolean;
+  /**
+   * Percorso ancora da fare (solo se moving). Server e client usano la stessa findPath/advance: il client
+   * simula il cammino da solo, quindi il server manda un messaggio quando si parte e uno quando ci si
+   * ferma, non una posizione a ogni tick.
+   */
+  path?: [number, number][];
   /** Presente solo la prima volta (o se cambia). */
   profile?: PlayerProfile;
 }
 
-/** `world.players`: delta delle posizioni nel raggio, a world.tick_hz. */
+/** `world.players`: cambi nel raggio (partenze, arrivi, ingressi, profili), controllati a world.tick_hz. */
 export interface WorldPlayers {
   t: number;
   players: PlayerSnapshot[];

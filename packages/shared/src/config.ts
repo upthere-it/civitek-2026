@@ -113,7 +113,7 @@ export interface WorldCfg {
 export interface GameConfig {
   version: string;
   conference: { date: string; expected_players: number };
-  brand: { name: string; colors: Record<string, string>; [k: string]: unknown };
+  brand: { name: string; colors: Record<string, string>; signs: Record<string, string>; [k: string]: unknown };
   links: { dop_digital: string };
   player: PlayerCfg;
   avatar: AvatarCfg;

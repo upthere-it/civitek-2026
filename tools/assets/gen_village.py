@@ -219,7 +219,7 @@ collider(4 * T, 28 * T, 2 * T, T)
 collider(7 * T + 8, 29 * T, 16, 16)
 
 # ---------------------------------------------------------------- Dott.ssa Hash (in basso al centro)
-sign('autenticatore', 15 * T, 27 * T + 10)
+sign('autenticatore', 15 * T, 27 * T + 2)
 place('npc', 'autenticatore', 15 * T, 29 * T + 6, approach=(15, 31), sprite='npc_wizard_idle')
 prop('bench', 13 * T, 29 * T + 4)
 collider(13 * T, 29 * T + 4, 64, 28, 'autenticatore')

@@ -15,14 +15,16 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 **Accettazione**: `npm test` verde; un acquisto da bacheca simulato via test produce ledger, catena hash e certificazione mock corretti.
 
 ### M1 — Entrare nel villaggio (gio 15/10)
-- [ ] Landing, `device_id`, handshake, `sp_player_get_or_create` (nickname, 100 monete, scarpa regalo) — la SP è già fatta e testata in M0
-- [ ] Boot che carica tutto da `apps/client/public/assets/manifest.json`
-- [ ] Schermata avatar (3 tratti) con il compositore a layer descritto in `docs/ASSETS.md`
-- [ ] Tilemap del villaggio in Tiled (tile da 16 px) con gli asset di `vendor/pixel-crawler`, secondo la mappa di GAME_DESIGN §4
-- [ ] Scena Village: tap-to-move, camera, presenza degli altri giocatori nel raggio, emote
-- [ ] HUD: monete, valore armadio
+- [x] Landing, `device_id`, handshake, `sp_player_get_or_create` (nickname, 100 monete, scarpa regalo)
+- [x] Boot che carica tutto da `apps/client/public/assets/manifest.json`
+- [x] Schermata avatar (3 tratti) con il compositore a layer descritto in `docs/ASSETS.md`
+- [x] Tilemap del villaggio in Tiled (tile da 16 px) con gli asset di `vendor/pixel-crawler`, secondo la mappa di GAME_DESIGN §4 — generata da `tools/assets/gen_village.py`, ritoccabile in Tiled
+- [x] Scena Village: tap-to-move, camera, presenza degli altri giocatori nel raggio, emote
+- [x] HUD: monete, valore armadio
 
 **Accettazione**: 3 telefoni veri nel villaggio contemporaneamente si vedono e si mandano emote; dal QR al villaggio in meno di 45 s.
+
+> Verificato in automatico con 3 browser mobili headless (iPhone 13, Pixel 7, iPhone SE): si vedono, si muovono, si mandano emote; circa 5 s dall'apertura al villaggio. **Da fare: prova su 3 telefoni veri (Simone).**
 
 ### M2 — Mercato e passaporto (ven 16/10)
 - [ ] Negozio (`sp_shop_buy`), inventario
@@ -62,7 +64,7 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 - [ ] (facoltativo) ritocco in Aseprite dei layer avatar e delle icone delle scarpe
 
 ### M6 — Messa in produzione (gio 22/10)
-- [ ] Deploy (PM2 fork, nginx, HTTPS) sul dominio definitivo (D3)
+- [ ] Deploy (PM2 fork, nginx, HTTPS) sul dominio definitivo (D3), con `RECOVERY_SECRET` nel `.env` di produzione
 - [ ] Reset del DB di produzione con script SQL a mano (non via MCP) + seed
 - [ ] Faucet della testnet ricaricato, se D1 è attiva
 - [ ] QR definitivo stampato e provato
@@ -125,3 +127,22 @@ _(Claude Code: aggiungi qui una riga per sessione con data, milestone, cosa è s
     - D7, D8, D9;
     - in produzione `fn_setting` richiede SUPER oppure `log_bin_trust_function_creators=1`;
     - su GitHub va impostato `main` come branch di default.
+- **13/10 — M1 completata (in attesa della prova su telefoni veri).**
+  - **Fatto**:
+    - gateway socket.io con eventi tipizzati in `shared/protocol.ts`, ack `{ok, data | code, message}` in italiano, rate limit, una sessione per giocatore;
+    - nickname dal pattern di config;
+    - codice di recupero ricavato con HMAC dal device: nel DB solo l'hash, rimostrabile sempre;
+    - `sp_player_set_avatar` (006);
+    - mappa generata (`gen_village.py`), con griglia e A* condivisi tra server e client;
+    - client: landing, Boot dal manifest, schermata avatar con anteprima live, villaggio con camera, NPC che parlano all'arrivo, emote, HUD;
+    - nuove chiavi `world.*` in config.
+  - **Test**:
+    - `npm test`: 28 test di shared (incluso: ogni punto di interazione è raggiungibile dallo spawn) + 33 del server (11 end-to-end sul gateway);
+    - 3 browser mobili in parallelo: si vedono, il movimento si propaga, le emote arrivano a tutti, nessun errore in console;
+    - carico: 100 client entrano in circa 0,55 s, p95 di `move.to` 13 ms, nessun errore nel log.
+  - **Scelta fuori documento**: `world.players` non manda più la posizione a ogni tick (10 Hz) ma il percorso alla partenza e un messaggio all'arrivo. Il client simula il cammino con la stessa `advance()`. Nella prova a 100 giocatori la banda è scesa da 18,5 MB a 4,4 MB in 10 s. ARCHITECTURE §5 è aggiornata.
+  - **Aperto**:
+    - prova su telefoni veri;
+    - acqua della fontana non animata;
+    - pannelli degli NPC da M2 (per ora dicono una battuta);
+    - il link "Hai già giocato? Inserisci il codice" arriva con il recupero (M4).

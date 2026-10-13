@@ -18,6 +18,8 @@ npm run dev:server            # :3000
 npm run dev:client            # Vite, raggiungibile dal telefono sulla stessa rete
 ```
 
+**Provarlo dal telefono** (stessa rete WiFi del portatile): con `dev:server` e `dev:client` avviati, apri `http://<IP del portatile>:5173`. Vite fa da proxy a `/socket.io`, quindi basta quella porta. In HTTP il `device_id` usa il fallback con `crypto.getRandomValues`: funziona anche fuori da HTTPS.
+
 **Rigenerare dati e asset**
 ```bash
 python3 tools/build_data.py                      # data/*.json

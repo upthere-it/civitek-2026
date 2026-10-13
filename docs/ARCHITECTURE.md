@@ -406,6 +406,12 @@ Nota sul calcolo del valore. Il valore percepito si calcola in **TypeScript** (`
 
 Handshake: `io(url, { auth: { deviceId } })`. Il server calcola `sha256(deviceId)` con `crypto` e risolve il giocatore.
 
+- `deviceId` deve essere un UUID v4, altrimenti `error DEVICE_INVALID` e disconnessione.
+- **Una sessione per giocatore**: una seconda scheda sostituisce la prima, che riceve `SESSION_REPLACED`.
+- **Codice di recupero**: è `HMAC-SHA256(RECOVERY_SECRET, deviceId)` mappato sull'alfabeto di `player.recovery_code`. Nel DB va solo `sha256(codice)`, ma il server può sempre rimostrarlo al device che l'ha generato (`state.init.player.recoveryCode`) senza salvarlo. In produzione `RECOVERY_SECRET` è obbligatorio e non va cambiato dopo il lancio, altrimenti i codici già mostrati non tornano più.
+- Ogni richiesta client → server ha un ack `{ ok: true, data } | { ok: false, code, message }`, con il messaggio già in italiano (`packages/shared/src/errors.ts`).
+- I tipi degli eventi sono in `packages/shared/src/protocol.ts` (`ServerToClientEvents`, `ClientToServerEvents`) e tipizzano socket.io su entrambi i lati.
+
 **Client → server**
 
 | Evento | Payload |
@@ -429,7 +435,7 @@ Handshake: `io(url, { auth: { deviceId } })`. Il server calcola `sha256(deviceId
 | Evento | Payload |
 |---|---|
 | `state.init` | giocatore, inventario, saldo, valore armadio, stato prima run, config pubblica, NPC |
-| `world.players` | posizioni dei giocatori nel raggio (10 Hz, delta) |
+| `world.players` | cambi nel raggio: partenza (posizione + **percorso**), arrivo, ingresso/uscita dal raggio, profilo alla prima apparizione. Il server simula a `tick_hz` ma non manda una posizione a ogni tick: il client fa camminare gli altri lungo il percorso con la stessa `advance()` di `shared`. Con 100 giocatori nella piazza la banda scende di circa 4 volte rispetto ai delta a 10 Hz |
 | `world.emote` | `{ playerId, emote }` |
 | `wallet.updated` | `{ coins, wardrobeValue }` |
 | `asset.updated` | asset con valore percepito ricalcolato |
@@ -523,7 +529,7 @@ Un solo wallet con la sequence/nonce gestita in serie dal worker, dato che non c
 - **Phaser**:
   - scene `Boot` (carica tutto da `assets/manifest.json`: circa 330 KB), `Avatar`, `Village`;
   - camera che segue l'avatar, `pixelArt: true`;
-  - gli altri giocatori sono interpolati tra i tick.
+  - gli altri giocatori camminano lungo il percorso ricevuto (stessa `findPath`/`advance` del server); il proprio avatar parte subito in locale e si riallinea solo oltre `world.reconcile_px`.
 - **UI**:
   - overlay HTML/CSS sopra il canvas: HUD, inventario, passaporto, bacheca, pannelli NPC, reveal;
   - font leggibili, bottoni da almeno 44 px.

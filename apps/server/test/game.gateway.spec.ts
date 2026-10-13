@@ -173,16 +173,26 @@ describe('villaggio', () => {
     const target = { x: a.position.x + 40, y: a.position.y };
     const res = await a.socket.emitWithAck(C2S.MOVE_TO, target);
     expect(res.ok).toBe(true);
+    let messages = 0;
+    const count = (m: WorldPlayers) => {
+      if (m.players.some((p) => p.id === a.init.player.id)) messages++;
+    };
+    b.socket.on(S2C.WORLD_PLAYERS, count);
     const moving = await waitFor<WorldPlayers>(b.socket, S2C.WORLD_PLAYERS, (m) =>
       m.players.some((p) => p.id === a.init.player.id && p.moving),
     );
-    expect(moving.players.find((p) => p.id === a.init.player.id)!.facing).toBe('right');
-    // arriva a destinazione a walk_speed_px_s
+    const start = moving.players.find((p) => p.id === a.init.player.id)!;
+    expect(start.facing).toBe('right');
+    // il percorso arriva una volta sola: B lo simula da sé fino alla destinazione
+    expect(start.path![start.path!.length - 1]).toEqual([Math.round(target.x), Math.round(target.y)]);
     const arrived = await waitFor<WorldPlayers>(b.socket, S2C.WORLD_PLAYERS, (m) =>
       m.players.some((p) => p.id === a.init.player.id && !p.moving),
     );
     const end = arrived.players.find((p) => p.id === a.init.player.id)!;
     expect(Math.abs(end.x - Math.round(target.x))).toBeLessThanOrEqual(1);
+    // 40 px a walk_speed_px_s sono più tick: ma i messaggi su A sono solo partenza e arrivo
+    b.socket.off(S2C.WORLD_PLAYERS, count);
+    expect(messages).toBe(2);
   });
 
   it('chi esce dal villaggio sparisce per gli altri', async () => {

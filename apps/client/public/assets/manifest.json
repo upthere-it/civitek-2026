@@ -988,6 +988,13 @@
    "bytes": 10735
   }
  ],
+ "tilemaps": [
+  {
+   "key": "village",
+   "path": "assets/maps/village.json",
+   "bytes": 46050
+  }
+ ],
  "excluded_from_boot": [
   "assets/avatar/avatar_manifest.json (metadati)",
   "assets/shoes/items/*.png (icone singole: usare l'atlas)",
@@ -996,5 +1003,5 @@
   "assets/vendor/pixel-crawler/characters/* (sorgenti per rigenerare l'avatar)",
   "assets/vendor/pixel-crawler/buildings/roofs.png (sorgente: in gioco roofs_upthere.png)"
  ],
- "total_boot_bytes": 334953
+ "total_boot_bytes": 381003
 }

@@ -28,6 +28,8 @@ apps/client/public/assets/
 ├── PREVIEW_avatar.png       anteprima delle combinazioni avatar
 ├── PREVIEW_items.png        anteprima delle 29 icone scarpe
 ├── PREVIEW_roofs.png        confronto tetti originali / ricolorati Upthere (§6)
+├── PREVIEW_village.png      anteprima della mappa del villaggio (collider in rosso, punti in giallo)
+├── maps/village.json        mappa Tiled del villaggio (§6), generata da tools/assets/gen_village.py
 ├── avatar/
 │   ├── body/                skin_{0..4}_{idle|walk}_{down|side|up}.png    (corpo, 5 toni di pelle)
 │   ├── layers/              {pants|shoes|hoodie|hair_corti|hair_lunghi|hair_cappellino}_{anim}_{dir}.png
@@ -84,6 +86,7 @@ const m = this.cache.json.get('manifest');
 for (const s of m.spritesheets) this.load.spritesheet(s.key, s.path, { frameWidth: s.frameWidth, frameHeight: s.frameHeight });
 for (const i of m.images) this.load.image(i.key, i.path);
 for (const a of m.atlases) this.load.atlas(a.key, a.image, a.json);
+for (const t of m.tilemaps) this.load.tilemapTiledJSON(t.key, t.path);
 ```
 
 Dopo il load, un'animazione per ogni texture dell'avatar, con chiave = chiave della texture:
@@ -205,7 +208,26 @@ Gli sheet degli NPC del pack sono in una sola direzione e restano fermi: si gira
 
 **Brand.** I tetti verde acqua del pack sono già ricolorati con la palette Upthere in `buildings/roofs_upthere.png`, che è la versione caricata dal manifest. La rampa usata è accent-900 → primary → primary-700 → accent (confronto in `PREVIEW_roofs.png`); le vetrate restano azzurre. Per rigenerare: `tools/assets/recolor_brand.py` (variante `plum`; `mauve` è l'alternativa più chiara). Le insegne sono pronte in `brand/pixel/` (vedi §7).
 
-La tilemap esportata in JSON va in `apps/client/public/assets/maps/village.json` e va aggiunta al manifest.
+### Com'è fatta (M1)
+
+La mappa è `maps/village.json`, 30×40 tile, già nel manifest (`tilemaps`). La genera `tools/assets/gen_village.py`, che produce anche `PREVIEW_village.png`:
+
+```bash
+python3 tools/assets/gen_village.py apps/client/public/assets && python3 tools/assets/build_manifest.py
+```
+
+| Livello | Tipo | Contenuto |
+|---|---|---|
+| `ground`, `cobble`, `grass` | tile | terra sotto, ciottolato della piazza (bucato sul palco), erba ai bordi (bucata sulla piazza) |
+| `buildings` | tile | facciate (intonaco con zoccolo in mattoni, `walls.png` righe 12–14) e fontana |
+| `roofs` | tile | tetti Upthere: disegnati **sopra** i personaggi |
+| `decor` | oggetti | prop come rettangoli con proprietà `texture` (chiave del manifest), `sx`, `sy` (ritaglio nello sheet) e `above` (insegne sopra i personaggi) |
+| `places` | punti | `spawn`, NPC (`name` = zona di `npcs.json`, `sprite`), `bacheca`; `approach = "tx,ty"` è la cella dove l'avatar si ferma per parlare |
+| `colliders` | rettangoli | celle non calpestabili: da qui server e client ricavano la stessa griglia (`parseVillage` in `shared`) |
+
+I tileset hanno come `name` la chiave del manifest, così il client li aggancia direttamente.
+
+Si può ritoccare in Tiled aprendo `village.json`. Attenzione: rilanciando lo script, le modifiche fatte a mano si perdono. Si sceglie una strada sola: o lo script o Tiled. Dopo una modifica vanno rifatti `npm test -w @sp/shared` (verifica che ogni punto di interazione sia raggiungibile dallo spawn) e il riavvio del server, che legge la mappa all'avvio.
 
 ## 7. Brand Upthere
 
@@ -280,8 +302,9 @@ Dove compare il brand in gioco:
 | Edifici (tetti Upthere al posto degli originali) | 43 |
 | Prop (alberi, vegetazione, mobili) | 183 |
 | Atlas scarpe | 10 |
+| Mappa del villaggio (`village.json`, 4 KB con gzip) | 45 |
 | Insegne e logo pixel | ~4 |
-| **Totale (manifest Phaser)** | **~325** |
+| **Totale (manifest Phaser)** | **~372** |
 | Font (CSS, fuori dal manifest: Chillax 2 pesi + DM Sans latin) | ~88 |
 
-Il totale resta intorno ai 415 KB, con margine sul budget di 1 MB per tilemap e suoni. Il file DM Sans latin-ext (18 KB) si scarica solo se serve, grazie a `unicode-range`. Se serve risparmiare, il primo candidato è `props/furniture.png`: si può ritagliare solo la parte che si usa.
+Con i font si arriva a circa 460 KB di file. A questi si aggiunge il bundle JS: Phaser 3 pesa circa 1,2 MB minificato e 345 KB con gzip (vedi decisione D9 in `PLAN.md`). Per i suoni resta margine solo se il budget di 1 MB si misura sul trasferito compresso. Il file DM Sans latin-ext (18 KB) si scarica solo se serve, grazie a `unicode-range`. Se serve risparmiare, il primo candidato è `props/furniture.png`: si può ritagliare solo la parte che si usa.
