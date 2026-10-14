@@ -1,5 +1,6 @@
-import type { GameConfig } from '@sp/shared';
+import type { GameConfig, GameItem } from '@sp/shared';
 import gameConfigJson from '../../../data/game_config.json';
+import gameItemsJson from '../../../data/game_items.json';
 import npcsJson from '../../../data/npcs.json';
 
 // Numeri e testi di gioco solo da data/*.json (CLAUDE.md, regola 7). catalog_reference.json non va MAI importato qui.
@@ -22,3 +23,12 @@ const raw = npcsJson as unknown as { system_players: NpcInfo[]; service_npcs: Np
 export const npcByZone: ReadonlyMap<string, NpcInfo> = new Map(
   [...raw.system_players, ...raw.service_npcs].map((n) => [n.zone, n]),
 );
+
+/** Campi di un item che arrivano al client (il resto lo toglie il plugin sp-client-items in vite.config.ts). */
+export type ClientItem = Pick<GameItem, 'id' | 'brand' | 'name' | 'display_name' | 'colorway' | 'silhouette' | 'palette' | 'tier' | 'rarity' | 'flavor'>;
+
+const items: ReadonlyMap<string, ClientItem> = new Map(
+  (gameItemsJson as unknown as { items: ClientItem[] }).items.map((i) => [i.id, i]),
+);
+
+export const itemInfo = (id: string): ClientItem | undefined => items.get(id);

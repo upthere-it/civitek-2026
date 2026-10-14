@@ -1,6 +1,6 @@
 import gameConfig from '../../../data/game_config.json';
 import gameItems from '../../../data/game_items.json';
-import { assetViewFromChain, perceivedValue } from '../src/valuation';
+import { assetViewFromChain, listingPriceRange, marketFee, perceivedValue } from '../src/valuation';
 import type { AssetView, ChainLink } from '../src/types';
 import type { ValuationCfg } from '../src/config';
 
@@ -105,5 +105,21 @@ describe('assetViewFromChain', () => {
     const chain = [link('MINT', 1001), link('TRANSFER', 1002), link('TRANSFER', 1001), link('TRANSFER', 1002)];
     const v = assetViewFromChain({ isFake: false, fakeRevealed: false, legendCount: 0, mintedBy: 2 }, chain, TREASURY);
     expect(v.humanOwnersCount).toBe(4);
+  });
+});
+
+describe('bacheca: fascia di prezzo e commissione (stesse regole delle SP)', () => {
+  const economy = { listing_min_price: 2, listing_max_multiplier: 5, market_fee_pct: 5, market_fee_min: 1 };
+
+  it('prezzo tra il minimo e valore × moltiplicatore', () => {
+    expect(listingPriceRange(30, economy)).toEqual({ min: 2, max: 150 });
+    expect(listingPriceRange(0, economy)).toEqual({ min: 2, max: 2 });
+  });
+
+  it('commissione: percentuale arrotondata per eccesso, con un minimo, mai oltre il prezzo', () => {
+    expect(marketFee(100, economy)).toBe(5);
+    expect(marketFee(21, economy)).toBe(2);
+    expect(marketFee(10, economy)).toBe(1);
+    expect(marketFee(1, { ...economy, market_fee_min: 3 })).toBe(1);
   });
 });

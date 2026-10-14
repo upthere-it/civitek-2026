@@ -438,13 +438,18 @@ Handshake: `io(url, { auth: { deviceId } })`. Il server calcola `sha256(deviceId
 | `world.players` | cambi nel raggio: partenza (posizione + **percorso**), arrivo, ingresso/uscita dal raggio, profilo alla prima apparizione. Il server simula a `tick_hz` ma non manda una posizione a ogni tick: il client fa camminare gli altri lungo il percorso con la stessa `advance()` di `shared`. Con 100 giocatori nella piazza la banda scende di circa 4 volte rispetto ai delta a 10 Hz |
 | `world.emote` | `{ playerId, emote }` |
 | `wallet.updated` | `{ coins, wardrobeValue }` |
-| `asset.updated` | asset con valore percepito ricalcolato |
-| `asset.certified` | `{ assetId, eventId, txHash, explorerUrl }` |
-| `market.updated` | diff degli annunci aperti |
+| `inventory.updated` | `{ coins, wardrobeValue, inventory }` dopo ogni azione economica, a chi l'ha fatta e alla controparte (il venditore riceve il suo appena qualcuno compra) |
+| `asset.updated` | `{ assetId }`: il passaporto ha un anello nuovo o un annuncio aperto/chiuso. Va alla room `asset:<id>` (chi ha il passaporto aperto), che ricarica con `passport.get` |
+| `asset.certified` | `{ assetId, eventId, txHash, explorerUrl }`, alla room `asset:<id>` e ai giocatori coinvolti nell'anello |
+| `market.updated` | `()`: la bacheca è cambiata; chi la sta guardando ricarica la prima pagina con `market.list` |
 | `drop.announce` / `drop.update` / `drop.closed` | `{ dropId, itemId, quantity, sold, closesAt }` |
 | `run.beat` | `{ beatId }` |
 | `run.end` | dati del reveal (§12 del GAME_DESIGN) |
 | `error` | `{ code, message }` (messaggio in italiano da mappa codici) |
+
+`passport.get` fa entrare il socket nella room `asset:<id>` (e uscire da quella del passaporto precedente). Così gli avvisi di un asset vanno solo a chi lo sta guardando, non a tutti.
+
+Il passaporto non espone mai `is_fake`: `status` è `fake` solo se il falso è stato smascherato. Gli orari (`events[].at`, `lockedUntil`) viaggiano come epoch ms, calcolati con `UNIX_TIMESTAMP` lato DB. Così non dipendono dal fuso del server né da quello del telefono, e Safari non deve leggere date in formato MySQL.
 
 Rate limit: `player.rate_limit_actions_per_sec` per socket. Oltre la soglia il server risponde `BUSY` e scarta l'azione.
 
@@ -455,13 +460,14 @@ Rate limit: `player.rate_limit_actions_per_sec` per socket. Oltre la soglia il s
 export interface NotarizeItem { eventId: number; hash: string }
 export interface ChainNotary {
   readonly network: string;
-  notarizeBatch(items: NotarizeItem[]): Promise<{ txHash: string }>;
+  /** batchId = UUID del batch nell'outbox: per Commercio è anche il document_uuid. */
+  notarizeBatch(items: NotarizeItem[], batchId: string): Promise<{ txHash: string }>;
   explorerUrl(txHash: string): string;
 }
 export const CHAIN_NOTARY = Symbol('CHAIN_NOTARY');
 ```
 
-`MockNotary`, il default finché D1 non è chiusa: aspetta un ritardo casuale tra `chain.mock.min_delay_ms` e `max_delay_ms` e restituisce `mock-<sha256 del batch>`. Permette di sviluppare e provare tutta la UX senza testnet.
+`MockNotary`, il default in sviluppo e finché le credenziali commercio.app (D11) non sono nel `.env`: aspetta un ritardo casuale tra `chain.mock.min_delay_ms` e `max_delay_ms` e restituisce `mock-<sha256 del batch>`. Permette di sviluppare e provare tutta la UX senza testnet.
 
 ```ts
 // apps/server/src/chain/chain.worker.ts
@@ -491,7 +497,7 @@ export class ChainWorker implements OnModuleInit {
         'sp_chain_claim_batch', [this.cfg.chain.max_items_per_batch, batchId]);
       if (!rows.length) return;
       try {
-        const { txHash } = await this.notary.notarizeBatch(rows.map(r => ({ eventId: r.id, hash: r.hash })));
+        const { txHash } = await this.notary.notarizeBatch(rows.map(r => ({ eventId: r.id, hash: r.hash })), batchId);
         const done = await this.db.call<CertifiedRow>('sp_chain_mark_confirmed', [batchId, txHash]);
         this.gateway.notifyCertified(done, this.notary.explorerUrl(txHash));
       } catch (err) {
@@ -544,6 +550,14 @@ export class ChainWorker implements OnModuleInit {
 - **UI**:
   - overlay HTML/CSS sopra il canvas: HUD, inventario, passaporto, bacheca, pannelli NPC, reveal;
   - font leggibili, bottoni da almeno 44 px.
+- **Pannelli del mercato** (M2, `apps/client/src/ui/`):
+  - fogli dal basso impilabili (`panel.ts`): il passaporto si apre sopra la bacheca o il negozio, si chiude con ×, tap fuori o Esc;
+  - `store.ts` tiene saldo e scarpe **come li manda il server** e avvisa i pannelli aperti (`inventory`, `market`, `asset`). Ogni pannello si disiscrive alla chiusura;
+  - in bacheca si compra **solo dal passaporto**, così la storia si guarda sempre prima di pagare (GAME_DESIGN §7);
+  - dopo un acquisto al Negozio si apre il passaporto, e l'anello passa da ⏳ a ✅ davanti al giocatore;
+  - i bottoni d'azione restano disabilitati finché il server non risponde: niente doppi acquisti col doppio tap;
+  - le icone scarpa sono solo a 32 o 64 px CSS, così la pixel art scala di un fattore intero.
+- **Dati degli item**: il client importa `data/game_items.json` attraverso il plugin `sp-client-items` di `vite.config.ts`, che tiene solo i campi da mostrare. `reference_ids` (modelli reali), valori base e pesi dei drop non entrano nel bundle.
 - **Riconnessione**: socket.io con riconnessione automatica; a ogni riconnessione il server rimanda `state.init`.
 
 ## 8. API REST pubbliche

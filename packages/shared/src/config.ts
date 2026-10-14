@@ -40,6 +40,8 @@ export interface EconomyCfg {
   market_fee_min: number;
   listing_min_price: number;
   listing_max_multiplier: number;
+  /** Annunci restituiti da market.list per pagina. */
+  market_page_size: number;
   shop_price: string;
   auth_cost: number;
   legend: { cost: number; wear_duration_sec: number; cooldown_sec: number };

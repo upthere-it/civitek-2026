@@ -305,6 +305,7 @@ game_config = {
         "market_fee_min": 1,
         "listing_min_price": 2,
         "listing_max_multiplier": 5,
+        "market_page_size": 50,
         "shop_price": "base_value",
         "auth_cost": 3,
         "legend": {"cost": 15, "wear_duration_sec": 10, "cooldown_sec": 60},

@@ -13,6 +13,6 @@ import { createNotary } from './notary.factory';
     ChainEventsService,
     ChainWorker,
   ],
-  exports: [ChainEventsService],
+  exports: [ChainEventsService, CHAIN_NOTARY],
 })
 export class ChainModule {}

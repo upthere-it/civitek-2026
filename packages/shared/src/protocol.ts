@@ -1,6 +1,6 @@
 // Payload del protocollo socket (ARCHITECTURE §5). Il client manda intenzioni, mai stati.
 import { C2S, S2C } from './events';
-import type { AssetCertified } from './types';
+import type { AssetCertified, AssetEventType, ChainStatus } from './types';
 import type { Facing } from './village';
 
 /** Indici nelle liste di game_config.avatar. */
@@ -20,6 +20,81 @@ export interface InventoryItem {
   itemId: string;
   serial: number;
   perceivedValue: number;
+  /** Annuncio aperto in bacheca, se c'è. */
+  listingId: number | null;
+  listingPrice: number | null;
+  /** Prezzo massimo ammesso per metterla in bacheca (il minimo è economy.listing_min_price). */
+  maxListPrice: number;
+}
+
+export interface ShopEntry {
+  itemId: string;
+  price: number;
+}
+
+export interface Listing {
+  listingId: number;
+  assetId: number;
+  itemId: string;
+  serial: number;
+  price: number;
+  perceivedValue: number;
+  sellerId: number;
+  sellerName: string;
+}
+
+export interface MarketPage {
+  listings: Listing[];
+  /** Da passare a market.list per la pagina successiva; null se finite. */
+  nextCursor: number | null;
+}
+
+export type PassportStatus = 'authentic' | 'fake' | null;
+
+export interface PassportEvent {
+  id: number;
+  event: AssetEventType;
+  fromId: number | null;
+  fromName: string | null;
+  toId: number;
+  toName: string;
+  price: number;
+  hash: string;
+  prevHash: string | null;
+  /** Epoch ms (UNIX_TIMESTAMP lato DB): non dipende dal fuso di server e telefono. */
+  at: number;
+  chainStatus: ChainStatus;
+  txHash: string | null;
+  explorerUrl: string | null;
+}
+
+/** Passaporto di una scarpa (GAME_DESIGN §7): si può aprire per qualunque asset, anche prima di comprarlo. */
+export interface Passport {
+  assetId: number;
+  publicId: string;
+  itemId: string;
+  serial: number;
+  /** Chi l'ha coniata: Negozio, Banca Upthere (drop), Tony Affari (falsi). */
+  origin: 'shop' | 'upthere' | 'stall' | 'other';
+  dropSerial: number | null;
+  dropQuantity: number | null;
+  perceivedValue: number;
+  /** ✅ autentica (verificata) / ❌ falsa (smascherata) / null se mai verificata. Mai is_fake in chiaro. */
+  status: PassportStatus;
+  legendCount: number;
+  ownerId: number;
+  ownerName: string;
+  /** Epoch ms: fino a quando è da MC Suola (non si può vendere). */
+  lockedUntil: number | null;
+  listing: { listingId: number; price: number; sellerId: number } | null;
+  events: PassportEvent[];
+}
+
+/** Dopo un'azione economica: saldo, valore armadio e scarpe del giocatore. */
+export interface InventoryUpdated {
+  coins: number;
+  wardrobeValue: number;
+  inventory: InventoryItem[];
 }
 
 export interface StateInit {
@@ -98,6 +173,11 @@ export interface ServerToClientEvents {
   [S2C.WORLD_EMOTE]: (m: WorldEmote) => void;
   [S2C.WALLET_UPDATED]: (m: WalletUpdated) => void;
   [S2C.ASSET_CERTIFIED]: (m: AssetCertified) => void;
+  /** Il passaporto dell'asset è cambiato (nuovo anello): chi lo ha aperto lo ricarica. */
+  [S2C.ASSET_UPDATED]: (m: { assetId: number }) => void;
+  [S2C.INVENTORY_UPDATED]: (m: InventoryUpdated) => void;
+  /** La bacheca è cambiata: chi la sta guardando la ricarica. */
+  [S2C.MARKET_UPDATED]: () => void;
   [S2C.ERROR]: (e: ErrorEvent) => void;
 }
 
@@ -106,4 +186,11 @@ export interface ClientToServerEvents {
   [C2S.AVATAR_SET]: (look: AvatarLook, ack: (r: Ack<{ x: number; y: number }>) => void) => void;
   [C2S.MOVE_TO]: (p: MoveTo, ack: (r: Ack<{ x: number; y: number }>) => void) => void;
   [C2S.EMOTE_SEND]: (p: { emote: string }, ack: (r: Ack) => void) => void;
+  [C2S.SHOP_LIST]: (p: Record<string, never>, ack: (r: Ack<ShopEntry[]>) => void) => void;
+  [C2S.SHOP_BUY]: (p: { itemId: string }, ack: (r: Ack<{ assetId: number }>) => void) => void;
+  [C2S.MARKET_LIST]: (p: { cursor?: number }, ack: (r: Ack<MarketPage>) => void) => void;
+  [C2S.LISTING_CREATE]: (p: { assetId: number; price: number }, ack: (r: Ack<{ listingId: number }>) => void) => void;
+  [C2S.LISTING_CANCEL]: (p: { listingId: number }, ack: (r: Ack) => void) => void;
+  [C2S.LISTING_BUY]: (p: { listingId: number }, ack: (r: Ack<{ assetId: number }>) => void) => void;
+  [C2S.PASSPORT_GET]: (p: { assetId: number }, ack: (r: Ack<Passport>) => void) => void;
 }

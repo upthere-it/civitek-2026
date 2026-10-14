@@ -83,6 +83,7 @@ INSERT INTO game_settings (name, value) VALUES
   ('economy.market_fee_min', '1'),
   ('economy.listing_min_price', '2'),
   ('economy.listing_max_multiplier', '5'),
+  ('economy.market_page_size', '50'),
   ('economy.shop_price', 'base_value'),
   ('economy.auth_cost', '3'),
   ('economy.legend.cost', '15'),
@@ -137,6 +138,14 @@ INSERT INTO game_settings (name, value) VALUES
   ('chain.certify', 'MINT (tranne FAKE_MINT) + ogni evento con almeno un giocatore umano'),
   ('chain.mock.min_delay_ms', '1500'),
   ('chain.mock.max_delay_ms', '4000'),
+  ('chain.commercio.auth_token_url', 'https://devlogin.commercio.app/auth/realms/commercio/protocol/openid-connect/token'),
+  ('chain.commercio.client_id', 'dev.commercio.app'),
+  ('chain.commercio.api_url', 'https://dev-api.commercio.app/v1'),
+  ('chain.commercio.schema_uri', 'https://civitek.upthere.it/schema/sneaker-passport-batch'),
+  ('chain.commercio.schema_version', '1'),
+  ('chain.commercio.poll_interval_ms', '2000'),
+  ('chain.commercio.poll_timeout_ms', '90000'),
+  ('chain.commercio.http_timeout_ms', '10000'),
   ('leaderboard.metric', 'wardrobe_value'),
   ('leaderboard.size', '10');
 

@@ -27,12 +27,14 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 > Verificato in automatico con 3 browser mobili headless (iPhone 13, Pixel 7, iPhone SE): si vedono, si muovono, si mandano emote; circa 5 s dall'apertura al villaggio. **Da fare: prova su 3 telefoni veri (Simone).**
 
 ### M2 — Mercato e passaporto (ven 16/10)
-- [ ] Negozio (`sp_shop_buy`), inventario
-- [ ] Bacheca: crea, annulla, compra annuncio
-- [ ] UI passaporto completa (timeline, badge certificazione, aggiornamento live su `asset.certified`)
-- [ ] Mappa errori SP → messaggi italiani (GAME_DESIGN §18)
+- [x] Negozio (`sp_shop_buy`), inventario (Armadio dall'HUD, con Vendi/Ritira)
+- [x] Bacheca: crea, annulla, compra annuncio (`sp_listing_cancel` in 007; si compra dal passaporto)
+- [x] UI passaporto completa (timeline, badge certificazione, aggiornamento live su `asset.certified` e `asset.updated`)
+- [x] Mappa errori SP → messaggi italiani (GAME_DESIGN §18), con un test che la controlla su tutti i `SIGNAL` di `sql/`
 
 **Accettazione**: due giocatori si scambiano una scarpa; il passaporto mostra il passaggio ⏳ → ✅ in pochi secondi.
+
+> Verificato in automatico: test end-to-end sul gateway (due giocatori, scambio, `inventory.updated` / `market.updated` / `asset.updated` / `asset.certified`) e smoke con 2 browser mobili headless (iPhone 13 + iPhone SE). A compra al Negozio e vede ⏳ → ✅, mette in bacheca; B apre il passaporto dalla bacheca, compra e vede l'anello "Venduta a te" diventare ✅; A riceve "Hai venduto…". Con `MockNotary` ci vogliono circa 2 s. **Da fare: prova su 2 telefoni veri (Simone) e, con le credenziali (D11), la latenza reale di Commercio.**
 
 ### M3 — Le meccaniche del messaggio (lun 19/10)
 - [ ] Tony Affari: restock dei falsi, acquisto, passaporto con ⚠️
@@ -149,3 +151,26 @@ _(Claude Code: aggiungi qui una riga per sessione con data, milestone, cosa è s
     - acqua della fontana non animata;
     - pannelli degli NPC da M2 (per ora dicono una battuta);
     - il link "Hai già giocato? Inserisci il codice" arriva con il recupero (M4).
+- **14/10 — CommercioNotary e M2 completata (in attesa di telefoni veri e credenziali).**
+  - **Fatto**:
+    - `CommercioNotary`, che usa le API commercio.app come `@mvl/commercio-network`: login Keycloak con token in cache, `POST /sharedoc/process` con l'hash cumulativo del batch, polling fino a `doc_tx_hash`. `GET /api/chain/batch/:batchId` è il `content_uri` pubblico, da cui chiunque ricalcola l'hash. Si attiva con `chain.notary = "commercio"` e `CN_*` nel `.env`; finché mancano si resta su `MockNotary`;
+    - `sql/007_market.sql`: `sp_shop_buy` (monete alla tesoreria, MINT dal Negozio direttamente al giocatore) e `sp_listing_cancel`;
+    - gateway: `shop.*`, `market.list` (paginata), `listing.*`, `passport.get` con room `asset:<id>`; `inventory.updated` va anche al venditore;
+    - client: pannelli impilabili Negozio, Bacheca, Armadio e Passaporto, selettore di prezzo con commissione visibile, toast "Hai venduto";
+    - `shared`: `listingPriceRange` e `marketFee` (le stesse regole delle SP, il client le mostra soltanto);
+    - errori: `INTERNAL_SP_CODES` per i codici che il giocatore non vede mai.
+  - **Test**:
+    - `npm test`: 30 test di shared + 68 del server, tutti verdi;
+    - smoke con 2 browser mobili (sopra);
+    - nessun overflow orizzontale a 320 px, emote su una riga;
+    - nessun errore in console né nel log del server.
+  - **Scelte fuori documento**:
+    - in bacheca si compra solo dal passaporto, così la lezione "guarda la storia prima di comprare" è nel gesto;
+    - dopo un acquisto al Negozio si apre il passaporto, per vedere subito il primo anello certificarsi;
+    - orari del passaporto in epoch ms (`UNIX_TIMESTAMP` lato DB): così niente fusi e niente date MySQL che Safari non sa leggere;
+    - il plugin Vite `sp-client-items` toglie dal bundle `reference_ids` (modelli reali), valori base e pesi dei drop.
+  - **Aperto**:
+    - D7–D11;
+    - credenziali commercio.app (D11) per la prima notarizzazione vera sulla testnet;
+    - prova su telefoni veri di M1 e M2;
+    - pannelli di Banca, Tony Affari, Dott.ssa Hash, MC Suola ed Enoteca in M3.

@@ -1,8 +1,28 @@
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
+
+/**
+ * Il client riceve di game_items.json solo i campi da mostrare. Restano fuori `reference_ids` (modelli reali di
+ * catalog_reference.json, CLAUDE.md "cosa NON fare"), i valori base e i pesi dei drop: li conosce solo il server.
+ */
+const CLIENT_ITEM_FIELDS = ['id', 'brand', 'name', 'display_name', 'colorway', 'silhouette', 'palette', 'tier', 'rarity', 'flavor'];
+
+function clientItems(): Plugin {
+  return {
+    name: 'sp-client-items',
+    enforce: 'pre',
+    transform(code, id) {
+      if (!/[\\/]data[\\/]game_items\.json$/.test(id)) return null;
+      const { items } = JSON.parse(code) as { items: Record<string, unknown>[] };
+      const slim = items.map((it) => Object.fromEntries(CLIENT_ITEM_FIELDS.map((k) => [k, it[k]])));
+      return { code: JSON.stringify({ items: slim }), map: null };
+    },
+  };
+}
 
 // Il client importa shared come sorgente TS (il server lo usa compilato in CJS).
 export default defineConfig({
+  plugins: [clientItems()],
   resolve: {
     alias: {
       '@sp/shared': fileURLToPath(new URL('../../packages/shared/src/index.ts', import.meta.url)),

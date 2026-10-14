@@ -7,6 +7,7 @@ import {
   OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import {
   C2S,
@@ -15,17 +16,23 @@ import {
   type Ack,
   type AvatarLook,
   type ClientToServerEvents,
+  type InventoryUpdated,
+  type MarketPage,
   type MoveTo,
+  type Passport,
   type ServerToClientEvents,
+  type ShopEntry,
   type StateInit,
   type WorldEmote,
 } from '@sp/shared';
 import type { Subscription } from 'rxjs';
-import type { Socket } from 'socket.io';
+import type { Server, Socket } from 'socket.io';
 import { ChainEventsService } from '../chain/chain-events.service';
 import { GameConfigService } from '../config/game-config.service';
 import { SpError } from '../db/sp-error';
+import { AssetsService } from './assets.service';
 import { isDeviceId } from './identity';
+import { MarketService } from './market.service';
 import { PlayerService, type PlayerState } from './player.service';
 import { RateLimiter } from './rate-limit';
 import { WorldService } from './world.service';
@@ -40,6 +47,11 @@ type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents, Record<stri
 
 const fail = (code: string): Ack<never> => ({ ok: false, code, message: errorMessage(code) });
 
+const isId = (v: unknown): v is number => Number.isSafeInteger(v) && (v as number) > 0;
+
+/** Room di chi ha aperto il passaporto di un asset: riceve certificazioni e nuovi anelli in diretta. */
+const assetRoom = (assetId: number) => `asset:${assetId}`;
+
 /**
  * Gateway socket.io: sessione dal device_id dell'handshake, presenza, emote. Il client manda intenzioni
  * (move.to, avatar.set, emote.send), mai stati. Ogni richiesta ha una risposta (ack) `Ack<T>`.
@@ -48,6 +60,7 @@ const fail = (code: string): Ack<never> => ({ ok: false, code, message: errorMes
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit, OnModuleDestroy {
   static readonly WORLD_TICK = 'world-tick';
 
+  @WebSocketServer() private server!: Server<ClientToServerEvents, ServerToClientEvents>;
   private readonly logger = new Logger(GameGateway.name);
   /** playerId → socket attivo (uno solo: una nuova scheda sostituisce la vecchia) */
   private readonly sockets = new Map<number, GameSocket>();
@@ -59,6 +72,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     private readonly cfg: GameConfigService,
     private readonly chainEvents: ChainEventsService,
     private readonly scheduler: SchedulerRegistry,
+    private readonly market: MarketService,
+    private readonly assets: AssetsService,
   ) {}
 
   onModuleInit(): void {
@@ -68,7 +83,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     this.certified = this.chainEvents.certified$.subscribe((batch) => {
       for (const n of batch) {
         const payload = { assetId: n.assetId, eventId: n.eventId, txHash: n.txHash, explorerUrl: n.explorerUrl };
-        for (const id of new Set([n.fromId, n.toId])) if (id !== null) this.sockets.get(id)?.emit(S2C.ASSET_CERTIFIED, payload);
+        // chi ha il passaporto aperto + i giocatori coinvolti (socket.io consegna una volta sola a socket)
+        const rooms = [assetRoom(n.assetId), ...[n.fromId, n.toId].flatMap((id) => this.socketRoom(id))];
+        this.server.to(rooms).emit(S2C.ASSET_CERTIFIED, payload);
       }
     });
   }
@@ -153,6 +170,125 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     const msg: WorldEmote = { playerId: id, emote };
     for (const viewer of this.world.nearby(id)) this.sockets.get(viewer)?.emit(S2C.WORLD_EMOTE, msg);
     return { ok: true, data: undefined };
+  }
+
+  // ------------------------------------------------------------------ negozio, bacheca, passaporto (M2)
+
+  @SubscribeMessage(C2S.SHOP_LIST)
+  onShopList(@ConnectedSocket() socket: GameSocket): Ack<ShopEntry[]> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    return { ok: true, data: this.market.shopList() };
+  }
+
+  @SubscribeMessage(C2S.SHOP_BUY)
+  async onShopBuy(@ConnectedSocket() socket: GameSocket, @MessageBody() body: unknown): Promise<Ack<{ assetId: number }>> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    const itemId = (body as { itemId?: unknown })?.itemId;
+    if (typeof itemId !== 'string') return fail('INVALID_PAYLOAD');
+    return this.run(async () => {
+      const res = await this.market.shopBuy(id, itemId);
+      await this.refreshPlayers(id);
+      return res;
+    });
+  }
+
+  @SubscribeMessage(C2S.MARKET_LIST)
+  async onMarketList(@ConnectedSocket() socket: GameSocket, @MessageBody() body: unknown): Promise<Ack<MarketPage>> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    const cursor = (body as { cursor?: unknown })?.cursor;
+    if (cursor !== undefined && !isId(cursor)) return fail('INVALID_PAYLOAD');
+    return this.run(() => this.market.page(cursor));
+  }
+
+  @SubscribeMessage(C2S.LISTING_CREATE)
+  async onListingCreate(@ConnectedSocket() socket: GameSocket, @MessageBody() body: unknown): Promise<Ack<{ listingId: number }>> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    const { assetId, price } = (body ?? {}) as { assetId?: unknown; price?: unknown };
+    if (!isId(assetId) || !Number.isSafeInteger(price)) return fail('INVALID_PAYLOAD');
+    return this.run(async () => {
+      const res = await this.market.createListing(id, assetId, price as number);
+      await this.refreshPlayers(id);
+      this.server.emit(S2C.MARKET_UPDATED);
+      this.server.to(assetRoom(assetId)).emit(S2C.ASSET_UPDATED, { assetId });
+      return res;
+    });
+  }
+
+  @SubscribeMessage(C2S.LISTING_CANCEL)
+  async onListingCancel(@ConnectedSocket() socket: GameSocket, @MessageBody() body: unknown): Promise<Ack> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    const listingId = (body as { listingId?: unknown })?.listingId;
+    if (!isId(listingId)) return fail('INVALID_PAYLOAD');
+    return this.run(async () => {
+      const { assetId } = await this.market.cancelListing(id, listingId);
+      await this.refreshPlayers(id);
+      this.server.emit(S2C.MARKET_UPDATED);
+      this.server.to(assetRoom(assetId)).emit(S2C.ASSET_UPDATED, { assetId });
+      return undefined;
+    });
+  }
+
+  @SubscribeMessage(C2S.LISTING_BUY)
+  async onListingBuy(@ConnectedSocket() socket: GameSocket, @MessageBody() body: unknown): Promise<Ack<{ assetId: number }>> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    const listingId = (body as { listingId?: unknown })?.listingId;
+    if (!isId(listingId)) return fail('INVALID_PAYLOAD');
+    return this.run(async () => {
+      const { assetId, sellerId } = await this.market.buyListing(id, listingId);
+      await this.refreshPlayers(id, sellerId);
+      this.server.emit(S2C.MARKET_UPDATED);
+      this.server.to(assetRoom(assetId)).emit(S2C.ASSET_UPDATED, { assetId });
+      return { assetId };
+    });
+  }
+
+  /** Passaporto di qualunque scarpa (anche prima di comprarla). Il socket entra nella room dell'asset. */
+  @SubscribeMessage(C2S.PASSPORT_GET)
+  async onPassport(@ConnectedSocket() socket: GameSocket, @MessageBody() body: unknown): Promise<Ack<Passport>> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    const assetId = (body as { assetId?: unknown })?.assetId;
+    if (!isId(assetId)) return fail('INVALID_PAYLOAD');
+    return this.run(async () => {
+      const passport = await this.assets.passport(assetId);
+      if (!passport) throw new SpError('ASSET_NOT_FOUND');
+      // una room di passaporto alla volta per socket
+      for (const room of socket.rooms) if (room.startsWith('asset:')) void socket.leave(room);
+      void socket.join(assetRoom(assetId));
+      return passport;
+    });
+  }
+
+  /** Saldo, armadio e colore delle scarpe dopo un'azione: ai giocatori coinvolti, se connessi. */
+  private async refreshPlayers(...ids: number[]): Promise<void> {
+    for (const id of new Set(ids)) {
+      const socket = this.sockets.get(id);
+      if (!socket) continue;
+      const state = await this.players.loadState(id);
+      const update: InventoryUpdated = { coins: state.row.coins, wardrobeValue: state.wardrobeValue, inventory: state.inventory };
+      socket.emit(S2C.INVENTORY_UPDATED, update);
+      if (state.look) this.world.updateProfile(id, { shoesColor: state.shoesColor });
+    }
+  }
+
+  /** Esegue un'azione: errori di gioco → ack con codice e messaggio in italiano; altri → INTERNAL nel log. */
+  private async run<T>(fn: () => Promise<T>): Promise<Ack<T>> {
+    try {
+      return { ok: true, data: await fn() };
+    } catch (err) {
+      return this.failFrom(err);
+    }
+  }
+
+  private socketRoom(playerId: number | null): string[] {
+    const socket = playerId === null ? undefined : this.sockets.get(playerId);
+    return socket ? [socket.id] : [];
   }
 
   private tick(dtSec: number): void {

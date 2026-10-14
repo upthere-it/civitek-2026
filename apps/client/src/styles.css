@@ -203,7 +203,34 @@ canvas {
 }
 
 .hud-bottom {
+  position: relative;
   justify-content: flex-end;
+}
+
+.hud-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 16px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--up-primary);
+  color: #fff;
+  font: 600 15px var(--up-font-display);
+  cursor: pointer;
+}
+
+.hud-btn span {
+  font-size: 22px;
+}
+
+button.pill {
+  border: 0;
+  color: #fff;
+  font-family: var(--up-font-body);
+  cursor: pointer;
 }
 
 .spacer {
@@ -248,10 +275,17 @@ canvas {
 }
 
 .emote-bar {
+  position: absolute; /* sopra la riga in basso: su un telefono stretto non spinge via il bottone Armadio */
+  right: 0;
+  bottom: 56px;
+  max-width: calc(100vw - 20px);
+  box-sizing: border-box;
   display: flex;
-  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
   padding: 6px;
-  border-radius: 999px;
+  border-radius: 28px;
   background: var(--up-accent-900);
 }
 
@@ -259,12 +293,453 @@ canvas {
   display: none;
 }
 
+/* 6 emote da 44 px + spazi = 296 px: stanno su una riga anche a 320 px di larghezza */
 .emote {
+  width: 44px;
+  height: 44px;
   background: transparent;
+}
+
+/* ---------------------------------------------------------------- pannelli (negozio, bacheca, armadio, passaporto) */
+.panel-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.panel-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.45);
+}
+
+.panel {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: min(88dvh, 88vh);
+  display: flex;
+  flex-direction: column;
+  background: var(--up-primary);
+  border-radius: 24px 24px 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 0.35);
+  animation: panel-in 0.18s ease-out;
+}
+
+@keyframes panel-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px 6px 18px;
+  border-bottom: 1px solid var(--up-primary-700);
+}
+
+.panel-title {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 20px var(--up-font-display);
+}
+
+.panel-close {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.panel-body {
+  flex: 1;
+  min-height: 80px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.panel-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px 14px;
+  border-top: 1px solid var(--up-primary-700);
+}
+
+.panel-foot:empty {
+  display: none;
+}
+
+.panel-summary,
+.muted {
+  margin: 0;
+  font-size: 14px;
+  color: var(--up-accent-400);
+}
+
+.npc-line {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--up-accent-900);
+  font-style: italic;
+}
+
+/* righe: contenuto (tap → passaporto) a sinistra, azioni a destra */
+.row-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 6px;
+  border-radius: 16px;
+  background: var(--up-primary-700);
+}
+
+.row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* su 320 px nome e dettagli vanno a capo invece di troncarsi */
+.row-name {
+  font: 600 15px var(--up-font-display);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.row-sub {
+  font-size: 13px;
+  line-height: 1.3;
+  opacity: 0.85;
+  overflow-wrap: anywhere;
+}
+
+.row-side {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row-badge {
+  font-size: 13px;
+  color: var(--up-accent-400);
+  font-weight: 600;
+  text-align: right;
+  max-width: 6em;
+}
+
+.row-price {
+  font: 600 15px var(--up-font-display);
+  white-space: nowrap;
+}
+
+.row-go {
+  font-size: 24px;
+  opacity: 0.7;
+}
+
+.shoe-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  image-rendering: pixelated;
+  border-radius: 10px;
+  background: var(--up-accent-900);
+}
+
+.shoe-icon.big {
+  width: 64px;
+  height: 64px;
+  padding: 8px;
+  border-radius: 14px;
+}
+
+.btn-small {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  font: 600 14px var(--up-font-display);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn-small:disabled,
+.btn:disabled {
+  opacity: 0.6;
+}
+
+/* nei pannelli (fondo primary) il bottone primario è accent-400 con testo primary: 6,3:1 */
+.panel .btn-primary {
+  background: var(--up-accent-400);
+  color: var(--up-primary);
+}
+
+.panel .btn-secondary {
+  background: var(--up-accent-900);
+  color: #fff;
+}
+
+/* selettore di prezzo */
+.price-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 16px;
+  background: var(--up-accent-900);
+}
+
+.price-picker[hidden] {
+  display: none;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.step {
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--up-primary-700);
+  color: #fff;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.price-input {
+  width: 96px;
+  height: 48px;
+  border: 2px solid var(--up-accent);
+  border-radius: 14px;
+  background: var(--up-primary);
+  color: #fff;
+  font: 600 22px var(--up-font-display);
+  text-align: center;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.price-picker .chips {
+  justify-content: center;
+}
+
+.price-hint {
+  margin: 0;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* passaporto (GAME_DESIGN §7) */
+.pp-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pp-id {
+  min-width: 0;
+}
+
+.pp-name {
+  margin: 0;
+  font: 600 20px var(--up-font-display);
+}
+
+.pp-sub,
+.pp-value,
+.pp-owner {
+  margin: 2px 0 0;
+  font-size: 14px;
+}
+
+.pp-value {
+  font-weight: 600;
+}
+
+.pp-owner {
+  color: var(--up-accent-400);
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.badge-ok {
+  background: #fff;
+  color: var(--up-primary);
+}
+
+.badge-fake {
+  background: #fff;
+  color: var(--up-warn);
+  border: 2px solid var(--up-warn);
+}
+
+.chain {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+
+.ring {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 14px;
+}
+
+/* il filo che lega un anello al precedente */
+.ring:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 20px;
+  bottom: 0;
+  width: 2px;
+  background: var(--up-accent);
+}
+
+.ring-dot {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border-radius: 50%;
+  background: var(--up-accent-400);
+  box-shadow: 0 0 0 3px var(--up-primary);
+}
+
+.ring-pending .ring-dot,
+.ring-sending .ring-dot {
+  background: var(--up-primary-700);
+  border: 2px dashed var(--up-accent-400);
+  box-sizing: border-box;
+}
+
+.ring-unknown .ring-dot,
+.ring-failed .ring-dot {
+  background: var(--up-warn);
+}
+
+.ring-body {
+  min-width: 0;
+}
+
+.ring-text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.ring-meta,
+.ring-hash {
+  margin: 2px 0 0;
+  font-size: 13px;
+}
+
+.ring-hash {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  opacity: 0.75;
+  overflow-wrap: anywhere;
+}
+
+.cert-ok {
+  color: #fff;
+  font-weight: 600;
+}
+
+a.cert-ok {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cert-warn {
+  font-weight: 600; /* testo bianco: il rosso warn su primary non ha contrasto, l'icona ⚠️ basta */
+}
+
+.cert-pending {
+  color: var(--up-accent-400);
+}
+
+.just-certified .ring-body {
+  animation: certified 1.2s ease-out;
+}
+
+@keyframes certified {
+  0% {
+    background: var(--up-accent-400);
+    color: var(--up-primary);
+  }
+}
+
+.pp-footer {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.85;
 }
 
 /* ---------------------------------------------------------------- avvisi */
 .toast {
+  z-index: 10; /* sopra i pannelli */
   position: absolute;
   left: 50%;
   bottom: calc(80px + env(safe-area-inset-bottom));

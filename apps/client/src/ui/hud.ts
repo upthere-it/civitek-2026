@@ -2,10 +2,10 @@ import { gameConfig } from '../config';
 import { h, uiRoot } from './dom';
 import { T } from './texts';
 
-/** HUD: nickname, monete, valore armadio; barra delle emote (niente chat libera). */
-export function showHud(nickname: string, onEmote: (emote: string) => void) {
+/** HUD: nickname, monete, valore armadio; armadio e barra delle emote (niente chat libera). */
+export function showHud(nickname: string, onEmote: (emote: string) => void, onWardrobe: () => void) {
   const coins = h('span', { class: 'pill' });
-  const wardrobe = h('span', { class: 'pill' });
+  const wardrobe = h('button', { class: 'pill', type: 'button', onclick: onWardrobe });
   const bar = h('div', { class: 'emote-bar', hidden: true });
   for (const e of gameConfig.world.emotes) {
     bar.append(
@@ -24,7 +24,14 @@ export function showHud(nickname: string, onEmote: (emote: string) => void) {
     'div',
     { class: 'hud' },
     h('div', { class: 'hud-top' }, h('span', { class: 'pill name' }, nickname), h('span', { class: 'spacer' }), coins, wardrobe),
-    h('div', { class: 'hud-bottom' }, bar, toggle),
+    h(
+      'div',
+      { class: 'hud-bottom' },
+      h('button', { class: 'hud-btn', type: 'button', onclick: onWardrobe }, h('span', { 'aria-hidden': 'true' }, '👟'), T.wardrobeOpen),
+      h('span', { class: 'spacer' }),
+      bar,
+      toggle,
+    ),
   );
   uiRoot().append(el);
   return {

@@ -1,4 +1,4 @@
-import type { ValuationCfg } from './config';
+import type { EconomyCfg, ValuationCfg } from './config';
 import type { AssetView, ChainLink } from './types';
 
 /**
@@ -44,4 +44,15 @@ export function assetViewFromChain(
     originGap,
     humanOwnersCount,
   };
+}
+
+/** Fascia di prezzo per mettere una scarpa in bacheca: la stessa regola di sp_listing_create. */
+export function listingPriceRange(perceived: number, economy: Pick<EconomyCfg, 'listing_min_price' | 'listing_max_multiplier'>) {
+  const min = economy.listing_min_price;
+  return { min, max: Math.max(min, Math.floor(perceived * economy.listing_max_multiplier)) };
+}
+
+/** Commissione della bacheca su una vendita: la stessa regola di sp_listing_buy (il client la mostra soltanto). */
+export function marketFee(price: number, economy: Pick<EconomyCfg, 'market_fee_pct' | 'market_fee_min'>): number {
+  return Math.min(price, Math.max(economy.market_fee_min, Math.ceil((price * economy.market_fee_pct) / 100)));
 }

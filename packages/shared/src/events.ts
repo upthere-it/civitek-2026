@@ -28,6 +28,7 @@ export const S2C = {
   WORLD_EMOTE: 'world.emote',
   WALLET_UPDATED: 'wallet.updated',
   ASSET_UPDATED: 'asset.updated',
+  INVENTORY_UPDATED: 'inventory.updated',
   ASSET_CERTIFIED: 'asset.certified',
   MARKET_UPDATED: 'market.updated',
   DROP_ANNOUNCE: 'drop.announce',
