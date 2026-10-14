@@ -3,20 +3,22 @@ import type { SchedulerRegistry } from '@nestjs/schedule';
 import { gameLoopsEnabled } from '../config/env';
 
 /**
- * Registra un loop di gioco nello SchedulerRegistry. Un giro non parte se il precedente non è finito, e un
+ * Registra un loop di gioco nello SchedulerRegistry: il primo giro parte subito (all'avvio Tony ha già il banco
+ * pieno e i bot le loro scorte), poi uno ogni everyMs. Un giro non parte se il precedente non è finito, e un
  * errore finisce nel log senza fermare il loop. Con GAME_LOOPS=off (test) non registra niente.
  */
 export function startLoop(scheduler: SchedulerRegistry, name: string, everyMs: number, fn: () => Promise<unknown>, logger: Logger): void {
   if (!gameLoopsEnabled()) return;
   let running = false;
-  const handle = setInterval(() => {
+  const run = () => {
     if (running) return;
     running = true;
     fn()
       .catch((err: unknown) => logger.error(`${name}: ${String(err)}`))
       .finally(() => (running = false));
-  }, everyMs);
-  scheduler.addInterval(name, handle);
+  };
+  scheduler.addInterval(name, setInterval(run, everyMs));
+  setImmediate(run);
 }
 
 export function stopLoop(scheduler: SchedulerRegistry, name: string): void {

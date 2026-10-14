@@ -1,4 +1,5 @@
 import { itemInfo } from '../config';
+import type { PassportStatus } from '@sp/shared';
 import { h } from './dom';
 
 /**
@@ -16,4 +17,16 @@ export const shoeColorway = (itemId: string) => itemInfo(itemId)?.colorway ?? ''
 /** Titolo e sottotitolo di una riga: nome della scarpa e una riga di dettagli. */
 export function shoeText(itemId: string, sub: string): HTMLElement {
   return h('div', { class: 'row-text' }, h('span', { class: 'row-name' }, shoeName(itemId)), h('span', { class: 'row-sub' }, sub));
+}
+
+/** Icona con il timbro della Dott.ssa Hash: ✅ autentica, ❌ falsa (GAME_DESIGN §9). */
+export function shoeBadge(it: { itemId: string; status: PassportStatus }): HTMLElement {
+  const icon = shoeIcon(it.itemId);
+  if (!it.status) return icon;
+  return h(
+    'span',
+    { class: `shoe-stamp stamp-${it.status}` },
+    icon,
+    h('span', { class: 'stamp', 'aria-label': it.status === 'fake' ? 'Falsa' : 'Autentica' }, it.status === 'fake' ? '❌' : '✅'),
+  );
 }

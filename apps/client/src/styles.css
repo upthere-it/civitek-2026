@@ -737,13 +737,91 @@ a.cert-ok {
   opacity: 0.85;
 }
 
+/* timbro della Dott.ssa Hash sull'icona (GAME_DESIGN §9) */
+.shoe-stamp {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+}
+
+.shoe-stamp .stamp {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.stamp-fake .shoe-icon {
+  box-shadow: inset 0 0 0 2px var(--up-warn);
+}
+
+/* verdetto: fondo bianco, così il rosso warn resta leggibile (ASSETS.md §7) */
+.verdict {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--up-primary);
+  border-left: 6px solid var(--up-accent);
+}
+
+.verdict-fake {
+  border-left-color: var(--up-warn);
+}
+
+.verdict-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.btn-dim {
+  opacity: 0.7;
+}
+
+/* banner del drop, in alto sotto l'HUD */
+.drop-banner {
+  z-index: 8;
+  position: absolute;
+  left: 50%;
+  top: calc(56px + env(safe-area-inset-top));
+  transform: translateX(-50%);
+  width: min(94vw, 480px);
+  box-sizing: border-box;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px 8px 10px;
+  border-radius: 18px;
+  background: var(--up-accent-900);
+  border: 2px solid var(--up-accent-400);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.35);
+  animation: panel-in 0.2s ease-out;
+}
+
+.drop-banner-text {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 /* ---------------------------------------------------------------- avvisi */
-.toast {
+.toasts {
   z-index: 10; /* sopra i pannelli */
   position: absolute;
   left: 50%;
   bottom: calc(80px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
+  width: max-content;
+  max-width: 86vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast {
   max-width: 86vw;
   background: #fff;
   color: var(--up-primary);

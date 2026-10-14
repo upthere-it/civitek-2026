@@ -189,6 +189,7 @@ I falsi si possono rivendere in bacheca, come succede nel mondo reale. Il passap
 - Costo: `economy.legend.cost` (15 monete).
 - La scarpa resta "in prestito" per `wear_duration_sec` (10 s). In quel tempo è bloccata, non vendibile, e mostra l'etichetta "in prestito a MC Suola".
 - Nel passaporto si aggiungono due eventi certificati, `LEGEND_IN` e `LEGEND_OUT`, e `legend_count` sale di 1.
+- È un **prestito**, non una vendita: la scarpa resta del giocatore (nell'armadio con l'etichetta "In prestito a MC Suola"), la catena registra la custodia.
 - Il bonus +40% conta al massimo `legend_max_counted` (2) volte per scarpa.
 - Cooldown per giocatore: `cooldown_sec` (60 s).
 - La battuta chiave di MC Suola: "Non conta che le ho messe. Conta che si può dimostrare."

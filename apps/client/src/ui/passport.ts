@@ -6,7 +6,7 @@ import { h, toast } from './dom';
 import { act, debounce, openPanel } from './panel';
 import { pricePicker } from './price';
 import { shoeColorway, shoeIcon, shoeName } from './shoe';
-import { isMine, store, subscribe } from './store';
+import { isMine, serverNow, store, subscribe } from './store';
 import { T } from './texts';
 
 /** Un anello della timeline: LEGEND_IN e LEGEND_OUT si mostrano come uno solo (GAME_DESIGN §7). */
@@ -37,7 +37,7 @@ export function openPassport(api: Api, assetId: number): void {
       // la barra delle azioni si ricostruisce solo se cambia proprietario o annuncio: una certificazione che
       // arriva mentre si sceglie il prezzo non deve chiudere il selettore
       const locked = isLocked(p);
-      const key = `${p.ownerId}|${p.listing?.listingId ?? ''}|${locked}`;
+      const key = `${p.ownerId}|${p.listing?.listingId ?? ''}|${p.stallPrice ?? ''}|${locked}`;
       if (key !== footKey) {
         footKey = key;
         panel.foot.replaceChildren(...actions(api, p, locked, reload));
@@ -53,7 +53,7 @@ export function openPassport(api: Api, assetId: number): void {
   void load();
 }
 
-const isLocked = (p: Passport) => p.lockedUntil !== null && p.lockedUntil > Date.now() + store.clockOffset;
+const isLocked = (p: Passport) => p.lockedUntil !== null && p.lockedUntil > serverNow();
 
 function header(p: Passport): HTMLElement[] {
   const serial =
@@ -79,7 +79,7 @@ function header(p: Passport): HTMLElement[] {
     ),
     h('p', { class: 'pp-owner' }, isMine(p.ownerId) ? T.ownerYou : T.owner(p.ownerName)),
   ];
-  if (isLocked(p)) out.push(h('p', { class: 'pp-owner muted' }, T.lockedLegend));
+  if (isLocked(p)) out.push(h('p', { class: 'pp-owner muted' }, `${T.atLegend}. ${T.lockedLegend}`));
   return out;
 }
 
@@ -95,7 +95,8 @@ function rings(p: Passport): Ring[] {
         if (p.origin === 'upthere') {
           text = T.ringMintUpthere(to) + (p.dropSerial && p.dropQuantity ? T.ringDrop(p.dropSerial, p.dropQuantity) : '');
         } else if (p.origin === 'shop') {
-          text = e.price === 0 ? T.ringGift(to) : T.ringMintShop(to);
+          // prezzo 0 a un umano = regalo di benvenuto; a un bot è una scorta del Negozio
+          text = e.price === 0 && !e.toSystem ? T.ringGift(to) : T.ringMintShop(to);
         } else {
           text = T.ringMintOther(to);
         }
@@ -128,7 +129,7 @@ function rings(p: Passport): Ring[] {
 }
 
 function chain(p: Passport, seen: Map<number, ChainStatus>): HTMLElement {
-  const now = Date.now() + store.clockOffset;
+  const now = serverNow();
   const list = h('ol', { class: 'chain' });
   for (const r of rings(p)) {
     const badge = certBadge(r);
@@ -169,6 +170,18 @@ function certBadge(r: Ring): HTMLElement {
 }
 
 function actions(api: Api, p: Passport, locked: boolean, reload: () => void): HTMLElement[] {
+  const stall = p.stallPrice;
+  if (stall !== null) {
+    const buy = h('button', { class: 'btn btn-primary', type: 'button' }, T.stallBuyFor(stall));
+    buy.addEventListener('click', () =>
+      void act(buy, async () => {
+        await api.stallBuy(p.assetId);
+        toast(T.stallBought(shoeName(p.itemId)));
+        reload();
+      }),
+    );
+    return [buy];
+  }
   const l = p.listing;
   if (l && !isMine(l.sellerId)) {
     const buy = h('button', { class: 'btn btn-primary', type: 'button' }, T.buyFor(l.price));

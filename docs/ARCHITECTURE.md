@@ -379,20 +379,20 @@ DELIMITER ;
 | `sp_player_get_or_create(device_hash, nickname_candidate, recovery_hash)` ✅ M0 | Trova il giocatore dal device o lo crea: `GRANT` di 100 monete + `_sp_mint` della scarpa regalo a prezzo 0. Restituisce `player_id`, `created`, `gift_asset_id` | `NICKNAME_TAKEN` / `RECOVERY_TAKEN` (il server riprova con un altro valore), `DEVICE_TAKEN` (stesso device in parallelo: il server richiama la SP) |
 | `sp_player_set_avatar(player, skin, hair, hair_color, outfit)` | Solo se l'avatar non è ancora impostato. Gli indici sono validati contro `game_settings` | `AVATAR_ALREADY_SET`, `AVATAR_INVALID` |
 | `sp_player_recover(recovery_hash, device_hash)` | Associa il device al giocatore esistente | `CODE_NOT_FOUND` |
-| `sp_shop_buy(player, item)` | Item con `"shop"` tra le sources: `_sp_move_coins(player→1, SHOP)` + `_sp_mint(minted_by 2)` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
+| `sp_shop_buy(player, item)` ✅ M2 | Item con `"shop"` tra le sources: `_sp_move_coins(player→1, SHOP)` + `_sp_mint(minted_by 2)` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
 | `sp_listing_create(player, asset, price, perceived_value)` ✅ M0 | Prezzo tra `listing_min_price` e `perceived_value × listing_max_multiplier` (il valore lo passa il server, calcolato da `shared`) | `NOT_OWNER`, `ASSET_LOCKED`, `PRICE_OUT_OF_RANGE`, duplicato → `ALREADY_LISTED` |
-| `sp_listing_cancel(player, listing)` | | `NOT_OWNER`, `LISTING_CLOSED` |
+| `sp_listing_cancel(player, listing)` ✅ M2 | | `NOT_OWNER`, `LISTING_CLOSED` |
 | `sp_listing_buy(listing, buyer)` ✅ M0 | Vedi sopra | `LISTING_NOT_FOUND`, `LISTING_CLOSED`, `SELF_BUY`, `NOT_OWNER`, `ASSET_LOCKED`, `NO_FUNDS`, `INVENTORY_FULL`, `PLAYER_NOT_FOUND` |
 | `sp_treasury_seed(amount)` ✅ M0 | `GRANT` iniziale della tesoreria, una sola volta (il seed è rilanciabile) | |
-| `sp_bot_buy(listing, bot)` | Come `listing_buy`, ma paga la tesoreria (`BOT_BUY`) e non c'è commissione. Controlla la soglia di tesoreria | `TREASURY_LOW` |
-| `sp_stall_restock(item)` | `_sp_mint(to 3, minted_by 3, is_fake 1)` | |
-| `sp_stall_buy(player, asset)` | `STALL` verso la tesoreria, `TRANSFER 3→player` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
-| `sp_auth_request(player, asset)` | `AUTH` verso la tesoreria. Se falso: `fake_revealed = 1`, altrimenti `auth_verified = 1`. Restituisce il verdetto | `NOT_OWNER`, `NO_FUNDS` |
-| `sp_legend_wear(player, asset)` | `LEGEND` verso la tesoreria, `TRANSFER player→4` come `LEGEND_IN`, `locked_until = now + 10 s` | `NOT_OWNER`, `ASSET_LOCKED`, `LEGEND_COOLDOWN`, `LEGEND_MAXED`, `NO_FUNDS` |
-| `sp_legend_return(asset)` | Chiamata dallo scheduler: `LEGEND_OUT 4→ex owner`, `legend_count + 1`, sblocco | |
-| `sp_drop_open(item, quantity, window_sec)` | Crea il drop | |
-| `sp_drop_claim(drop, player)` | `DROP` verso la tesoreria, `_sp_mint(minted_by 1, drop_id)`, `sold + 1`, `assets.drop_serial = sold` | `DROP_CLOSED`, `DROP_SOLDOUT`, `DROP_ALREADY_CLAIMED`, `NO_FUNDS`, `INVENTORY_FULL` |
-| `sp_bot_restock(bot, item)` | `_sp_mint(to bot, minted_by 2)` | |
+| `sp_bot_buy(listing, bot, max_price)` ✅ M3 | Come `listing_buy`, ma paga la tesoreria (`BOT_BUY`) e non c'è commissione. Ricontrolla `price ≤ max_price` (perceivedValue × buy_pct, dal server), la soglia di tesoreria e l'inventario del bot. Mai da account di sistema | `TREASURY_LOW`, `PRICE_OUT_OF_RANGE`, `NOT_FOR_SALE`, `INVENTORY_FULL` |
+| `sp_stall_restock(item)` ✅ M3 | `_sp_mint(to 3, minted_by 3, is_fake 1)` | |
+| `sp_stall_buy(player, asset)` ✅ M3 | `STALL` verso la tesoreria (`base_value × stall.price_pct_of_base`), `TRANSFER 3→player` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
+| `sp_auth_request(player, asset)` ✅ M3 | `AUTH` verso la tesoreria. Se falso: `fake_revealed = 1`, altrimenti `auth_verified = 1`. Restituisce il verdetto. Una scarpa già verificata non si paga due volte | `NOT_OWNER`, `ASSET_LOCKED`, `ALREADY_VERIFIED`, `NO_FUNDS` |
+| `sp_legend_wear(player, asset)` ✅ M3 | `LEGEND` verso la tesoreria, evento `LEGEND_IN` player→4, `locked_until = now + wear_duration_sec`, `players.legend_ready_at = now + cooldown_sec`. **È un prestito**: `owner_id` resta il giocatore (I3 lo sa) | `NOT_OWNER`, `ASSET_LOCKED`, `ALREADY_LISTED`, `LEGEND_COOLDOWN`, `LEGEND_MAXED`, `NO_FUNDS` |
+| `sp_legend_return(asset)` ✅ M3 | Chiamata dallo scheduler a prestito scaduto: `LEGEND_OUT` 4→proprietario, `legend_count + 1`, `locked_until = NULL`. Idempotente | |
+| `sp_drop_open(item, quantity, window_sec)` ✅ M3 | Crea il drop | |
+| `sp_drop_claim(drop, player)` ✅ M3 | `DROP` verso la tesoreria, `_sp_mint(minted_by 1, drop_id)`, `sold + 1`, `assets.drop_serial = sold` | `DROP_CLOSED`, `DROP_SOLDOUT`, `DROP_ALREADY_CLAIMED`, `NO_FUNDS`, `INVENTORY_FULL` |
+| `sp_bot_restock(bot, item)` ✅ M3 | `_sp_mint(to bot, minted_by 2)` | |
 | `sp_chain_recover_sending()` ✅ M0 | All'avvio: `SENDING` → `PENDING` (rischio accettato: un hash notarizzato due volte) | |
 | `sp_chain_claim_batch(limit, batch_id)` ✅ M0 | `UPDATE … SET SENDING, chain_batch, attempts+1 WHERE PENDING ORDER BY id LIMIT n`, poi `SELECT` del batch | |
 | `sp_chain_mark_confirmed(batch_id, tx)` ✅ M0 | `CONFIRMED` + `chain_tx`. Restituisce `asset_id`, `from_id`, `to_id` per le notifiche | |
@@ -426,7 +426,7 @@ Handshake: `io(url, { auth: { deviceId } })`. Il server calcola `sha256(deviceId
 | `stall.list` / `stall.buy` | `{}` / `{ assetId }` |
 | `auth.request` | `{ assetId }` |
 | `legend.request` | `{ assetId }` |
-| `drop.claim` | `{ dropId }` |
+| `drop.claim` / `drop.state` | `{ dropId }` / `{}` |
 | `passport.get` | `{ assetId }` |
 | `leaderboard.get` | `{}` |
 
@@ -442,7 +442,10 @@ Handshake: `io(url, { auth: { deviceId } })`. Il server calcola `sha256(deviceId
 | `asset.updated` | `{ assetId }`: il passaporto ha un anello nuovo o un annuncio aperto/chiuso. Va alla room `asset:<id>` (chi ha il passaporto aperto), che ricarica con `passport.get` |
 | `asset.certified` | `{ assetId, eventId, txHash, explorerUrl }`, alla room `asset:<id>` e ai giocatori coinvolti nell'anello |
 | `market.updated` | `()`: la bacheca è cambiata; chi la sta guardando ricarica la prima pagina con `market.list` |
-| `drop.announce` / `drop.update` / `drop.closed` | `{ dropId, itemId, quantity, sold, closesAt }` |
+| `drop.announce` | `{ dropId, itemId, quantity, sold, price, closesAt }` a tutti; `state.init.drop` dà lo stesso stato a chi entra dopo |
+| `drop.update` / `drop.closed` | `{ dropId, sold }` / `{ dropId, nextAt }` |
+| `stall.updated` | `()`: il banco di Tony è cambiato (rifornimento o vendita) |
+| `legend.returned` | `{ assetId }` al proprietario: MC Suola ha restituito la scarpa |
 | `run.beat` | `{ beatId }` |
 | `run.end` | dati del reveal (§12 del GAME_DESIGN) |
 | `error` | `{ code, message }` (messaggio in italiano da mappa codici) |
@@ -557,6 +560,7 @@ export class ChainWorker implements OnModuleInit {
   - dopo un acquisto al Negozio si apre il passaporto, e l'anello passa da ⏳ a ✅ davanti al giocatore;
   - i bottoni d'azione restano disabilitati finché il server non risponde: niente doppi acquisti col doppio tap;
   - le icone scarpa sono solo a 32 o 64 px CSS, così la pixel art scala di un fattore intero.
+- **Loop di gioco** (M3, server): bot (`economy.bots.tick_sec`), rifornimento di Tony (`stall.restock_sec`), drop (orologio di mondo: multipli di `drops.interval_sec` dall'epoch, uguali per tutti), ritorno da MC Suola (ogni secondo). Partono subito all'avvio e poi a intervallo. Inoltrano ai client tramite `GameEventsService`. Nei test sono spenti (`GAME_LOOPS=off`) e si chiamano i loro `tick()`.
 - **Dati degli item**: il client importa `data/game_items.json` attraverso il plugin `sp-client-items` di `vite.config.ts`, che tiene solo i campi da mostrare. `reference_ids` (modelli reali), valori base e pesi dei drop non entrano nel bundle.
 - **Riconnessione**: socket.io con riconnessione automatica; a ogni riconnessione il server rimanda `state.init`.
 

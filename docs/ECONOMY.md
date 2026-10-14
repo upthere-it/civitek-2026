@@ -63,7 +63,9 @@ Cosa fa un bot quando agisce:
   - inventario del bot < `max_inventory_per_bot` (6).
 - **Rifornimento**: se l'inventario scende sotto 2, il bot conia 2 item `base` o `trend` a caso. È un `MINT` di sistema: non muove monete, ma viene certificato on-chain come ogni `MINT` autentico. Così, se poi la scarpa arriva a un umano, la sua origine risulta certificata.
 
-Lo stile in `npcs.json` (`compra_sottoprezzo`, `vende_trend`, …) pesa le scelte. All'avvio ogni bot parte con 3 item.
+Lo stile in `npcs.json` (`compra_sottoprezzo`, `vende_trend`, …) pesa le scelte: `economy.bots.styles` dice per ogni stile con che probabilità il bot prova prima a comprare (`buy_first`) e da quali tier si rifornisce. All'avvio ogni bot parte con `start_stock` (3) item; soglie e quantità di rifornimento sono `restock_below` / `restock_count`, gli annunci aperti al massimo `max_open_listings`.
+
+I bot non comprano falsi (nemmeno quelli non smascherati) né scarpe in prestito a MC Suola. "Umani online" = giocatori nel villaggio.
 
 I bot non comprano mai da altri bot né da Tony Affari, e non fanno annunci di falsi.
 

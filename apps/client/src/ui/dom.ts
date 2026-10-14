@@ -14,9 +14,19 @@ export function h<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Attrs = 
 
 export const uiRoot = () => document.getElementById('ui')!;
 
+/** Avvisi impilati in basso: due toast ravvicinati (es. "è tornata" e "Hai venduto") non si coprono. */
+function toastStack(): HTMLElement {
+  let stack = document.getElementById('toasts');
+  if (!stack) {
+    stack = h('div', { id: 'toasts', class: 'toasts', 'aria-live': 'polite' });
+    uiRoot().append(stack);
+  }
+  return stack;
+}
+
 export function toast(text: string, ms = 2600): void {
   const el = h('div', { class: 'toast', role: 'status' }, text);
-  uiRoot().append(el);
+  toastStack().append(el);
   setTimeout(() => el.classList.add('out'), ms);
   setTimeout(() => el.remove(), ms + 400);
 }

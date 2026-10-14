@@ -4,8 +4,8 @@ import { h, toast } from './dom';
 import { act, openPanel, row } from './panel';
 import { openPassport } from './passport';
 import { pricePicker } from './price';
-import { shoeColorway, shoeIcon, shoeText } from './shoe';
-import { store, subscribe } from './store';
+import { shoeBadge, shoeColorway, shoeText } from './shoe';
+import { serverNow, store, subscribe } from './store';
 import { T } from './texts';
 
 /** Armadio: le tue scarpe, il loro valore, Vendi / Ritira. Tap su una scarpa → passaporto. */
@@ -27,7 +27,10 @@ export function openWardrobe(api: Api): void {
 
   const itemRow = (it: InventoryItem): HTMLElement => {
     const sub = `${shoeColorway(it.itemId)} · ${T.serial(it.serial)} · ${T.value(it.perceivedValue)}`;
-    const main = [shoeIcon(it.itemId), shoeText(it.itemId, sub)];
+    const main = [shoeBadge(it), shoeText(it.itemId, sub)];
+    if (it.lockedUntil !== null && it.lockedUntil > serverNow()) {
+      return row(main, [h('span', { class: 'row-badge' }, T.atLegend)], () => openPassport(api, it.assetId));
+    }
     if (it.listingId !== null) {
       const listingId = it.listingId;
       const cancel = h('button', { class: 'btn-small btn-secondary', type: 'button' }, T.unlist);

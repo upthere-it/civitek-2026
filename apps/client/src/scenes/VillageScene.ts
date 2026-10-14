@@ -22,7 +22,7 @@ const C = gameConfig.brand.colors;
 const num = (hex: string) => parseInt(hex.replace('#', ''), 16);
 const DEPTH_ROOFS = 100_000; // tetti e insegne coprono i personaggi che passano dietro
 const UI_DEPTH = 200_000;
-const LABEL_DY = 46; // il nome sopra la testa (frame da 64, piedi a 0.75)
+const LABEL_DY = 34; // il nome appena sopra la testa (frame da 64, piedi a 0.75): più in alto finiva sull'NPC davanti
 
 export interface VillageInit {
   me: { id: number; nickname: string; profile: PlayerProfile; position: Point };
@@ -46,6 +46,7 @@ interface Remote extends Actor {
 export class VillageScene extends Phaser.Scene {
   private village!: Village;
   private init!: VillageInit;
+  private readonly bubbles = new Map<string, Phaser.GameObjects.Text>();
   private me!: Actor & { mover: Mover; pendingPlace: Place | null };
   private readonly remotes = new Map<number, Remote>();
   private marker?: Phaser.GameObjects.Arc;
@@ -265,6 +266,8 @@ export class VillageScene extends Phaser.Scene {
   /** Fumetto con una battuta dell'NPC (npcs.json). */
   say(place: Place, text: string): void {
     this.events.emit('say', { zone: place.name, text });
+    // una battuta nuova sostituisce quella ancora a schermo dello stesso NPC
+    this.bubbles.get(place.name)?.destroy();
     const t = this.add
       .text(place.x, place.y - 46, text, {
         fontFamily: '"DM Sans", sans-serif',
@@ -279,13 +282,34 @@ export class VillageScene extends Phaser.Scene {
       .setScale(1 / this.zoom)
       .setResolution(window.devicePixelRatio || 1)
       .setDepth(UI_DEPTH);
-    this.time.delayedCall(4000, () => this.tweens.add({ targets: t, alpha: 0, duration: 300, onComplete: () => t.destroy() }));
+    this.bubbles.set(place.name, t);
+    this.time.delayedCall(4000, () =>
+      this.tweens.add({
+        targets: t,
+        alpha: 0,
+        duration: 300,
+        onComplete: () => {
+          if (this.bubbles.get(place.name) === t) this.bubbles.delete(place.name);
+          t.destroy();
+        },
+      }),
+    );
   }
 
-  /** Solo per i test end-to-end in sviluppo (vedi main.ts): cammina verso una zona come dopo un tap. */
-  debugGoTo(zone: string): void {
-    const place = this.village.places.find((p) => p.name === zone);
+  /** Cammina verso una zona come dopo un tap (banner del drop, test end-to-end). */
+  goTo(zone: string): void {
+    const place = this.place(zone);
     if (place) this.walkTo(place.approach ?? place, place);
+  }
+
+  /** Battuta dell'NPC di una zona, anche senza esserci arrivati (drop aperto, MC Suola che restituisce). */
+  sayAt(zone: string, text: string): void {
+    const place = this.place(zone);
+    if (place) this.say(place, text);
+  }
+
+  private place(zone: string): Place | undefined {
+    return this.village.places.find((p) => p.name === zone);
   }
 
   /** Solo per i test end-to-end in sviluppo (vedi main.ts). */

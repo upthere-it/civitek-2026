@@ -37,13 +37,22 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 > Verificato in automatico: test end-to-end sul gateway (due giocatori, scambio, `inventory.updated` / `market.updated` / `asset.updated` / `asset.certified`) e smoke con 2 browser mobili headless (iPhone 13 + iPhone SE). A compra al Negozio e vede ⏳ → ✅, mette in bacheca; B apre il passaporto dalla bacheca, compra e vede l'anello "Venduta a te" diventare ✅; A riceve "Hai venduto…". Con `MockNotary` ci vogliono circa 2 s. **Da fare: prova su 2 telefoni veri (Simone) e, con le credenziali (D11), la latenza reale di Commercio.**
 
 ### M3 — Le meccaniche del messaggio (lun 19/10)
-- [ ] Tony Affari: restock dei falsi, acquisto, passaporto con ⚠️
-- [ ] Dott.ssa Hash: verifica, badge ✅ / timbro ❌, valore 2
-- [ ] MC Suola: prestito di 10 s, `LEGEND_IN` / `LEGEND_OUT`, bonus, cooldown
-- [ ] Drop di mondo ogni 3' con annuncio a tutti
-- [ ] Bot di mercato con attività in funzione degli umani online
+- [x] Tony Affari: restock dei falsi, acquisto, passaporto con ⚠️
+- [x] Dott.ssa Hash: verifica, badge ✅ / timbro ❌, valore 2
+- [x] MC Suola: prestito di 10 s, `LEGEND_IN` / `LEGEND_OUT`, bonus, cooldown
+- [x] Drop di mondo ogni 3' con annuncio a tutti
+- [x] Bot di mercato con attività in funzione degli umani online
 
 **Accettazione**: un giocatore da solo, senza altri umani online, riesce a fare tutte le azioni del gioco grazie ai bot.
+
+> Verificato in automatico: `mechanics.spec` (SP a livello DB) e `m3.gateway.spec` (via socket, un giocatore da solo), più uno smoke in browser con un giocatore e i bot attivi:
+> - bacheca piena di annunci dei bot;
+> - falso comprato da Tony senza guardare il passaporto e smascherato dalla Dott.ssa Hash (timbro ❌, valore 2);
+> - MC Suola: prestito, ritorno dopo 10 s, +40%;
+> - un bot compra l'annuncio sottoprezzo ("Hai venduto…");
+> - banner del drop → "Vai" → Banca → acquisto → passaporto "Creata da Upthere — drop n. 1 di 4".
+>
+> **Da fare: prova su un telefono vero (Simone).**
 
 ### M4 — Prima run e reveal (mar 20/10)
 - [ ] Timer della prima run e beat (`run.beat`), obiettivo, badge "Mercante"
@@ -174,3 +183,22 @@ _(Claude Code: aggiungi qui una riga per sessione con data, milestone, cosa è s
     - credenziali commercio.app (D11) per la prima notarizzazione vera sulla testnet;
     - prova su telefoni veri di M1 e M2;
     - pannelli di Banca, Tony Affari, Dott.ssa Hash, MC Suola ed Enoteca in M3.
+- **14/10 — M3 completata (in attesa del telefono vero).**
+  - **Fatto**:
+    - `sql/008_mechanics.sql`: bancarella, autenticazione, MC Suola, drop, scorte e acquisti dei bot; `sp_economy_check` ridefinita (I3 tiene conto del prestito);
+    - server: `MechanicsService`, `DropService` (orologio di mondo), `BotService` (attività in funzione degli umani nel villaggio), `GameEventsService`;
+    - client: pannelli di Tony, Dott.ssa Hash, MC Suola e Banca, banner del drop con "Vai", timbro ✅/❌ sulle icone, "In prestito a MC Suola" nell'armadio, toast impilati, battute che si sostituiscono invece di sovrapporsi;
+    - `npm run dev` avvia solo server e client, senza toccare il DB; su Windows lancia `npm-cli.js` (lo spawn di `npm.cmd` dà `EINVAL` con Node ≥ 18.20).
+  - **Test**: `npm test` 30 di shared + 88 del server; smoke M3 (sopra) e regressione dello smoke M2 con i bot attivi, nessun errore in console.
+  - **Scelte fuori documento**:
+    - MC Suola è un prestito: `owner_id` non cambia, la catena registra `LEGEND_IN` (giocatore → MC Suola) e `LEGEND_OUT`. Così armadio, valore e bacheca non si rompono per 10 secondi;
+    - da Tony il "Compra" sta nella riga e la lista non mostra il valore: chi apre il passaporto vede il ⚠️, chi non lo apre ci casca;
+    - la Dott.ssa Hash non fa pagare due volte la stessa scarpa (`ALREADY_VERIFIED`);
+    - i numeri dei bot sono in `economy.bots.*` (stili compresi), non nel codice;
+    - i loop partono subito all'avvio: Tony ha il banco pieno e i bot hanno le scorte;
+    - etichetta del nickname più bassa (da 46 a 34 px): prima finiva sull'NPC davanti.
+  - **Aperto**:
+    - Enoteca DOP Digital (§15) e prima run in M4;
+    - D6 (nomi NPC);
+    - il DB `civitek` sul server di test non ha ancora la 008;
+    - un drop lasciato aperto durante un riavvio del server resta in DB ma non viene ripreso: il prossimo si apre all'orario successivo.

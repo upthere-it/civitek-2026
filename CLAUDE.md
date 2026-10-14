@@ -35,7 +35,7 @@ DOP Digital fa la stessa cosa con le bottiglie di vino. Il gioco funziona **in a
 
 1. **Server autoritativo.** Il client invia intenzioni (`listing.buy`), mai stati (saldi, prezzi, proprietari, valori).
 2. **Monete solo via ledger.** Ogni movimento passa da `coin_ledger`. Invariante: monete in circolazione = monete emesse. Il test `economy.invariants.spec` è obbligatorio e deve restare verde.
-3. **Proprietà e monete solo in stored procedure**, dentro una transazione, con l'ordine di lock definito in ARCHITECTURE: `market_listings` → `players` (id crescente) → `assets`.
+3. **Proprietà e monete solo in stored procedure**, dentro una transazione, con l'ordine di lock definito in ARCHITECTURE: `market_listings` / `drops` → `players` (id crescente) → `assets`.
 4. **La blockchain non sta mai nel percorso critico.** Lo scambio è valido al COMMIT; la certificazione arriva dopo, dal worker, con il pattern outbox. Mai chiamare la chain dentro una transazione DB.
 5. **Nessun marchio reale** nel gioco: nomi, loghi e silhouette sono fittizi. Gli sprite non devono riprodurre swoosh, tre strisce, jazz stripe o altri segni distintivi. Gli asset fantasy del pack (armi, orchi, scheletri, dungeon) sono esclusi apposta: non reintrodurli.
 6. **Gli utenti sono minorenni.**

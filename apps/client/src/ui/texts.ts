@@ -88,4 +88,45 @@ export const T = {
   buyFor: (price: number) => `Compra a ${price} monete`,
   bought: 'È tua! Guarda il passaporto: c’è un anello nuovo.',
   unlistCta: 'Ritira dalla bacheca',
+  stallBuyFor: (price: number) => `Compra da Tony a ${price} monete`,
+  atLegend: 'In prestito a MC Suola',
+  countdown: (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`,
+
+  // Tony Affari (GAME_DESIGN §9)
+  stallTitle: 'Bancarella di Tony',
+  stallEmpty: 'Banco vuoto. Tony sta "rifornendo": ripassa tra poco.',
+  stallSub: (colorway: string, serial: number) => `${colorway} · n. ${serial}`,
+  stallBuy: (price: number) => `${price} monete`,
+  stallBought: (name: string) => `${name} è tua. Affare… o no?`,
+
+  // Dott.ssa Hash
+  authTitle: 'Dott.ssa Hash',
+  authHint: (cost: number) => `Scegli una scarpa da verificare: ${cost} monete.`,
+  authCta: (cost: number) => `Verifica · ${cost}`,
+  authEmpty: 'Non hai scarpe da verificare.',
+  authGenuine: '✅ Autentica. Ogni passaggio torna, dal primo all’ultimo.',
+  authFake: '❌ Falsa. Il passaporto non parte da un produttore certificato.',
+  authDoneGenuine: '✅ Autentica',
+  authDoneFake: '❌ Falsa',
+
+  // MC Suola (GAME_DESIGN §10)
+  legendTitle: 'MC Suola',
+  legendHint: (cost: number, sec: number) => `Per ${cost} monete MC Suola la indossa ${sec} secondi e la tua scarpa entra nella storia.`,
+  legendCta: (cost: number) => `Falla indossare · ${cost}`,
+  legendMaxed: 'Già leggenda',
+  legendWearing: (sec: number) => `La sta indossando… ${sec}s`,
+  legendCooldown: (sec: number) => `MC Suola si riposa ancora ${sec}s.`,
+  legendBack: (name: string) => `${name} è tornata: nel passaporto c’è MC Suola.`,
+
+  // Banca Upthere e drop (GAME_DESIGN §11)
+  bankTitle: 'Banca Upthere',
+  bankNext: (time: string) => `Prossimo drop tra ${time}.`,
+  dropBanner: (qty: number, name: string, price: number, sec: number) =>
+    `Drop alla Banca Upthere: ${qty} paia di ${name} a ${price} monete. Hai ${sec} secondi.`,
+  dropGo: 'Vai',
+  dropSold: (sold: number, qty: number) => `${sold} di ${qty} già prese`,
+  dropLeft: (time: string) => `Chiude tra ${time}`,
+  dropBuy: (price: number) => `Compra a ${price} monete`,
+  dropBought: (name: string) => `${name} è tua: creata da Upthere, vale subito di più.`,
+  dropOver: 'Drop finito.',
 };

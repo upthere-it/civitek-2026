@@ -8,14 +8,20 @@ import { ACK_TIMEOUT_MS, RequestError, connectSocket, request, type GameSocket }
 import { AvatarScene } from './scenes/AvatarScene';
 import { BOOT_PROGRESS, BOOT_READY, BootScene } from './scenes/BootScene';
 import { VillageScene } from './scenes/VillageScene';
+import { openAuth } from './ui/auth';
 import { showAvatarPicker } from './ui/avatar';
+import { openBank } from './ui/bank';
+import { hideDropBanner, showDropBanner } from './ui/banner';
 import { openBoard } from './ui/board';
 import { toast } from './ui/dom';
 import { showBlocker, showHud } from './ui/hud';
 import { showLanding } from './ui/landing';
+import { openLegend } from './ui/legend';
+import { npcLine } from './ui/npc';
 import { panelsOpen } from './ui/panel';
 import { shoeName } from './ui/shoe';
 import { openShop } from './ui/shop';
+import { openStall } from './ui/stall';
 import { publish, store } from './ui/store';
 import { T } from './ui/texts';
 import { openWardrobe } from './ui/wardrobe';
@@ -77,6 +83,30 @@ function enter(): void {
   socket.on(S2C.MARKET_UPDATED, () => publish('market'));
   socket.on(S2C.ASSET_UPDATED, (m) => publish('asset', m.assetId));
   socket.on(S2C.ASSET_CERTIFIED, (m) => publish('asset', m.assetId));
+  socket.on(S2C.STALL_UPDATED, () => publish('stall'));
+  socket.on(S2C.DROP_ANNOUNCE, (d) => {
+    store.drop = { ...store.drop, current: d };
+    publish('drop');
+    const line = npcLine('banca', 'drop_open', { qty: d.quantity, item: shoeName(d.itemId), price: d.price });
+    if (line) village()?.sayAt('banca', line);
+    showDropBanner(d, () => village()?.goTo('banca'));
+  });
+  socket.on(S2C.DROP_UPDATE, (m) => {
+    if (store.drop.current?.dropId === m.dropId) store.drop = { ...store.drop, current: { ...store.drop.current, sold: m.sold } };
+    publish('drop');
+  });
+  socket.on(S2C.DROP_CLOSED, (m) => {
+    if (store.drop.current?.dropId === m.dropId) store.drop = { current: null, nextAt: m.nextAt };
+    hideDropBanner();
+    publish('drop');
+  });
+  socket.on(S2C.LEGEND_RETURNED, (m) => {
+    const item = store.inventory.find((i) => i.assetId === m.assetId);
+    const line = npcLine('palco', 'returned');
+    if (line) village()?.sayAt('palco', line);
+    if (item) toast(T.legendBack(shoeName(item.itemId)));
+    publish('asset', m.assetId);
+  });
   socket.on(S2C.ERROR, (e) => {
     if (e.code === 'SESSION_REPLACED') showBlocker(e.message, T.replacedCta, () => socket?.connect());
     else toast(e.message);
@@ -110,7 +140,7 @@ if (import.meta.env.DEV) {
   const says: { zone: string; text: string }[] = [];
   game.events.on('village-ready', (scene: VillageScene) => scene.events.on('say', (m: { zone: string; text: string }) => says.push(m)));
   Object.assign(window, {
-    __sp: { village: () => village()?.debugState() ?? null, goTo: (zone: string) => village()?.debugGoTo(zone), emotes: debugEmotes, says },
+    __sp: { village: () => village()?.debugState() ?? null, goTo: (zone: string) => village()?.goTo(zone), emotes: debugEmotes, says },
   });
 }
 
@@ -118,6 +148,8 @@ if (import.meta.env.DEV) {
 async function onState(state: StateInit): Promise<void> {
   store.me = { id: state.player.id, nickname: state.player.nickname };
   store.clockOffset = state.serverTime - Date.now();
+  store.drop = state.drop;
+  store.legendReadyAt = state.player.legendReadyAt;
   setInventory({ coins: state.player.coins, wardrobeValue: state.wardrobeValue, inventory: state.inventory }, false);
   // dopo una riconnessione i pannelli aperti si ricaricano
   publish('market');
@@ -190,19 +222,31 @@ function startVillage(state: StateInit, look: AvatarLook, position: { x: number;
   hud.setWallet(store.coins, store.wardrobeValue);
 }
 
-/**
- * All'arrivo l'NPC dice una battuta; Negozio e Bacheca aprono il loro pannello. Gli altri pannelli (banca,
- * Tony Affari, Dott.ssa Hash, MC Suola, enoteca) arrivano con M3.
- */
+// conti alla rovescia nei pannelli aperti (drop, MC Suola)
+setInterval(() => publish('tick'), 1000);
+
+/** All'arrivo da un NPC si apre il suo pannello; l'Enoteca DOP Digital per ora dice solo una battuta (M4). */
 function talk(place: Place): void {
   const scene = village();
   if (!scene || !api || panelsOpen()) return;
-  if (place.type === 'board') {
-    openBoard(api);
-    return;
+  const say = (line: string | null) => line && scene.say(place, line);
+  switch (place.type === 'board' ? 'bacheca' : place.name) {
+    case 'bacheca':
+      return openBoard(api);
+    case 'negozio': {
+      const line = npcLine('negozio', 'idle');
+      say(line);
+      return void openShop(api, line);
+    }
+    case 'bancarella':
+      return openStall(api, () => say(npcLine('bancarella', 'after_sale')));
+    case 'autenticatore':
+      return openAuth(api, say);
+    case 'palco':
+      return openLegend(api, say);
+    case 'banca':
+      return openBank(api);
+    default:
+      say(npcLine(place.name, 'idle'));
   }
-  const lines = scene.npcInfo(place)?.lines.idle ?? [];
-  const line = lines.length ? lines[crypto.getRandomValues(new Uint32Array(1))[0] % lines.length] : null;
-  if (line) scene.say(place, line);
-  if (place.name === 'negozio') void openShop(api, line);
 }
