@@ -517,11 +517,13 @@ export class ChainWorker implements OnModuleInit {
 | Esito | `GET /sharedoc/process/{process_id}` → `status` (`enqueued` … `success`/`failure`) e `doc_tx_hash`; oppure `POST` sul `back_url` quando ha finito. `GET /sharedoc/{document_uuid}` dà 404 finché la tx non è indicizzata |
 | Explorer | `https://testnet.commercio.network/transactions/detail/{txHash}`, lo stesso formato usato in `ms-carma-advisory` |
 
-**Uso nel gioco** (`CommercioNotary`, M4): porting minimo delle chiamate di `@mvl/commercio-network`, con `fetch` nativo e `crypto.randomUUID`, senza axios/qs/uuid. Le stesse variabili d'ambiente.
+**Uso nel gioco** (`apps/server/src/chain/commercio-notary.ts`, si attiva con `chain.notary = "commercio"`; i parametri sono in `chain.commercio`): porting minimo delle chiamate di `@mvl/commercio-network`, con `fetch` nativo e `crypto.randomUUID`, senza axios/qs/uuid. Le stesse variabili d'ambiente.
 - **Per batch** (D10, proposta): un `sharedoc` per batch con `hash = sha256(notaryPayload(batch))`, cioè il pattern "hash cumulativo" già usato in Carma. `content_uri = https://civitek.upthere.it/api/chain/batch/<document_uuid>` restituisce `{ v, app, events: [[eventId, hash], …] }`: chiunque può ricalcolare l'hash del batch e confrontarlo con il checksum on-chain. Rientra nell'interfaccia `ChainNotary` attuale (un `txHash` per batch) senza toccare il worker.
 - **Per evento** (alternativa): un `sharedoc` per anello, con checksum = hash dell'anello. È più diretto da mostrare ai ragazzi, ma fa 1–1,5 chiamate API/s al picco; limiti e costi dell'account vanno verificati con Commercio.
 - `notarizeBatch` invia il processo e poi interroga `/sharedoc/process/{id}` finché non arriva `doc_tx_hash`, con timeout. Un solo batch in volo alla volta: durante l'attesa gli eventi si accumulano nel batch successivo. In produzione si può aggiungere il `back_url` (`/api/chain/commercio-callback`) per non dipendere solo dal polling.
 - Latenza attesa ⏳ → ✅: coda di commercio.app + un blocco (~5 s) + indicizzazione. Va misurata alla prima prova.
+- `GET /api/chain/batch/:batchId` (pubblico) è il `content_uri`. Restituisce `{ v, app, batchId, events, sha256, network, txHash, explorerUrl }`: `sha256` è il checksum on-chain, ricalcolabile dagli `events`.
+- Il `batchId` del worker (UUID v4) è anche il `document_uuid` su Commercio.
 
 ## 7. Client
 

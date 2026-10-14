@@ -80,6 +80,19 @@ export interface ChainCfg {
   /** Template: {txHash} viene sostituito con l'hash della transazione. */
   explorer_tx_url: string;
   mock: { min_delay_ms: number; max_delay_ms: number };
+  commercio: CommercioCfg;
+}
+
+/** API commercio.app (come @mvl/commercio-network nel repo microservices). Le credenziali stanno nel .env. */
+export interface CommercioCfg {
+  auth_token_url: string;
+  client_id: string;
+  api_url: string;
+  schema_uri: string;
+  schema_version: string;
+  poll_interval_ms: number;
+  poll_timeout_ms: number;
+  http_timeout_ms: number;
 }
 
 export interface FirstRunCfg {

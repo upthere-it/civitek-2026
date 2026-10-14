@@ -75,7 +75,7 @@ export class ChainWorker implements OnModuleInit, OnModuleDestroy {
 
       let txHash: string;
       try {
-        ({ txHash } = await this.notary.notarizeBatch(rows.map((r) => ({ eventId: r.id, hash: r.hash }))));
+        ({ txHash } = await this.notary.notarizeBatch(rows.map((r) => ({ eventId: r.id, hash: r.hash })), batchId));
       } catch (err) {
         const [res] = await this.db.call<{ failed: number }>('sp_chain_mark_failed', [
           batchId,

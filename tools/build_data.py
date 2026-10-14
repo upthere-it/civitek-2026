@@ -363,6 +363,17 @@ game_config = {
         "explorer_tx_url": "https://testnet.commercio.network/transactions/detail/{txHash}",
         "certify": "MINT (tranne FAKE_MINT) + ogni evento con almeno un giocatore umano",
         "mock": {"min_delay_ms": 1500, "max_delay_ms": 4000},
+        "commercio": {
+            "_note": "API commercio.app come @mvl/commercio-network (repo microservices). Ambiente dev = testnet. Credenziali solo in .env: CN_USERNAME, CN_PASSWORD, CN_RECIPIENT_ADDRESS",
+            "auth_token_url": "https://devlogin.commercio.app/auth/realms/commercio/protocol/openid-connect/token",
+            "client_id": "dev.commercio.app",
+            "api_url": "https://dev-api.commercio.app/v1",
+            "schema_uri": "https://civitek.upthere.it/schema/sneaker-passport-batch",
+            "schema_version": "1",
+            "poll_interval_ms": 2000,
+            "poll_timeout_ms": 90000,
+            "http_timeout_ms": 10000,
+        },
     },
     "leaderboard": {"metric": "wardrobe_value", "size": 10},
 }

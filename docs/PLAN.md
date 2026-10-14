@@ -49,7 +49,8 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 - [ ] Recupero da un altro device (`sp_player_recover`)
 - [ ] Enoteca DOP Digital con la bottiglia demo
 - [ ] Classifica
-- [ ] `CommercioNotary` via API commercio.app (porting di `@mvl/commercio-network`, ARCHITECTURE §6) e `chain.notary = "commercio"`. Senza credenziali (D11) entro il 20/10 si resta su Mock
+- [x] `CommercioNotary` via API commercio.app (porting di `@mvl/commercio-network`, ARCHITECTURE §6), anticipato il 14/10: provato contro un finto commercio.app
+- [ ] Credenziali nel `.env` (D11), prima notarizzazione vera sulla testnet, `chain.notary = "commercio"`. Senza credenziali entro il 20/10 si resta su Mock
 
 **Accettazione**: run completa di 5 minuti su telefono vero, dal QR al reveal, senza intoppi.
 
