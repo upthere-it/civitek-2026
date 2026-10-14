@@ -99,7 +99,9 @@
     "recovery_code": {
       "length": 6,
       "alphabet": "ABCDEFGHJKMNPQRSTUVWXYZ23456789",
-      "display_format": "XXX-XXX"
+      "display_format": "XXX-XXX",
+      "attempts_per_ip_per_min": 10,
+      "attempts_global_per_min": 120
     },
     "inactivity_anonymize_days": 30,
     "rate_limit_actions_per_sec": 8
@@ -380,6 +382,7 @@
   },
   "leaderboard": {
     "metric": "wardrobe_value",
-    "size": 10
+    "size": 10,
+    "cache_sec": 5
   }
 }

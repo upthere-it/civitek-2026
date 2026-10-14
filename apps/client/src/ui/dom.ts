@@ -30,3 +30,13 @@ export function toast(text: string, ms = 2600): void {
   setTimeout(() => el.classList.add('out'), ms);
   setTimeout(() => el.remove(), ms + 400);
 }
+
+/** Banner in alto (drop, beat della prima run), impilati sotto l'HUD: due insieme non si coprono. */
+export function bannerStack(): HTMLElement {
+  let stack = document.getElementById('banners');
+  if (!stack) {
+    stack = h('div', { id: 'banners', class: 'banners' });
+    uiRoot().append(stack);
+  }
+  return stack;
+}

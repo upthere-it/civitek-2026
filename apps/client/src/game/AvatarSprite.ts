@@ -34,6 +34,18 @@ const BODY_LAYERS: Record<string, { body: string; lower: string; lowerTint: 'pan
   ragazza: { body: 'skinf', lower: 'skirt', lowerTint: 'outfit' },
 };
 
+/** Layer dal basso verso l'alto, con il colore del tint (null = il corpo, già colorato). */
+export function layerDefs(parts: AvatarParts): [prefix: string, tint: string | null][] {
+  const style = BODY_LAYERS[parts.bodyType] ?? BODY_LAYERS.ragazzo;
+  return [
+    [`${style.body}_${parts.skin}`, null],
+    [style.lower, style.lowerTint === 'outfit' ? parts.outfitColor : gameConfig.avatar.pants_color],
+    ['shoes', parts.shoesColor],
+    ['hoodie', parts.outfitColor],
+    [`hair_${parts.hairStyle}`, parts.hairColor],
+  ];
+}
+
 /**
  * Avatar a 5 layer sovrapposti (docs/ASSETS.md §3): corpo, pantaloni o gonna, scarpe, felpa, capelli.
  * Gli overlay sono in grigi e vengono tinti (solo WebGL). Gli sheet `side` guardano a destra.
@@ -45,15 +57,7 @@ export class AvatarSprite extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, parts: AvatarParts) {
     super(scene, x, y);
     const a = gameConfig.avatar;
-    const style = BODY_LAYERS[parts.bodyType] ?? BODY_LAYERS.ragazzo;
-    const defs: [string, string | null][] = [
-      [`${style.body}_${parts.skin}`, null],
-      [style.lower, style.lowerTint === 'outfit' ? parts.outfitColor : a.pants_color],
-      ['shoes', parts.shoesColor],
-      ['hoodie', parts.outfitColor],
-      [`hair_${parts.hairStyle}`, parts.hairColor],
-    ];
-    for (const [prefix, tint] of defs) {
+    for (const [prefix, tint] of layerDefs(parts)) {
       const s = scene.add.sprite(0, 0, `${prefix}_idle_down`).setOrigin(a.frame.origin_x, a.frame.origin_y);
       if (tint) s.setTint(hex(tint));
       this.add(s);

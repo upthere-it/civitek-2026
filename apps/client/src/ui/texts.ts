@@ -4,6 +4,11 @@ export const T = {
   landingCta: 'Entra nel mercato',
   loading: (pct: number) => `Carico il villaggio… ${pct}%`,
   connecting: 'Entro…',
+  landingRecover: 'Hai già giocato? Inserisci il codice',
+  recoverLabel: 'Il tuo codice',
+  recoverCta: 'Rientra',
+  recoverBack: 'Gioco da capo',
+  recoverFormat: (n: number, format: string) => `Il codice ha ${n} caratteri, così: ${format}.`,
   avatarTitle: 'Crea il tuo personaggio',
   avatarWho: 'Chi sei nel villaggio',
   avatarLookTitle: 'Il tuo look',
@@ -146,4 +151,57 @@ export const T = {
   dropBuy: (price: number) => `Compra a ${price} monete`,
   dropBought: (name: string) => `${name} è tua: creata da Upthere, vale subito di più.`,
   dropOver: 'Drop finito.',
+
+  // prima run (GAME_DESIGN §5): un banner per beat, si chiude con un tap
+  beats: {
+    welcome: (coins: number) => `Benvenuto al villaggio! Hai ${coins} monete e il tuo primo paio.`,
+    tooltip_move: () => 'Tocca dove vuoi andare.',
+    tooltip_passport: () => 'Apri il passaporto della tua scarpa: per ora c’è solo il tuo nome.',
+    objective: (pct: number, target: number) =>
+      `Obiettivo: fai crescere del ${pct}% il valore del tuo armadio prima che chiuda il mercato. Arriva a ${target}.`,
+    hint_stall: () => 'Da Tony Affari i prezzi sono bassi. Troppo bassi?',
+    hint_legend: () => 'MC Suola può far entrare la tua scarpa nella storia.',
+    hint_market: () => 'Guarda la bacheca: qualcuno svende?',
+    closing_warning: (sec: number) => `Il mercato della tua prima giornata chiude tra ${sec} secondi.`,
+  },
+  beatOpen: 'Apri',
+  beatGo: 'Vai',
+  runTimer: (time: string, target: number) => `⏱ ${time} · 🎯 ${target}`,
+  runReached: (time: string) => `⏱ ${time} · 🎯 raggiunto!`,
+
+  // reveal (GAME_DESIGN §12)
+  revealTitle: 'La tua giornata al mercato',
+  revealValues: (from: number, to: number) => `Valore armadio: ${from} → ${to}`,
+  revealMerchant: '🏅 Mercante',
+  revealMerchantHint: (target: number) => `Obiettivo raggiunto: oltre ${target}.`,
+  revealMissed: (target: number) => `L’obiettivo era ${target}: il badge sarà per la prossima. Non hai perso niente.`,
+  revealTrades: (n: number) => (n === 1 ? '1 scambio' : `${n} scambi`),
+  revealFakes: (bought: number, spotted: number) =>
+    bought === 0
+      ? 'Nessun falso nel tuo armadio'
+      : `${bought === 1 ? '1 falso comprato' : `${bought} falsi comprati`}${spotted ? `, ${spotted} smascherat${spotted === 1 ? 'o' : 'i'}` : ', nessuno smascherato'}`,
+  revealBestTitle: 'La tua scarpa più preziosa',
+  revealBridge: (n: number) =>
+    `Questa scarpa ha avuto ${n} ${n === 1 ? 'proprietario' : 'proprietari'}. Ogni passaggio è certificato su blockchain. DOP Digital fa la stessa cosa con le bottiglie di vino: inquadri il QR e vedi tutta la storia, dal vigneto al tavolo.`,
+  revealBridgeNone:
+    'Ogni passaggio delle tue scarpe è certificato su blockchain. DOP Digital fa la stessa cosa con le bottiglie di vino: inquadri il QR e vedi tutta la storia, dal vigneto al tavolo.',
+  revealCtaDop: 'Scopri DOP Digital',
+  revealCodeTitle: 'Il tuo codice',
+  revealCodeHint: 'Salvalo: ti serve per rientrare da un altro telefono.',
+  revealCodeUnknown: 'È il codice che hai usato per rientrare su questo telefono.',
+  revealContinue: 'Continua a giocare',
+
+  // profilo, classifica, enoteca
+  profileTitle: 'Il tuo profilo',
+  profileDay: 'Rivedi la tua giornata',
+  profileRun: (time: string) => `La tua prima giornata finisce tra ${time}.`,
+  leaderboardOpen: 'Classifica',
+  leaderboardTitle: 'Classifica',
+  leaderboardHint: 'Per valore armadio: monete più il valore delle scarpe.',
+  leaderboardEmpty: 'Ancora nessuno in classifica.',
+  leaderboardYou: 'tu',
+  leaderboardMerchant: 'Mercante',
+  wineTitle: 'Enoteca DOP Digital',
+  wineCertified: '✅ certificato',
+  wineFooter: 'Come per le scarpe: ogni passaggio della bottiglia è un anello della catena, certificato.',
 };

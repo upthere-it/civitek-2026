@@ -91,6 +91,8 @@ Gli eventi sono scanditi da `first_run.beats`. Ogni beat è un tooltip o un bann
 | 4:30 | `closing_warning` | "Il mercato della tua prima giornata chiude tra 30 secondi." |
 | 5:00 | `reveal` | Schermata reveal (§12) |
 
+Durante la run l'HUD mostra il conto alla rovescia e il valore da raggiungere (⏱ 4:12 · 🎯 169); i beat sui posti (Tony, MC Suola, bacheca, passaporto) hanno un bottone che porta lì.
+
 Nel frattempo partono anche i **drop di mondo** ogni 3 minuti (§11), quindi in una run se ne vedono 1 o 2.
 
 **Obiettivo della run**: valore armadio finale ≥ valore iniziale × `first_run.objective.multiplier` (1,3, da tarare in playtest).
@@ -227,7 +229,7 @@ I falsi si possono rivendere in bacheca, come succede nel mondo reale. Il passap
 
 ## 13. Classifica
 
-- Top 10 per valore armadio (`leaderboard`), con nickname e avatar.
+- Top 10 per valore armadio (`leaderboard`), con nickname, avatar e 🏅 per chi ha il badge "Mercante". Bot e account di sistema non ci sono.
 - Si apre da un'icona nell'HUD.
 - È sempre visibile anche la propria posizione.
 
@@ -237,6 +239,8 @@ I falsi si possono rivendere in bacheca, come succede nel mondo reale. Il passap
 - Si genera alla creazione del giocatore e si mostra nel reveal e nel profilo.
 - Nel DB si salva solo l'hash SHA-256.
 - Inserendo il codice sulla landing, il `device_id` corrente viene associato al giocatore esistente. Il vecchio device resta valido.
+- Tentativi limitati per IP e in tutto il server (`player.recovery_code.attempts_*`): una classe intera dietro lo stesso NAT ci sta comoda, chi prova i codici a tappeto no.
+- Il codice si rivede nel profilo (tap sul nome nell'HUD), insieme al reveal della prima giornata.
 
 ## 15. Enoteca DOP Digital
 

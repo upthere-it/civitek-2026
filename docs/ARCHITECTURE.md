@@ -100,6 +100,9 @@ CREATE TABLE players (
   recovery_hash CHAR(64) NULL,
   first_run_started_at   DATETIME(6) NULL,
   first_run_completed_at DATETIME(6) NULL,
+  first_run_start_value  INT NULL,                -- valore armadio all'inizio della prima run (010)
+  first_run_end_value    INT NULL,                -- e alla fine
+  first_run_merchant     TINYINT(1) NOT NULL DEFAULT 0, -- badge "Mercante"
   last_seen_at  DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   anonymized_at DATETIME(6) NULL,
   created_at    DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -379,7 +382,9 @@ DELIMITER ;
 | `sp_player_get_or_create(device_hash, nickname_candidate, recovery_hash)` ✅ M0 | Trova il giocatore dal device o lo crea: `GRANT` di 100 monete + `_sp_mint` della scarpa regalo a prezzo 0. Restituisce `player_id`, `created`, `gift_asset_id` | `NICKNAME_TAKEN` / `RECOVERY_TAKEN` (il server riprova con un altro valore), `DEVICE_TAKEN` (stesso device in parallelo: il server richiama la SP) |
 | `sp_player_set_avatar(player, skin, hair, hair_color, outfit)` | Solo se l'avatar non è ancora impostato. Gli indici sono validati contro `game_settings`. Resta per i chiamanti vecchi: la creazione del personaggio usa `sp_player_set_profile` | `AVATAR_ALREADY_SET`, `AVATAR_INVALID` |
 | `sp_player_set_profile(player, nickname, body, skin, hair, hair_color, outfit)` ✅ 009 | Creazione del personaggio (D12): stile, aspetto e nome, una volta sola. Ricontrolla la lunghezza del nome; il formato e le parole vietate li controlla il server prima. Un nome già usato (collation `_ai_ci`: maiuscole e accenti non contano) → 1062 → `NICKNAME_TAKEN` | `AVATAR_ALREADY_SET`, `AVATAR_INVALID`, `NICKNAME_INVALID`, `NICKNAME_TAKEN` |
-| `sp_player_recover(recovery_hash, device_hash)` | Associa il device al giocatore esistente | `CODE_NOT_FOUND` |
+| `sp_player_recover(recovery_hash, device_hash)` ✅ M4 | Associa il device al giocatore del codice (`player_devices`, upsert). Il vecchio device resta valido; se questo device era di un altro giocatore, ora apre quello del codice. Giocatori anonimizzati esclusi | `CODE_NOT_FOUND` |
+| `sp_run_start(player, start_value)` ✅ M4 | Avvia la prima run all'ingresso nel villaggio, salvando il valore armadio iniziale (calcolato dal server). Idempotente. Restituisce `started_ms`, `start_value`, `completed`, `merchant` | `PLAYER_NOT_FOUND` |
+| `sp_run_complete(player, end_value, merchant)` ✅ M4 | Chiude la prima run col valore finale e il badge (target = `runTarget` di shared, calcolato dal server). Rifiuta prima di `first_run.duration_sec`. Idempotente | `RUN_NOT_STARTED`, `RUN_NOT_OVER` (interni) |
 | `sp_shop_buy(player, item)` ✅ M2 | Item con `"shop"` tra le sources: `_sp_move_coins(player→1, SHOP)` + `_sp_mint(minted_by 2)` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
 | `sp_listing_create(player, asset, price, perceived_value)` ✅ M0 | Prezzo tra `listing_min_price` e `perceived_value × listing_max_multiplier` (il valore lo passa il server, calcolato da `shared`) | `NOT_OWNER`, `ASSET_LOCKED`, `PRICE_OUT_OF_RANGE`, duplicato → `ALREADY_LISTED` |
 | `sp_listing_cancel(player, listing)` ✅ M2 | | `NOT_OWNER`, `LISTING_CLOSED` |
@@ -405,7 +410,10 @@ Nota sul calcolo del valore. Il valore percepito si calcola in **TypeScript** (`
 
 ## 5. Protocollo socket
 
-Handshake: `io(url, { auth: { deviceId } })`. Il server calcola `sha256(deviceId)` con `crypto` e risolve il giocatore.
+Handshake: `io(url, { auth: { deviceId, recover? } })` (`HandshakeAuth`). Il server calcola `sha256(deviceId)` con `crypto` e risolve il giocatore.
+
+- **Recupero da un altro telefono** (M4): il codice della landing viaggia nell'handshake (`auth.recover`), non in un evento, così un telefono nuovo non crea un giocatore vuoto prima di inserirlo. Il server chiama `sp_player_recover` e poi prosegue come sempre. Codice sbagliato o fuori formato → `error CODE_NOT_FOUND`; oltre `player.recovery_code.attempts_per_ip_per_min` tentativi per IP o `attempts_global_per_min` in tutto il server → `RECOVER_LIMIT`. Dietro nginx l'IP è l'ultimo indirizzo di `X-Forwarded-For`. Dopo il primo `state.init` il client toglie il codice dall'handshake. Il server non rimostra il codice a un device che non l'ha generato (`recoveryCode: null`): il client tiene in memoria quello digitato.
+- Una sessione rifiutata riceve `error` e il client chiude da sé; il server chiude comunque dopo 1 s (chiudere subito fa fallire con 400 il polling di socket.io già in volo).
 
 - `deviceId` deve essere un UUID v4, altrimenti `error DEVICE_INVALID` e disconnessione.
 - **Una sessione per giocatore**: una seconda scheda sostituisce la prima, che riceve `SESSION_REPLACED`.
@@ -417,7 +425,6 @@ Handshake: `io(url, { auth: { deviceId } })`. Il server calcola `sha256(deviceId
 
 | Evento | Payload |
 |---|---|
-| `session.recover` | `{ code }` |
 | `avatar.set` | `{ body, skin, hair, hairColor, outfit, nickname }` (indici + nome). Ack `{ x, y, nickname }` con il nome salvato. Errori del nome: `NICKNAME_INVALID`, `NICKNAME_BLOCKED`, `NICKNAME_TAKEN` |
 | `move.to` | `{ x, y }` |
 | `emote.send` | `{ emote }` (solo emote da config) |
@@ -429,7 +436,8 @@ Handshake: `io(url, { auth: { deviceId } })`. Il server calcola `sha256(deviceId
 | `legend.request` | `{ assetId }` |
 | `drop.claim` / `drop.state` | `{ dropId }` / `{}` |
 | `passport.get` | `{ assetId }` |
-| `leaderboard.get` | `{}` |
+| `leaderboard.get` | `{}` → `{ top, me }`: top `leaderboard.size` per valore armadio (monete + valori percepiti), solo giocatori veri con l'avatar, con aspetto e badge; `me` anche fuori dalla top. Cache di `leaderboard.cache_sec` |
+| `run.reveal` | `{}` → i dati del reveal, per rivederlo dal profilo dopo la fine della prima run (`RUN_NOT_FINISHED` prima) |
 
 **Server → client**
 
@@ -447,8 +455,8 @@ Handshake: `io(url, { auth: { deviceId } })`. Il server calcola `sha256(deviceId
 | `drop.update` / `drop.closed` | `{ dropId, sold }` / `{ dropId, nextAt }` |
 | `stall.updated` | `()`: il banco di Tony è cambiato (rifornimento o vendita) |
 | `legend.returned` | `{ assetId }` al proprietario: MC Suola ha restituito la scarpa |
-| `run.beat` | `{ beatId }` |
-| `run.end` | dati del reveal (§12 del GAME_DESIGN) |
+| `run.beat` | `{ beatId }`: un beat di `first_run.beats` al suo secondo. A una riconnessione quelli passati non si ripetono |
+| `run.end` | `RunReveal`: valore iniziale e finale, target, `merchant`, scambi, falsi comprati e smascherati, scarpa più preziosa con il numero di proprietari, codice di recupero (se questo device lo conosce). Chi era offline alla fine lo riceve appena rientra |
 | `error` | `{ code, message }` (messaggio in italiano da mappa codici) |
 
 `passport.get` fa entrare il socket nella room `asset:<id>` (e uscire da quella del passaporto precedente). Così gli avvisi di un asset vanno solo a chi lo sta guardando, non a tutti.
@@ -561,7 +569,7 @@ export class ChainWorker implements OnModuleInit {
   - dopo un acquisto al Negozio si apre il passaporto, e l'anello passa da ⏳ a ✅ davanti al giocatore;
   - i bottoni d'azione restano disabilitati finché il server non risponde: niente doppi acquisti col doppio tap;
   - le icone scarpa sono solo a 32 o 64 px CSS, così la pixel art scala di un fattore intero.
-- **Loop di gioco** (M3, server): bot (`economy.bots.tick_sec`), rifornimento di Tony (`stall.restock_sec`), drop (orologio di mondo: multipli di `drops.interval_sec` dall'epoch, uguali per tutti), ritorno da MC Suola (ogni secondo). Partono subito all'avvio e poi a intervallo. Inoltrano ai client tramite `GameEventsService`. Nei test sono spenti (`GAME_LOOPS=off`) e si chiamano i loro `tick()`.
+- **Loop di gioco** (M3, server): bot (`economy.bots.tick_sec`), rifornimento di Tony (`stall.restock_sec`), drop (orologio di mondo: multipli di `drops.interval_sec` dall'epoch, uguali per tutti), ritorno da MC Suola (ogni secondo), prima run (M4, ogni secondo: beat e reveal ai giocatori connessi; la run dura `first_run.duration_sec` dall'ingresso nel villaggio sull'orologio del DB, anche a telefono spento). Partono subito all'avvio e poi a intervallo. Inoltrano ai client tramite `GameEventsService`. Nei test sono spenti (`GAME_LOOPS=off`) e si chiamano i loro `tick()`.
 - **Dati degli item**: il client importa `data/game_items.json` attraverso il plugin `sp-client-items` di `vite.config.ts`, che tiene solo i campi da mostrare. `reference_ids` (modelli reali), valori base e pesi dei drop non entrano nel bundle.
 - **Riconnessione**: socket.io con riconnessione automatica; a ogni riconnessione il server rimanda `state.init`.
 

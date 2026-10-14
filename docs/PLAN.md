@@ -55,11 +55,11 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 > **Da fare: prova su un telefono vero (Simone).**
 
 ### M4 — Prima run e reveal (mar 20/10)
-- [ ] Timer della prima run e beat (`run.beat`), obiettivo, badge "Mercante"
-- [ ] Schermata reveal completa, con codice di recupero e CTA verso DOP Digital
-- [ ] Recupero da un altro device (`sp_player_recover`)
-- [ ] Enoteca DOP Digital con la bottiglia demo
-- [ ] Classifica
+- [x] Timer della prima run e beat (`run.beat`), obiettivo, badge "Mercante"
+- [x] Schermata reveal completa, con codice di recupero e CTA verso DOP Digital
+- [x] Recupero da un altro device (`sp_player_recover`)
+- [x] Enoteca DOP Digital con la bottiglia demo
+- [x] Classifica
 - [x] `CommercioNotary` via API commercio.app (porting di `@mvl/commercio-network`, ARCHITECTURE §6), anticipato il 14/10: provato contro un finto commercio.app
 - [ ] Credenziali nel `.env` (D11), prima notarizzazione vera sulla testnet, `chain.notary = "commercio"`. Senza credenziali entro il 20/10 si resta su Mock
 
@@ -215,3 +215,21 @@ _(Claude Code: aggiungi qui una riga per sessione con data, milestone, cosa è s
     - il DB `civitek` non ha ancora la 009;
     - testo privacy (D5) da aggiornare con il nome scelto.
   - **Rivisto dopo il feedback di Simone ("la ragazza non si riconosce")**: ciglia e guance a 64 px non bastavano. Ora la ragazza ha il vestito (gonna corta e svasata tinta come la felpa, gambe scoperte), acconciature dedicate (lunghi, coda, codini, caschetto: `avatar.hair_by_body`, il server rifiuta le altre), bocca e ciglia marcate.
+- **14/10 — M4: prima run, reveal, recupero, Enoteca, classifica (in attesa di telefoni veri e credenziali D11).**
+  - **Fatto**:
+    - `sql/010_first_run.sql`: `players.first_run_start_value/_end_value/_merchant`, `sp_run_start`, `sp_run_complete`, `sp_player_recover`;
+    - `RunService`: la run parte all'ingresso nel villaggio e dura `first_run.duration_sec` sull'orologio del DB; beat (`run.beat`) ai connessi, reveal (`run.end`) alla fine o al rientro; `run.reveal` per rivederlo;
+    - recupero col codice nell'handshake (`auth.recover`), con limiti per IP e globali in config;
+    - `LeaderboardService` con cache (`leaderboard.cache_sec`);
+    - client: landing "Hai già giocato?", banner dei beat con "Vai"/"Apri", timer e obiettivo nell'HUD, reveal scrollabile (giornata, passaporto della scarpa più preziosa, ponte DOP Digital, codice), profilo dal nome (codice, "Rivedi la tua giornata"), classifica 🏆 con miniature degli avatar, pannello dell'Enoteca con la bottiglia demo;
+    - nuove chiavi: `player.recovery_code.attempts_per_ip_per_min`, `attempts_global_per_min`, `leaderboard.cache_sec`.
+  - **Test**: `npm test` 30 di shared + 144 del server (12 nuovi in `m4.gateway.spec`); smoke M4 su iPhone SE e Pixel 5 (run → reveal, codice sbagliato e giusto da un secondo telefono, classifica, Enoteca), nessun errore in console.
+  - **Scelte fuori documento**:
+    - `session.recover` non è un evento ma un campo dell'handshake: un telefono nuovo non crea un giocatore vuoto prima del codice;
+    - la giornata del reveal va dall'inizio della run al reveal stesso; i "falsi presi" sono quelli comprati durante la run (smascherati o no: è il momento della verità);
+    - il server non rimostra il codice a un telefono che non l'ha generato: lo tiene in memoria il client che l'ha digitato;
+    - i pannelli stanno sopra i banner (drop e beat), così la × resta toccabile.
+  - **Aperto**:
+    - D11: credenziali commercio.app, per ora Mock;
+    - "Condividi" del reveal (§16, tagliabile) non fatto;
+    - prova della run completa su telefono vero (accettazione M4).

@@ -10,11 +10,20 @@ export type NpcSprite =
   | { type: 'sheet'; key: string; flipX?: boolean }
   | { type: 'avatar'; skin: number; hair_style: string; hair_color: string; outfit_color: string; shoes_color: string };
 
+/** Bottiglia demo dell'Enoteca DOP Digital (GAME_DESIGN §15): dati statici, non si compra né si scambia. */
+export interface DemoBottle {
+  label: string;
+  name: string;
+  timeline: { step: string; detail: string; certified: boolean }[];
+  cta: { text: string; url: string };
+}
+
 export interface NpcInfo {
   name: string;
   zone: string;
   sprite: NpcSprite;
   lines: Record<string, string[]>;
+  demo_bottle?: DemoBottle;
 }
 
 const raw = npcsJson as unknown as { system_players: NpcInfo[]; service_npcs: NpcInfo[] };

@@ -17,6 +17,7 @@ import {
   MAX_RECOVERY_ATTEMPTS,
   deviceHash,
   formatCode,
+  normalizeCode,
   randomNickname,
   recoveryCode,
   recoveryHash,
@@ -87,6 +88,18 @@ export class PlayerService {
   }
 
   /**
+   * Recupero da un altro telefono (GAME_DESIGN §14): associa il device al giocatore del codice. Un codice fuori
+   * formato non arriva al DB; per chi prova risponde come uno sbagliato.
+   */
+  async recover(deviceId: string, rawCode: string): Promise<number> {
+    const { length, alphabet } = this.cfg.player.recovery_code;
+    const code = normalizeCode(rawCode);
+    if (code.length !== length || [...code].some((c) => !alphabet.includes(c))) throw new SpError('CODE_NOT_FOUND');
+    const [row] = await this.db.call<{ player_id: number }>('sp_player_recover', [recoveryHash(code), deviceHash(deviceId)]);
+    return row.player_id;
+  }
+
+  /**
    * Creazione del personaggio: aspetto e nome (D12). Il nome è quello proposto dal gioco o uno scelto dal
    * giocatore; qui si ricontrollano formato e parole vietate, la SP ricontrolla lunghezza e unicità.
    */
@@ -113,6 +126,11 @@ export class PlayerService {
       look.outfit,
     ]);
     return row.nickname;
+  }
+
+  async recoveryHashOf(playerId: number): Promise<string | null> {
+    const [row] = await this.db.select<{ recovery_hash: string | null }>('SELECT recovery_hash FROM players WHERE id = ?', [playerId]);
+    return row?.recovery_hash ?? null;
   }
 
   /** Codice da mostrare a questo device, se è quello registrato per il giocatore. */

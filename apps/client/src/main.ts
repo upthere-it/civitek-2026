@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
-import { C2S, S2C, type AvatarLook, type InventoryUpdated, type Place, type StateInit } from '@sp/shared';
+import { C2S, S2C, type AvatarLook, type InventoryUpdated, type Place, type RunState, type StateInit } from '@sp/shared';
 import { gameConfig } from './config';
 import { partsFromLook } from './game/AvatarSprite';
+import { avatarThumb } from './game/avatarThumb';
 import { createApi, type Api } from './net/api';
 import { getDeviceId } from './net/device';
-import { ACK_TIMEOUT_MS, RequestError, connectSocket, request, type GameSocket } from './net/socket';
+import { ACK_TIMEOUT_MS, RequestError, connectSocket, forgetRecover, request, type GameSocket } from './net/socket';
 import { AvatarScene } from './scenes/AvatarScene';
 import { BOOT_PROGRESS, BOOT_READY, BootScene } from './scenes/BootScene';
 import { VillageScene } from './scenes/VillageScene';
@@ -14,11 +15,17 @@ import { openBank } from './ui/bank';
 import { hideDropBanner, showDropBanner } from './ui/banner';
 import { openBoard } from './ui/board';
 import { toast } from './ui/dom';
+import { openEnoteca } from './ui/enoteca';
 import { showBlocker, showHud } from './ui/hud';
 import { showLanding } from './ui/landing';
+import { openLeaderboard } from './ui/leaderboard';
 import { openLegend } from './ui/legend';
 import { npcLine } from './ui/npc';
 import { panelsOpen } from './ui/panel';
+import { openPassport } from './ui/passport';
+import { openProfile } from './ui/profile';
+import { showReveal } from './ui/reveal';
+import { beatText, hideBeat, showBeat, type BeatAction } from './ui/run';
 import { shoeName } from './ui/shoe';
 import { openShop } from './ui/shop';
 import { openStall } from './ui/stall';
@@ -61,13 +68,32 @@ let socket: GameSocket | null = null;
 let api: Api | null = null;
 let hud: ReturnType<typeof showHud> | null = null;
 let inVillage = false;
+/** Prima run del giocatore (state.init, avatar.set, run.end). */
+let run: RunState | null = null;
+/** Codice digitato sulla landing per rientrare: il server non lo rimostra a questo telefono, lo teniamo in memoria. */
+let knownCode: string | null = null;
+let ready = false;
 
-function enter(): void {
+const formatCode = (code: string) => {
+  let i = 0;
+  return gameConfig.player.recovery_code.display_format.replace(/X/g, () => code[i++] ?? '');
+};
+
+function enter(recoverCode?: string): void {
   landing.setBusy(true);
   const { id } = getDeviceId();
-  socket = connectSocket(id);
+  // un tentativo di codice fallito ha chiuso la connessione: se ne apre una nuova
+  socket?.removeAllListeners();
+  socket?.disconnect();
+  socket = connectSocket(id, recoverCode);
   api = createApi(socket);
-  socket.on(S2C.STATE_INIT, (state) => void onState(state));
+  const s = socket;
+  s.on(S2C.STATE_INIT, (state) => {
+    if (!ready && recoverCode) knownCode = formatCode(recoverCode);
+    ready = true;
+    forgetRecover(s, id);
+    void onState(state);
+  });
   socket.on(S2C.WORLD_PLAYERS, (m) => village()?.applySnapshots(m.players, m.gone));
   socket.on(S2C.WORLD_EMOTE, (m) => {
     if (import.meta.env.DEV) debugEmotes.push(m);
@@ -107,7 +133,22 @@ function enter(): void {
     if (item) toast(T.legendBack(shoeName(item.itemId)));
     publish('asset', m.assetId);
   });
+  socket.on(S2C.RUN_BEAT, (m) => onBeat(m.beatId));
+  socket.on(S2C.RUN_END, (r) => {
+    run = run ? { ...run, completed: true, merchant: r.merchant } : run;
+    hud?.setRun(run);
+    hideBeat();
+    if (api) showReveal(api, r, knownCode);
+  });
   socket.on(S2C.ERROR, (e) => {
+    if (!ready) {
+      // sessione rifiutata prima di entrare (codice sbagliato, villaggio pieno…): si chiude e si può riprovare
+      s.disconnect();
+      landing.setBusy(false);
+      if (e.code === 'CODE_NOT_FOUND' || e.code === 'RECOVER_LIMIT') landing.recoverError(e.message);
+      else toast(e.message);
+      return;
+    }
     if (e.code === 'SESSION_REPLACED') showBlocker(e.message, T.replacedCta, () => socket?.connect());
     else toast(e.message);
   });
@@ -150,6 +191,8 @@ async function onState(state: StateInit): Promise<void> {
   store.clockOffset = state.serverTime - Date.now();
   store.drop = state.drop;
   store.legendReadyAt = state.player.legendReadyAt;
+  run = state.run;
+  hud?.setRun(run);
   setInventory({ coins: state.player.coins, wardrobeValue: state.wardrobeValue, inventory: state.inventory }, false);
   // dopo una riconnessione i pannelli aperti si ricaricano
   publish('market');
@@ -186,13 +229,14 @@ function pickAvatar(state: StateInit): void {
     (look) => preview().setParts(partsFromLook(look, state.player.shoesColor)),
     async (look, nickname) => {
       try {
-        const res = await request<{ x: number; y: number; nickname: string }>(() =>
+        const res = await request<{ x: number; y: number; nickname: string; run: RunState }>(() =>
           socket!.timeout(ACK_TIMEOUT_MS).emitWithAck(C2S.AVATAR_SET, { ...look, nickname }),
         );
         picker.close();
         window.removeEventListener('resize', fit);
         game.scene.stop('Avatar');
         store.me = { ...store.me, nickname: res.nickname };
+        run = res.run;
         startVillage({ ...state, player: { ...state.player, nickname: res.nickname, avatar: look } }, look, res);
       } catch (err) {
         if (err instanceof RequestError && err.code.startsWith('NICKNAME_')) picker.nameError(err.message);
@@ -216,24 +260,62 @@ function startVillage(state: StateInit, look: AvatarLook, position: { x: number;
     onPlace: (place: Place) => talk(place),
   });
   if (import.meta.env.DEV) game.events.emit('village-ready', game.scene.getScene('Village'));
-  hud = showHud(
-    player.nickname,
-    (emote) => {
+  hud = showHud(player.nickname, {
+    onEmote(emote) {
       void request(() => socket!.timeout(ACK_TIMEOUT_MS).emitWithAck(C2S.EMOTE_SEND, { emote })).catch((err: RequestError) =>
         toast(err.message),
       );
     },
-    () => {
+    onWardrobe() {
       if (api && !panelsOpen()) openWardrobe(api);
     },
-  );
+    onLeaderboard: leaderboard,
+    onProfile() {
+      if (!api || panelsOpen()) return;
+      const a = api;
+      openProfile(
+        { nickname: store.me.nickname, code: state.player.recoveryCode ?? knownCode, run },
+        async () => showReveal(a, await a.runReveal(), knownCode),
+        leaderboard,
+      );
+    },
+  });
   hud.setWallet(store.coins, store.wardrobeValue);
+  hud.setRun(run);
 }
 
-// conti alla rovescia nei pannelli aperti (drop, MC Suola)
-setInterval(() => publish('tick'), 1000);
+function leaderboard(): void {
+  if (api && !panelsOpen()) openLeaderboard(api, (look, shoesColor) => avatarThumb(game.textures, partsFromLook(look, shoesColor)));
+}
 
-/** All'arrivo da un NPC si apre il suo pannello; l'Enoteca DOP Digital per ora dice solo una battuta (M4). */
+/** Beat della prima run: un banner, e dove serve un bottone che porta al posto giusto. */
+function onBeat(beatId: string): void {
+  if (!run || !inVillage) return;
+  const text = beatText(beatId, run);
+  if (!text) return;
+  const go = (zone: string): BeatAction => ({ label: T.beatGo, run: () => village()?.goTo(zone) });
+  const actions: Record<string, BeatAction | undefined> = {
+    tooltip_passport: {
+      label: T.beatOpen,
+      run: () => {
+        const shoe = store.inventory[0];
+        if (api && shoe && !panelsOpen()) openPassport(api, shoe.assetId);
+      },
+    },
+    hint_stall: go('bancarella'),
+    hint_legend: go('palco'),
+    hint_market: go('bacheca'),
+  };
+  showBeat(text, actions[beatId]);
+}
+
+// conti alla rovescia nei pannelli aperti (drop, MC Suola) e nell'HUD (prima run)
+setInterval(() => {
+  publish('tick');
+  hud?.tick();
+}, 1000);
+
+/** All'arrivo da un NPC si apre il suo pannello. */
 function talk(place: Place): void {
   const scene = village();
   if (!scene || !api || panelsOpen()) return;
@@ -254,6 +336,11 @@ function talk(place: Place): void {
       return openLegend(api, say);
     case 'banca':
       return openBank(api);
+    case 'enoteca': {
+      const line = npcLine('enoteca', 'idle');
+      say(line);
+      return openEnoteca(line);
+    }
     default:
       say(npcLine(place.name, 'idle'));
   }

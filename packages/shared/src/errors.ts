@@ -30,6 +30,9 @@ export const ERROR_MESSAGES: Record<string, string> = {
   DEVICE_INVALID: 'Non riesco a riconoscere questo telefono. Ricarica la pagina.',
   SESSION_REPLACED: 'Il gioco è aperto in un’altra scheda.',
   WORLD_FULL: 'Il villaggio è pieno, riprova tra poco.',
+  CODE_NOT_FOUND: 'Codice non trovato. Controlla le lettere e riprova.',
+  RECOVER_LIMIT: 'Troppi tentativi. Aspetta un minuto e riprova.',
+  RUN_NOT_FINISHED: 'La tua prima giornata non è ancora finita.',
   INTERNAL: 'Qualcosa è andato storto, riprova.',
 };
 
@@ -37,7 +40,15 @@ export const ERROR_MESSAGES: Record<string, string> = {
  * Codici delle SP che non arrivano al giocatore: il server li gestisce (ritenta la creazione del giocatore)
  * oppure sono violazioni di un invariante, che per il giocatore restano INTERNAL. TREASURY_LOW lo vedono solo i bot.
  */
-export const INTERNAL_SP_CODES: readonly string[] = ['DEVICE_TAKEN', 'RECOVERY_TAKEN', 'LEDGER_INVALID', 'TREASURY_LOW'];
+export const INTERNAL_SP_CODES: readonly string[] = [
+  'DEVICE_TAKEN',
+  'RECOVERY_TAKEN',
+  'LEDGER_INVALID',
+  'TREASURY_LOW',
+  // la run la chiude il server al tempo giusto: questi due vogliono dire un suo errore, non del giocatore
+  'RUN_NOT_STARTED',
+  'RUN_NOT_OVER',
+];
 
 export function errorMessage(code: string): string {
   return ERROR_MESSAGES[code] ?? ERROR_MESSAGES.INTERNAL;

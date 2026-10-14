@@ -52,6 +52,8 @@ INSERT INTO game_settings (name, value) VALUES
   ('player.recovery_code.length', '6'),
   ('player.recovery_code.alphabet', 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'),
   ('player.recovery_code.display_format', 'XXX-XXX'),
+  ('player.recovery_code.attempts_per_ip_per_min', '10'),
+  ('player.recovery_code.attempts_global_per_min', '120'),
   ('player.inactivity_anonymize_days', '30'),
   ('player.rate_limit_actions_per_sec', '8'),
   ('avatar.frame.width', '64'),
@@ -165,7 +167,8 @@ INSERT INTO game_settings (name, value) VALUES
   ('chain.commercio.poll_timeout_ms', '90000'),
   ('chain.commercio.http_timeout_ms', '10000'),
   ('leaderboard.metric', 'wardrobe_value'),
-  ('leaderboard.size', '10');
+  ('leaderboard.size', '10'),
+  ('leaderboard.cache_sec', '5');
 
 -- VALUES() in ON DUPLICATE KEY UPDATE è deprecato da MySQL 8.0.20 ma funziona su tutta la 8.0
 -- (la sintassi con alias richiederebbe la 8.0.19, lo schema chiede solo la 8.0.16).

@@ -18,9 +18,12 @@ import {
   type ClientToServerEvents,
   type DropState,
   type InventoryUpdated,
+  type Leaderboard,
   type MarketPage,
   type MoveTo,
   type Passport,
+  type RunReveal,
+  type RunState,
   type ServerToClientEvents,
   type ShopEntry,
   type StallOffer,
@@ -36,10 +39,12 @@ import { AssetsService } from './assets.service';
 import { DropService } from './drop.service';
 import { GameEventsService, type GameEvent } from './game-events.service';
 import { isDeviceId } from './identity';
+import { LeaderboardService } from './leaderboard.service';
 import { MarketService } from './market.service';
 import { MechanicsService } from './mechanics.service';
 import { PlayerService, type PlayerState } from './player.service';
-import { RateLimiter } from './rate-limit';
+import { RateLimiter, RecoverLimiter, clientIp } from './rate-limit';
+import { RunService } from './run.service';
 import { WorldService } from './world.service';
 
 interface SocketData {
@@ -51,6 +56,9 @@ interface SocketData {
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
 
 const fail = (code: string): Ack<never> => ({ ok: false, code, message: errorMessage(code) });
+
+/** Tempo che il client ha per chiudere da solo una sessione rifiutata. */
+const REJECT_GRACE_MS = 1000;
 
 const isId = (v: unknown): v is number => Number.isSafeInteger(v) && (v as number) > 0;
 
@@ -71,6 +79,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   private readonly sockets = new Map<number, GameSocket>();
   private certified?: Subscription;
   private gameEvents?: Subscription;
+  private readonly recoverLimiter: RecoverLimiter;
 
   constructor(
     private readonly players: PlayerService,
@@ -83,7 +92,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     private readonly mechanics: MechanicsService,
     private readonly drops: DropService,
     private readonly events: GameEventsService,
-  ) {}
+    private readonly runs: RunService,
+    private readonly leaderboard: LeaderboardService,
+  ) {
+    const { attempts_per_ip_per_min, attempts_global_per_min } = this.cfg.player.recovery_code;
+    this.recoverLimiter = new RecoverLimiter(attempts_per_ip_per_min, attempts_global_per_min);
+  }
 
   onModuleInit(): void {
     const hz = this.cfg.config.world.tick_hz;
@@ -130,6 +144,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         case 'drop.closed':
           this.server.emit(S2C.DROP_CLOSED, { dropId: e.dropId, nextAt: e.nextAt });
           break;
+        case 'run.beat':
+          this.sockets.get(e.playerId)?.emit(S2C.RUN_BEAT, { beatId: e.beatId });
+          break;
+        case 'run.end': {
+          const socket = this.sockets.get(e.playerId);
+          if (socket) socket.emit(S2C.RUN_END, await this.withCode(socket, e.reveal));
+          break;
+        }
       }
     } catch (err) {
       this.logger.error(`inoltro di ${e.type} fallito: ${String(err)}`);
@@ -147,6 +169,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     if (!isDeviceId(deviceId)) return this.reject(socket, 'DEVICE_INVALID');
     socket.data = { deviceId, limiter: new RateLimiter(this.cfg.player.rate_limit_actions_per_sec) };
     try {
+      // codice di recupero dalla landing: prima si associa il device, poi getOrCreate trova quel giocatore
+      const recover: unknown = socket.handshake.auth?.recover;
+      if (recover !== undefined) {
+        if (typeof recover !== 'string') return this.reject(socket, 'CODE_NOT_FOUND');
+        const ip = clientIp(socket.handshake.address, socket.handshake.headers['x-forwarded-for']);
+        if (!this.recoverLimiter.take(ip)) return this.reject(socket, 'RECOVER_LIMIT');
+        await this.players.recover(deviceId, recover);
+      }
       const { playerId } = await this.players.getOrCreate(deviceId);
       if (!socket.connected) return;
       const previous = this.sockets.get(playerId);
@@ -159,16 +189,20 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
       const state = await this.players.loadState(playerId);
       let position = null;
+      let run: RunState | null = null;
       if (state.look) {
         if (!this.world.has(playerId) && this.world.size >= this.cfg.config.world.max_players_per_room) {
           return this.reject(socket, 'WORLD_FULL');
         }
         position = this.world.join(playerId, this.profileOf(state));
+        run = await this.runs.enter(playerId, state.wardrobeValue);
       }
-      socket.emit(S2C.STATE_INIT, this.stateInit(state, deviceId, position));
+      if (!socket.connected) return;
+      socket.emit(S2C.STATE_INIT, this.stateInit(state, deviceId, position, run));
     } catch (err) {
-      this.logger.error(`handshake fallito: ${String(err)}`);
-      this.reject(socket, err instanceof SpError ? err.code : 'INTERNAL');
+      const code = err instanceof SpError ? err.code : 'INTERNAL';
+      if (code !== 'CODE_NOT_FOUND') this.logger.error(`handshake fallito: ${String(err)}`);
+      this.reject(socket, code);
     }
   }
 
@@ -177,6 +211,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     if (id !== undefined && this.sockets.get(id)?.id === socket.id) {
       this.sockets.delete(id);
       this.world.leave(id);
+      this.runs.leave(id);
     }
   }
 
@@ -184,7 +219,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   async onAvatarSet(
     @ConnectedSocket() socket: GameSocket,
     @MessageBody() body: unknown,
-  ): Promise<Ack<{ x: number; y: number; nickname: string }>> {
+  ): Promise<Ack<{ x: number; y: number; nickname: string; run: RunState }>> {
     const id = this.guard(socket);
     if (typeof id === 'string') return fail(id);
     const look = parseLook(body);
@@ -195,7 +230,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       const saved = await this.players.setProfile(id, look, nickname ?? null);
       const state = await this.players.loadState(id);
       if (this.world.size >= this.cfg.config.world.max_players_per_room) return fail('WORLD_FULL');
-      return { ok: true, data: { ...this.world.join(id, this.profileOf(state)), nickname: saved } };
+      const position = this.world.join(id, this.profileOf(state));
+      // la prima run parte adesso, all'ingresso nel villaggio
+      const run = await this.runs.enter(id, state.wardrobeValue);
+      return { ok: true, data: { ...position, nickname: saved, run } };
     } catch (err) {
       return this.failFrom(err);
     }
@@ -391,6 +429,28 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     });
   }
 
+  // ------------------------------------------------------------------ classifica e reveal (M4)
+
+  @SubscribeMessage(C2S.LEADERBOARD_GET)
+  async onLeaderboard(@ConnectedSocket() socket: GameSocket): Promise<Ack<Leaderboard>> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    return this.run(() => this.leaderboard.get(id));
+  }
+
+  @SubscribeMessage(C2S.RUN_REVEAL)
+  async onRunReveal(@ConnectedSocket() socket: GameSocket): Promise<Ack<RunReveal>> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    return this.run(async () => this.withCode(socket, await this.runs.reveal(id)));
+  }
+
+  /** Il reveal mostra il codice di recupero, se questo device è quello che l'ha generato. */
+  private async withCode(socket: GameSocket, reveal: RunReveal): Promise<RunReveal> {
+    const hash = await this.players.recoveryHashOf(socket.data.playerId!);
+    return { ...reveal, recoveryCode: this.players.displayCode(socket.data.deviceId, hash) };
+  }
+
   /** Saldo, armadio e colore delle scarpe dopo un'azione: ai giocatori coinvolti, se connessi. */
   private async refreshPlayers(...ids: number[]): Promise<void> {
     for (const id of new Set(ids)) {
@@ -438,7 +498,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     return { nickname: state.row.nickname, look: state.look!, shoesColor: state.shoesColor };
   }
 
-  private stateInit(state: PlayerState, deviceId: string, position: { x: number; y: number } | null): StateInit {
+  private stateInit(state: PlayerState, deviceId: string, position: { x: number; y: number } | null, run: RunState | null): StateInit {
     return {
       serverTime: Date.now(),
       player: {
@@ -451,6 +511,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         legendReadyAt: state.row.legend_ready_ms === null ? null : Number(state.row.legend_ready_ms),
       },
       drop: this.drops.state(),
+      run,
       inventory: state.inventory,
       wardrobeValue: state.wardrobeValue,
       position,
@@ -463,9 +524,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     return fail('INTERNAL');
   }
 
+  /**
+   * Rifiuta la sessione: l'errore arriva al client, che chiude da sé; il server chiude comunque dopo
+   * REJECT_GRACE_MS. Chiudere subito farebbe fallire con 400 il polling di socket.io già in volo.
+   * Nel frattempo il socket non ha playerId: guard() scarta ogni richiesta.
+   */
   private reject(socket: GameSocket, code: string): void {
     socket.emit(S2C.ERROR, { code, message: errorMessage(code) });
-    socket.disconnect(true);
+    setTimeout(() => socket.disconnect(true), REJECT_GRACE_MS).unref();
   }
 }
 

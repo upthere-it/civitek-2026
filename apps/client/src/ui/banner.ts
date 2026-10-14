@@ -1,5 +1,5 @@
 import type { DropInfo } from '@sp/shared';
-import { h, uiRoot } from './dom';
+import { bannerStack, h } from './dom';
 import { shoeIcon, shoeName } from './shoe';
 import { serverNow } from './store';
 import { T } from './texts';
@@ -19,7 +19,7 @@ export function showDropBanner(d: DropInfo, onGo: () => void): void {
     h('button', { class: 'panel-close', type: 'button', 'aria-label': T.close, onclick: () => hideDropBanner() }, '×'),
   );
   current = el;
-  uiRoot().append(el);
+  bannerStack().prepend(el);
 }
 
 export function hideDropBanner(): void {

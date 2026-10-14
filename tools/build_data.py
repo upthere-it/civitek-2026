@@ -269,7 +269,11 @@ game_config = {
             "max_length": 14,
             "allowed_pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}._-]*$",
         },
-        "recovery_code": {"length": 6, "alphabet": "ABCDEFGHJKMNPQRSTUVWXYZ23456789", "display_format": "XXX-XXX"},
+        "recovery_code": {
+            "length": 6, "alphabet": "ABCDEFGHJKMNPQRSTUVWXYZ23456789", "display_format": "XXX-XXX",
+            # tentativi di recupero: per IP (una classe dietro lo stesso NAT ci sta comoda) e in tutto il server
+            "attempts_per_ip_per_min": 10, "attempts_global_per_min": 120,
+        },
         "inactivity_anonymize_days": 30,
         "rate_limit_actions_per_sec": 8,
     },
@@ -394,7 +398,7 @@ game_config = {
             "http_timeout_ms": 10000,
         },
     },
-    "leaderboard": {"metric": "wardrobe_value", "size": 10},
+    "leaderboard": {"metric": "wardrobe_value", "size": 10, "cache_sec": 5},
 }
 
 # drop pool check

@@ -33,7 +33,7 @@ export function openPassport(api: Api, assetId: number): void {
     try {
       const p = await api.passport(assetId);
       if (panel.closed) return;
-      panel.body.replaceChildren(...header(p), chain(p, certified), h('p', { class: 'pp-footer' }, T.passportFooter));
+      panel.body.replaceChildren(...passportView(p, certified));
       // la barra delle azioni si ricostruisce solo se cambia proprietario o annuncio: una certificazione che
       // arriva mentre si sceglie il prezzo non deve chiudere il selettore
       const locked = isLocked(p);
@@ -51,6 +51,11 @@ export function openPassport(api: Api, assetId: number): void {
   panel.onClose(subscribe('asset', (id) => id === assetId && reload()));
   panel.onClose(subscribe('inventory', reload));
   void load();
+}
+
+/** Intestazione, catena e nota in fondo: la stessa vista nel pannello e nel reveal (GAME_DESIGN §12). */
+export function passportView(p: Passport, certified = new Map<number, ChainStatus>()): HTMLElement[] {
+  return [...header(p), chain(p, certified), h('p', { class: 'pp-footer' }, T.passportFooter)];
 }
 
 const isLocked = (p: Passport) => p.lockedUntil !== null && p.lockedUntil > serverNow();
