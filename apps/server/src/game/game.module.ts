@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ChainModule } from '../chain/chain.module';
+import { HealthController } from '../health/health.controller';
 import { AnonymizeService } from './anonymize.service';
 import { AssetsService } from './assets.service';
 import { BotService } from './bot.service';
@@ -15,6 +16,7 @@ import { WorldService } from './world.service';
 
 @Module({
   imports: [ChainModule],
+  controllers: [HealthController],
   providers: [
     GameEventsService,
     AssetsService,

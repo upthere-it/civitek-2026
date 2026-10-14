@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import type { CommercioCfg } from '@sp/shared';
-import { batchHash, explorerTxUrl, type ChainNotary, type NotarizeItem } from './chain-notary';
+import { batchHash, explorerTxUrl, type ChainNotary, type NotarizeItem, type NotaryHealth } from './chain-notary';
 
 /** Credenziali commercio.app: stesse variabili di @mvl/commercio-network (repo microservices). */
 export interface CommercioCredentials {
@@ -80,6 +80,17 @@ export class CommercioNotary implements ChainNotary {
 
   explorerUrl(txHash: string): string {
     return explorerTxUrl(this.explorerTemplate, txHash);
+  }
+
+  /** Login + saldo del wallet (`GET /wallet/balance`, come walletBalance di @mvl/commercio-network). */
+  async health(): Promise<NotaryHealth> {
+    try {
+      const res = await this.api<{ amount?: { denom: string; amount: string | number }[] }>('GET', '/wallet/balance');
+      const balance = (res.amount ?? []).map((c) => ({ denom: c.denom, amount: String(c.amount) }));
+      return { ok: true, network: this.network, balance };
+    } catch (err) {
+      return { ok: false, network: this.network, detail: err instanceof Error ? err.message : String(err) };
+    }
   }
 
   /** Chiamata autenticata; un 401 rinnova il token e riprova una volta. */

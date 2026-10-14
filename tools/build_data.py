@@ -386,6 +386,8 @@ game_config = {
         "batch_interval_ms": 2000,
         "max_items_per_batch": 20,
         "max_attempts": 5,
+        # /api/health: un evento in coda da più di così è un avviso (worker fermo o testnet lenta)
+        "health_max_pending_sec": 120,
         "explorer_tx_url": "https://testnet.commercio.network/transactions/detail/{txHash}",
         "certify": "MINT (tranne FAKE_MINT) + ogni evento con almeno un giocatore umano",
         "mock": {"min_delay_ms": 1500, "max_delay_ms": 4000},

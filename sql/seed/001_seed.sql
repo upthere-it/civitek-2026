@@ -153,6 +153,7 @@ INSERT INTO game_settings (name, value) VALUES
   ('chain.batch_interval_ms', '2000'),
   ('chain.max_items_per_batch', '20'),
   ('chain.max_attempts', '5'),
+  ('chain.health_max_pending_sec', '120'),
   ('chain.explorer_tx_url', 'https://testnet.commercio.network/transactions/detail/{txHash}'),
   ('chain.certify', 'MINT (tranne FAKE_MINT) + ogni evento con almeno un giocatore umano'),
   ('chain.mock.min_delay_ms', '1500'),

@@ -1,7 +1,7 @@
 import { randomInt } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
 import type { ChainCfg } from '@sp/shared';
-import { batchHash, type ChainNotary, type NotarizeItem } from './chain-notary';
+import { batchHash, type ChainNotary, type NotarizeItem, type NotaryHealth } from './chain-notary';
 
 /**
  * Notary di sviluppo (default finché D1 non è chiusa): aspetta un ritardo casuale tra
@@ -24,5 +24,9 @@ export class MockNotary implements ChainNotary {
 
   explorerUrl(): string {
     return '';
+  }
+
+  async health(): Promise<NotaryHealth> {
+    return { ok: true, network: this.network, detail: 'mock: nessuna transazione vera' };
   }
 }

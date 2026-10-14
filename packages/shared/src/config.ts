@@ -109,6 +109,8 @@ export interface ChainCfg {
   batch_interval_ms: number;
   max_items_per_batch: number;
   max_attempts: number;
+  /** /api/health segnala un avviso se il più vecchio evento in coda aspetta da più di così. */
+  health_max_pending_sec: number;
   /** Template: {txHash} viene sostituito con l'hash della transazione. */
   explorer_tx_url: string;
   mock: { min_delay_ms: number; max_delay_ms: number };

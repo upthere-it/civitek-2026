@@ -11,6 +11,17 @@ export interface ChainNotary {
   notarizeBatch(items: NotarizeItem[], batchId: string): Promise<{ txHash: string }>;
   /** Link all'explorer della tx; stringa vuota se non esiste (es. MockNotary). */
   explorerUrl(txHash: string): string;
+  /** Controllo per /api/health: il servizio risponde, le credenziali valgono, quanto credito resta. */
+  health(): Promise<NotaryHealth>;
+}
+
+export interface NotaryHealth {
+  ok: boolean;
+  network: string;
+  /** Saldo del wallet (commercio.app `/wallet/balance`), se il notary ne ha uno. */
+  balance?: { denom: string; amount: string }[];
+  /** Cosa non va, senza segreti. */
+  detail?: string;
 }
 
 export const CHAIN_NOTARY = Symbol('CHAIN_NOTARY');

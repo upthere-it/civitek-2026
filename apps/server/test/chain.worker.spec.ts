@@ -38,6 +38,9 @@ class FailingNotary implements ChainNotary {
   explorerUrl(): string {
     return '';
   }
+  async health() {
+    return { ok: false, network: this.network, detail: 'testnet non raggiungibile' };
+  }
 }
 
 async function drain(): Promise<void> {
@@ -116,6 +119,7 @@ describe('ChainWorker', () => {
         await gate;
         return { txHash: `slow-${items.length}` };
       },
+      health: async () => ({ ok: true, network: 'slow' }),
       explorerUrl: () => '',
     };
     const w = worker(slow);

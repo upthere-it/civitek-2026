@@ -61,6 +61,9 @@ class FakeCommercio {
       this.submitted.push(body);
       return send(202, { process_id: 'p-1', document_id: body.document_uuid, status: 'enqueued' });
     }
+    if (req.method === 'GET' && req.url === '/v1/wallet/balance') {
+      return send(200, { amount: [{ denom: 'uccc', amount: '1250000' }] });
+    }
     if (req.method === 'GET' && req.url === '/v1/sharedoc/process/p-1') {
       const s = this.statuses[Math.min(this.polls++, this.statuses.length - 1)];
       return send(200, { process_id: 'p-1', document_id: 'x', ...s });
@@ -153,6 +156,14 @@ describe('CommercioNotary', () => {
   it('credenziali sbagliate: errore di login', async () => {
     fake.loginStatus = 401;
     await expect(notary().notarizeBatch(items, batchId)).rejects.toThrow(/login commercio.app: HTTP 401/);
+  });
+
+  it('health: login e saldo del wallet; con credenziali sbagliate ok=false, senza segreti nel dettaglio', async () => {
+    expect(await notary().health()).toEqual({ ok: true, network: cfg.chain.network, balance: [{ denom: 'uccc', amount: '1250000' }] });
+    fake.loginStatus = 401;
+    const bad = await notary().health();
+    expect(bad).toMatchObject({ ok: false, detail: expect.stringMatching(/login commercio.app: HTTP 401/) });
+    expect(JSON.stringify(bad)).not.toContain(creds.password);
   });
 
   it('link all’explorer della testnet dal template di config', () => {
