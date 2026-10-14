@@ -21,6 +21,7 @@
     "db:migrate": "tsx tools/db.ts migrate",
     "db:seed": "tsx tools/seed-from-json.ts && tsx tools/db.ts seed",
     "db:reset": "tsx tools/seed-from-json.ts && tsx tools/db.ts reset",
+    "db:bundle": "tsx tools/seed-from-json.ts && tsx tools/db-bundle.ts",
     "loadtest": "tsx tools/loadtest.ts",
     "sim:economy": "tsx tools/sim-economy.ts"
   },

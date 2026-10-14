@@ -582,26 +582,12 @@ export class ChainWorker implements OnModuleInit {
 
 ## 9. Deploy
 
-```js
-// ecosystem.config.js
-module.exports = {
-  apps: [{
-    name: 'sneaker-passport',
-    cwd: './apps/server',
-    script: 'dist/main.js',
-    exec_mode: 'fork',     // NON cluster: stato socket in memoria
-    instances: 1,
-    max_memory_restart: '512M',
-    env: { NODE_ENV: 'production' },
-  }],
-};
-```
-
-nginx su **civitek.upthere.it** (D3):
-- HTTPS obbligatorio (serve anche per `crypto.randomUUID`), certificato Let's Encrypt;
-- proxy di `/socket.io/` con gli header `Upgrade`/`Connection`;
-- gzip/brotli e cache lunga sugli asset con hash nel nome;
-- log di accesso con retention breve (7 giorni).
+Runbook completo in **`deploy/README.md`** (M6). In breve:
+- `ecosystem.config.js` (root): PM2, **una istanza in fork mode** (stato socket in memoria), `HOST=127.0.0.1`, `PORT=3000`, `NODE_ENV=production`, log in `logs/`;
+- `deploy/nginx/civitek.upthere.it.conf`: HTTPS (Let's Encrypt; serve anche per `crypto.randomUUID`), proxy di `/socket.io/` con `Upgrade`/`Connection` e di `/api/`, `X-Forwarded-For` con `$proxy_add_x_forwarded_for` (il server ne prende l'ultimo indirizzo), cache lunga su `/static/` (hash nel nome), breve su `/assets/`, `index.html` sempre rivalidato, IP troncati nei log di accesso;
+- DB di produzione a mano: `npm run db:bundle` genera `deploy/out/civitek_completo_<data>.sql` (migrazioni + `schema_migrations` con i checksum + seed; si ferma su un DB già in uso) oppure, per aggiornare, `-- --from NNN`;
+- in produzione il server non parte senza `RECOVERY_SECRET` e `CN_*`;
+- `GET /api/health`: DB, coda della certificazione (`pending`, `failed`, evento più vecchio in coda oltre `chain.health_max_pending_sec`), giocatori online; `?full=1` con l'header `x-health-token` = `HEALTH_TOKEN` aggiunge login e saldo commercio.app (`/wallet/balance`). 200 con `status` ok/warn, 503 se il DB non risponde.
 
 ## 10. Privacy (implementazione)
 

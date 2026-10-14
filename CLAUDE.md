@@ -94,7 +94,7 @@ Ci sono già stati problemi con Jest + ESM, quindi il server resta **CommonJS**.
 
 ## Comandi
 
-`npm run dev` (server e client insieme, senza toccare il DB) · `npm run dev:server` · `npm run dev:client` · `npm test` · `npm run typecheck` · `npm run build` · `npm run db:migrate` · `npm run db:seed` · `npm run db:reset` (solo database `*_dev`, `*_test`, `*_staging`)
+`npm run dev` (server e client insieme, senza toccare il DB) · `npm run dev:server` · `npm run dev:client` · `npm test` · `npm run typecheck` · `npm run build` · `npm run db:migrate` · `npm run db:seed` · `npm run db:reset` (solo database `*_dev`, `*_test`, `*_staging`) · `npm run db:bundle` (script SQL unico per la produzione in `deploy/out/`, da lanciare a mano; `-- --from NNN` per un aggiornamento). Deploy: `deploy/README.md`
 
 `npm run loadtest` (150 client per 10 min, p95 degli ack < 300 ms) · `npm run sim:economy` (100 giocatori per 30 min, tesoreria, distacco in classifica, invarianti). Entrambi vogliono un server acceso; fuori da localhost serve `--yes`, perché i giocatori finti finiscono nel DB e in classifica.
 

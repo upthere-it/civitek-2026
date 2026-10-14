@@ -78,13 +78,16 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 
 ### M6 — Messa in produzione (gio 22/10)
 - [ ] Deploy (PM2 fork, nginx, HTTPS) su **civitek.upthere.it** (D3), con `RECOVERY_SECRET` e `CN_*` nel `.env` di produzione
+  - 14/10: pronto da lanciare: `ecosystem.config.js`, `deploy/nginx/civitek.upthere.it.conf`, runbook `deploy/README.md`, `/api/health`. Avvio di produzione provato in locale
 - [ ] Reset del DB di produzione con script SQL a mano (non via MCP) + seed
+  - 14/10: `npm run db:bundle` → `deploy/out/civitek_completo_<data>.sql`, provato su un DB vuoto (11 migrazioni, 31 routine, tesoreria 5000, invarianti verdi, `db:migrate` lo vede aggiornato; rilanciato si ferma con `DB_NOT_EMPTY`)
 - [ ] Credito dell'account commercio.app sufficiente per la giornata
 - [ ] QR definitivo verso https://civitek.upthere.it stampato e provato
+  - 14/10: `deploy/qr/civitek-qr.svg` e `.png` (correzione H, colore primary su bianco), letti da un decoder anche a 120 px. Da stampare e provare con i telefoni
 - [ ] Prova generale con il team: 5+ telefoni, run completa
 
 ### Giorno della conferenza (ven 23/10)
-- [ ] Health check 1 ora prima (`/api/health`): DB, worker chain, login commercio.app e saldo (`/wallet/balance`)
+- [ ] Health check 1 ora prima (`/api/health`): DB, worker chain, login commercio.app e saldo (`/wallet/balance`). Endpoint pronto: `?full=1` con l'header `x-health-token`
 - [ ] `pm2 logs` aperto su un portatile
 - [ ] Hotspot 4G di riserva
 - [ ] Pagina `/schermo` pronta sul proiettore (se non tagliata)
@@ -260,3 +263,7 @@ _(Claude Code: aggiungi qui una riga per sessione con data, milestone, cosa è s
     - Con la config candidata D13 (MC Suola 6, drop 8, bot 85% e `min_activity` 0,5): armadio medio 127 → 124, chi usa MC Suola chiude a 127 (sopra la media), affaristi 134. Migliora, ma il blocco a ~10 minuti resta: per la gara lunga servirebbe un'entrata di monete (non c'è nel design).
   - **Aperto**: prova su telefoni veri (Safari iOS, Chrome Android, browser in-app); feature freeze da dichiarare; per una gara lunga dopo la conferenza servirebbe un'entrata di monete.
   - **D13 applicata** (Simone): `economy.legend.cost` 6, `drops.quantity` 8, `economy.bots.buy_pct` 0,85, `economy.bots.min_activity` 0,5.
+- **14/10 — M6 preparata (il deploy vero lo fanno Simone e Antonio).**
+  - **Fatto**: `/api/health` (con `ChainNotary.health()`: Mock ok, Commercio login + `/wallet/balance`), `ecosystem.config.js`, config nginx, `npm run db:bundle`, QR definitivo (`tools/make_qr.py`), runbook `deploy/README.md` con l'elenco alfabetico degli oggetti del DB per la task di rilascio, `HOST` nel server per il bind su 127.0.0.1.
+  - **Test**: 30 di shared + 148 del server (`health.spec`, saldo sul finto commercio.app); script SQL provato su un DB vuoto; avvio con `NODE_ENV=production` provato in locale (senza `CN_*` si ferma con un messaggio chiaro).
+  - **Aperto**: DNS e TLS (D3), deploy, credito commercio.app, stampa del QR, prova generale con 5+ telefoni, revisione del testo privacy (D5). nginx non è installato qui: `nginx -t` va lanciato sul server.
