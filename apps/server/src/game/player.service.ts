@@ -23,6 +23,7 @@ export interface PlayerRow {
   avatar_hair_color: number | null;
   avatar_outfit: number | null;
   recovery_hash: string | null;
+  legend_ready_ms: number | null;
 }
 
 export interface PlayerState {
@@ -92,7 +93,8 @@ export class PlayerService {
 
   async loadState(playerId: number): Promise<PlayerState> {
     const [row] = await this.db.select<PlayerRow>(
-      `SELECT id, nickname, coins, avatar_skin, avatar_hair, avatar_hair_color, avatar_outfit, recovery_hash
+      `SELECT id, nickname, coins, avatar_skin, avatar_hair, avatar_hair_color, avatar_outfit, recovery_hash,
+              ROUND(UNIX_TIMESTAMP(legend_ready_at) * 1000) AS legend_ready_ms
          FROM players WHERE id = ?`,
       [playerId],
     );
@@ -111,8 +113,19 @@ export class PlayerService {
 
   /** Scarpe possedute, con valore percepito (AssetsService) e l'eventuale annuncio aperto. */
   async inventoryOf(playerId: number): Promise<InventoryItem[]> {
-    const assets = await this.db.select<{ id: number; public_id: string; item_id: string; serial: number }>(
-      'SELECT id, public_id, item_id, serial FROM assets WHERE owner_id = ? ORDER BY id',
+    const assets = await this.db.select<{
+      id: number;
+      public_id: string;
+      item_id: string;
+      serial: number;
+      fake_revealed: number;
+      auth_verified: number;
+      legend_count: number;
+      locked_ms: number | null;
+    }>(
+      `SELECT id, public_id, item_id, serial, fake_revealed, auth_verified, legend_count,
+              ROUND(UNIX_TIMESTAMP(locked_until) * 1000) AS locked_ms
+         FROM assets WHERE owner_id = ? ORDER BY id`,
       [playerId],
     );
     if (!assets.length) return [];
@@ -133,6 +146,10 @@ export class PlayerService {
         listingId: listing?.id ?? null,
         listingPrice: listing?.price ?? null,
         maxListPrice: listingPriceRange(value, this.cfg.economy).max,
+        // is_fake non esce mai: il falso si vede solo quando la Dott.ssa Hash l'ha smascherato
+        status: a.fake_revealed === 1 ? 'fake' : a.auth_verified === 1 ? 'authentic' : null,
+        lockedUntil: a.locked_ms === null ? null : Number(a.locked_ms),
+        legendCount: a.legend_count,
       };
     });
   }

@@ -56,3 +56,8 @@ export function listingPriceRange(perceived: number, economy: Pick<EconomyCfg, '
 export function marketFee(price: number, economy: Pick<EconomyCfg, 'market_fee_pct' | 'market_fee_min'>): number {
   return Math.min(price, Math.max(economy.market_fee_min, Math.ceil((price * economy.market_fee_pct) / 100)));
 }
+
+/** Prezzo di un falso sul banco di Tony Affari: la stessa regola di sp_stall_buy. */
+export function stallPrice(baseValue: number, economy: Pick<EconomyCfg, 'stall'>): number {
+  return Math.max(1, Math.round(baseValue * economy.stall.price_pct_of_base));
+}

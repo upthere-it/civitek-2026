@@ -17,6 +17,7 @@ export const C2S = {
   AUTH_REQUEST: 'auth.request',
   LEGEND_REQUEST: 'legend.request',
   DROP_CLAIM: 'drop.claim',
+  DROP_STATE: 'drop.state',
   PASSPORT_GET: 'passport.get',
   LEADERBOARD_GET: 'leaderboard.get',
 } as const;
@@ -34,6 +35,8 @@ export const S2C = {
   DROP_ANNOUNCE: 'drop.announce',
   DROP_UPDATE: 'drop.update',
   DROP_CLOSED: 'drop.closed',
+  STALL_UPDATED: 'stall.updated',
+  LEGEND_RETURNED: 'legend.returned',
   RUN_BEAT: 'run.beat',
   RUN_END: 'run.end',
   ERROR: 'error',

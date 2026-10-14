@@ -16,12 +16,14 @@ import {
   type Ack,
   type AvatarLook,
   type ClientToServerEvents,
+  type DropState,
   type InventoryUpdated,
   type MarketPage,
   type MoveTo,
   type Passport,
   type ServerToClientEvents,
   type ShopEntry,
+  type StallOffer,
   type StateInit,
   type WorldEmote,
 } from '@sp/shared';
@@ -31,8 +33,11 @@ import { ChainEventsService } from '../chain/chain-events.service';
 import { GameConfigService } from '../config/game-config.service';
 import { SpError } from '../db/sp-error';
 import { AssetsService } from './assets.service';
+import { DropService } from './drop.service';
+import { GameEventsService, type GameEvent } from './game-events.service';
 import { isDeviceId } from './identity';
 import { MarketService } from './market.service';
+import { MechanicsService } from './mechanics.service';
 import { PlayerService, type PlayerState } from './player.service';
 import { RateLimiter } from './rate-limit';
 import { WorldService } from './world.service';
@@ -65,6 +70,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   /** playerId → socket attivo (uno solo: una nuova scheda sostituisce la vecchia) */
   private readonly sockets = new Map<number, GameSocket>();
   private certified?: Subscription;
+  private gameEvents?: Subscription;
 
   constructor(
     private readonly players: PlayerService,
@@ -74,6 +80,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     private readonly scheduler: SchedulerRegistry,
     private readonly market: MarketService,
     private readonly assets: AssetsService,
+    private readonly mechanics: MechanicsService,
+    private readonly drops: DropService,
+    private readonly events: GameEventsService,
   ) {}
 
   onModuleInit(): void {
@@ -88,11 +97,49 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         this.server.to(rooms).emit(S2C.ASSET_CERTIFIED, payload);
       }
     });
+    this.gameEvents = this.events.events$.subscribe((e) => void this.forward(e));
+  }
+
+  /** Inoltra ai client quello che succede nei loop (bot, bancarella, drop, MC Suola). */
+  private async forward(e: GameEvent): Promise<void> {
+    try {
+      switch (e.type) {
+        case 'market':
+          this.server.emit(S2C.MARKET_UPDATED);
+          break;
+        case 'stall':
+          this.server.emit(S2C.STALL_UPDATED);
+          break;
+        case 'players':
+          await this.refreshPlayers(...e.ids);
+          break;
+        case 'asset':
+          this.server.to(assetRoom(e.assetId)).emit(S2C.ASSET_UPDATED, { assetId: e.assetId });
+          break;
+        case 'legend.returned':
+          this.server.to(assetRoom(e.assetId)).emit(S2C.ASSET_UPDATED, { assetId: e.assetId });
+          this.sockets.get(e.ownerId)?.emit(S2C.LEGEND_RETURNED, { assetId: e.assetId });
+          await this.refreshPlayers(e.ownerId);
+          break;
+        case 'drop.announce':
+          this.server.emit(S2C.DROP_ANNOUNCE, e.drop);
+          break;
+        case 'drop.update':
+          this.server.emit(S2C.DROP_UPDATE, { dropId: e.dropId, sold: e.sold });
+          break;
+        case 'drop.closed':
+          this.server.emit(S2C.DROP_CLOSED, { dropId: e.dropId, nextAt: e.nextAt });
+          break;
+      }
+    } catch (err) {
+      this.logger.error(`inoltro di ${e.type} fallito: ${String(err)}`);
+    }
   }
 
   onModuleDestroy(): void {
     if (this.scheduler.doesExist('interval', GameGateway.WORLD_TICK)) this.scheduler.deleteInterval(GameGateway.WORLD_TICK);
     this.certified?.unsubscribe();
+    this.gameEvents?.unsubscribe();
   }
 
   async handleConnection(socket: GameSocket): Promise<void> {
@@ -265,6 +312,80 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     });
   }
 
+  // ------------------------------------------------------------------ Tony Affari, Dott.ssa Hash, MC Suola, drop (M3)
+
+  @SubscribeMessage(C2S.STALL_LIST)
+  async onStallList(@ConnectedSocket() socket: GameSocket): Promise<Ack<StallOffer[]>> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    return this.run(() => this.mechanics.stallList());
+  }
+
+  @SubscribeMessage(C2S.STALL_BUY)
+  async onStallBuy(@ConnectedSocket() socket: GameSocket, @MessageBody() body: unknown): Promise<Ack<{ assetId: number; price: number }>> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    const assetId = (body as { assetId?: unknown })?.assetId;
+    if (!isId(assetId)) return fail('INVALID_PAYLOAD');
+    return this.run(async () => {
+      const res = await this.mechanics.stallBuy(id, assetId);
+      await this.refreshPlayers(id);
+      this.server.emit(S2C.STALL_UPDATED);
+      this.server.to(assetRoom(assetId)).emit(S2C.ASSET_UPDATED, { assetId });
+      return res;
+    });
+  }
+
+  @SubscribeMessage(C2S.AUTH_REQUEST)
+  async onAuthRequest(@ConnectedSocket() socket: GameSocket, @MessageBody() body: unknown): Promise<Ack<{ verdict: 'genuine' | 'fake' }>> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    const assetId = (body as { assetId?: unknown })?.assetId;
+    if (!isId(assetId)) return fail('INVALID_PAYLOAD');
+    return this.run(async () => {
+      const res = await this.mechanics.authRequest(id, assetId);
+      await this.refreshPlayers(id);
+      this.server.to(assetRoom(assetId)).emit(S2C.ASSET_UPDATED, { assetId });
+      // un falso smascherato in bacheca cambia valore: chi guarda la bacheca la ricarica
+      if (res.verdict === 'fake') this.server.emit(S2C.MARKET_UPDATED);
+      return res;
+    });
+  }
+
+  @SubscribeMessage(C2S.LEGEND_REQUEST)
+  async onLegendRequest(@ConnectedSocket() socket: GameSocket, @MessageBody() body: unknown): Promise<Ack<{ until: number }>> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    const assetId = (body as { assetId?: unknown })?.assetId;
+    if (!isId(assetId)) return fail('INVALID_PAYLOAD');
+    return this.run(async () => {
+      const res = await this.mechanics.legendWear(id, assetId);
+      await this.refreshPlayers(id);
+      this.server.to(assetRoom(assetId)).emit(S2C.ASSET_UPDATED, { assetId });
+      return res;
+    });
+  }
+
+  @SubscribeMessage(C2S.DROP_STATE)
+  onDropState(@ConnectedSocket() socket: GameSocket): Ack<DropState> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    return { ok: true, data: this.drops.state() };
+  }
+
+  @SubscribeMessage(C2S.DROP_CLAIM)
+  async onDropClaim(@ConnectedSocket() socket: GameSocket, @MessageBody() body: unknown): Promise<Ack<{ assetId: number }>> {
+    const id = this.guard(socket);
+    if (typeof id === 'string') return fail(id);
+    const dropId = (body as { dropId?: unknown })?.dropId;
+    if (!isId(dropId)) return fail('INVALID_PAYLOAD');
+    return this.run(async () => {
+      const res = await this.drops.claim(id, dropId);
+      await this.refreshPlayers(id);
+      return res;
+    });
+  }
+
   /** Saldo, armadio e colore delle scarpe dopo un'azione: ai giocatori coinvolti, se connessi. */
   private async refreshPlayers(...ids: number[]): Promise<void> {
     for (const id of new Set(ids)) {
@@ -322,7 +443,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         coins: state.row.coins,
         recoveryCode: this.players.displayCode(deviceId, state.row.recovery_hash),
         shoesColor: state.shoesColor,
+        legendReadyAt: state.row.legend_ready_ms === null ? null : Number(state.row.legend_ready_ms),
       },
+      drop: this.drops.state(),
       inventory: state.inventory,
       wardrobeValue: state.wardrobeValue,
       position,

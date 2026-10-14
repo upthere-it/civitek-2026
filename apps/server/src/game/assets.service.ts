@@ -2,9 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   assetViewFromChain,
   perceivedValue,
+  stallPrice,
   type AssetEventType,
   type ChainStatus,
   type Passport,
+  type StallOffer,
 } from '@sp/shared';
 import { CHAIN_NOTARY, type ChainNotary } from '../chain/chain-notary';
 import { GameConfigService } from '../config/game-config.service';
@@ -114,6 +116,7 @@ export class AssetsService {
       ownerName: a.owner_name,
       lockedUntil: a.locked_until_ms === null ? null : Number(a.locked_until_ms),
       listing: listing ? { listingId: listing.id, price: listing.price, sellerId: listing.seller_id } : null,
+      stallPrice: a.owner_id === sys.stall ? stallPrice(this.cfg.item(a.item_id)?.base_value ?? 0, this.cfg.economy) : null,
       events: events.map((e) => ({
         id: e.id,
         event: e.event,
@@ -122,6 +125,7 @@ export class AssetsService {
         toId: e.to_id,
         toName: e.to_name,
         price: e.price,
+        toSystem: e.to_system === 1,
         hash: e.hash,
         prevHash: e.prev_hash,
         at: Number(e.at_ms),
@@ -130,6 +134,22 @@ export class AssetsService {
         explorerUrl: e.chain_tx ? this.notary.explorerUrl(e.chain_tx) || null : null,
       })),
     };
+  }
+
+  /** Scarpe sul banco di Tony Affari (owner = bancarella), con prezzo e valore percepito. */
+  async stallOffers(): Promise<StallOffer[]> {
+    const rows = await this.db.select<{ id: number; item_id: string; serial: number }>(
+      'SELECT id, item_id, serial FROM assets WHERE owner_id = ? ORDER BY id',
+      [this.cfg.economy.system_players.stall],
+    );
+    const values = await this.values(rows.map((r) => r.id));
+    return rows.map((r) => ({
+      assetId: r.id,
+      itemId: r.item_id,
+      serial: r.serial,
+      price: stallPrice(this.cfg.item(r.item_id)?.base_value ?? 0, this.cfg.economy),
+      perceivedValue: values.get(r.id) ?? 0,
+    }));
   }
 
   private valueOf(a: AssetRow, chain: { event: AssetEventType; toId: number; toIsSystem: boolean }[]): number {

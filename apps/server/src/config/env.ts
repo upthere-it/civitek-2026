@@ -44,3 +44,11 @@ export function recoverySecret(): string {
   }
   return 'sviluppo-non-usare-in-produzione-0123456789';
 }
+
+/**
+ * Loop di gioco (bot, bancarella, drop, ritorno da MC Suola). Nei test sono spenti (GAME_LOOPS=off) e si
+ * chiamano i loro tick() a mano: un bot che compra in mezzo a un test lo renderebbe instabile.
+ */
+export function gameLoopsEnabled(): boolean {
+  return process.env.GAME_LOOPS !== 'off';
+}

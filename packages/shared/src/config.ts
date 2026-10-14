@@ -31,6 +31,14 @@ export interface BotsCfg {
   full_activity_below_humans_online: number;
   min_activity_at_humans_online: number;
   min_activity: number;
+  /** Paia con cui parte un bot con l'armadio vuoto. */
+  start_stock: number;
+  /** Sotto questo inventario il bot conia restock_count paia (MINT dal Negozio, nessuna moneta). */
+  restock_below: number;
+  restock_count: number;
+  max_open_listings: number;
+  /** Per stile (npcs.json → bots[].style): probabilità di provare prima a comprare e tier delle scorte. */
+  styles: Record<string, { buy_first: number; restock_tiers: ItemTier[] }>;
 }
 
 export interface EconomyCfg {

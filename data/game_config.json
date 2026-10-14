@@ -242,7 +242,39 @@
       "max_inventory_per_bot": 6,
       "full_activity_below_humans_online": 10,
       "min_activity_at_humans_online": 40,
-      "min_activity": 0.2
+      "min_activity": 0.2,
+      "start_stock": 3,
+      "restock_below": 2,
+      "restock_count": 2,
+      "max_open_listings": 2,
+      "styles": {
+        "compra_sottoprezzo": {
+          "buy_first": 0.8,
+          "restock_tiers": [
+            "base",
+            "trend"
+          ]
+        },
+        "vende_trend": {
+          "buy_first": 0.3,
+          "restock_tiers": [
+            "trend"
+          ]
+        },
+        "vende_base": {
+          "buy_first": 0.3,
+          "restock_tiers": [
+            "base"
+          ]
+        },
+        "collezionista_hype": {
+          "buy_first": 0.7,
+          "restock_tiers": [
+            "base",
+            "trend"
+          ]
+        }
+      }
     },
     "stall": {
       "price_pct_of_base": 0.5,

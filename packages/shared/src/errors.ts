@@ -13,6 +13,11 @@ export const ERROR_MESSAGES: Record<string, string> = {
   PRICE_OUT_OF_RANGE: 'Prezzo non valido per questa scarpa.',
   ALREADY_LISTED: 'Questa scarpa è già in bacheca.',
   NOT_FOR_SALE: 'Non è in vendita.',
+  DROP_CLOSED: 'Il drop è chiuso. Al prossimo!',
+  DROP_ALREADY_CLAIMED: 'Hai già preso il tuo paio a questo drop.',
+  LEGEND_COOLDOWN: 'MC Suola si sta riposando: torna tra poco.',
+  LEGEND_MAXED: 'MC Suola l’ha già indossata abbastanza: di più non vale.',
+  ALREADY_VERIFIED: 'La Dott.ssa Hash l’ha già controllata.',
   PLAYER_NOT_FOUND: 'Giocatore non trovato.',
   ASSET_NOT_FOUND: 'Scarpa non trovata.',
   AVATAR_ALREADY_SET: 'Il tuo personaggio è già pronto.',
@@ -27,9 +32,9 @@ export const ERROR_MESSAGES: Record<string, string> = {
 
 /**
  * Codici delle SP che non arrivano al giocatore: il server li gestisce (ritenta la creazione del giocatore)
- * oppure sono violazioni di un invariante, che per il giocatore restano INTERNAL.
+ * oppure sono violazioni di un invariante, che per il giocatore restano INTERNAL. TREASURY_LOW lo vedono solo i bot.
  */
-export const INTERNAL_SP_CODES: readonly string[] = ['DEVICE_TAKEN', 'NICKNAME_TAKEN', 'RECOVERY_TAKEN', 'LEDGER_INVALID'];
+export const INTERNAL_SP_CODES: readonly string[] = ['DEVICE_TAKEN', 'NICKNAME_TAKEN', 'RECOVERY_TAKEN', 'LEDGER_INVALID', 'TREASURY_LOW'];
 
 export function errorMessage(code: string): string {
   return ERROR_MESSAGES[code] ?? ERROR_MESSAGES.INTERNAL;
