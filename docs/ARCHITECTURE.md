@@ -507,30 +507,21 @@ export class ChainWorker implements OnModuleInit {
 
 **Cosa va on-chain**: solo `{ v: 1, app: "sneaker-passport", events: [[eventId, hash], …] }`. Niente nickname, niente device, niente id giocatore. L'`eventId` è un numero interno senza significato fuori dal DB. Questo punto è importante perché la chain è immutabile e gli utenti sono minorenni.
 
-**Implementazione testnet: Commercio.network** (D1, chiusa il 14/10). I dati sotto sono stati verificati sul nodo il 14/10.
+**Implementazione testnet: Commercio.network** (D1, chiusa il 14/10), tramite le **API di commercio.app**, come fa già `@mvl/commercio-network` nel repo `upthere-it/microservices` (es. `ms-carma-advisory`). Niente wallet, mnemonic o fee da gestire in proprio: firma e CCC li gestisce la piattaforma sull'account Upthere.
 
 | | |
 |---|---|
-| Rete | `commercio-testnet11k`, Cosmos SDK 0.45 (app commercionetwork 5.1.1), un blocco ogni 5 s circa, nessun limite di gas per blocco |
-| Endpoint | LCD `https://lcd-testnet.commercio.network`, RPC `https://rpc-testnet.commercio.network`, gRPC `grpc-testnet.commercio.network:9090` |
-| Explorer | Almerico, `https://testnet.commercio.network` (link alla tx in `chain.explorer_tx_url`, formato da verificare a mano) |
-| Indirizzi | prefisso bech32 `did:com:` |
-| Fee | in **`uccc`** (Commercio Cash Credit), non in `ucommercio`. Le tx recenti pagano 20.000 uccc con gas limit 1.000.000; un `MsgShareDocument` ne consuma circa 115.000 |
-| Faucet | `https://faucet-testnet.commercio.network/give?addr=…&amount=…` (al massimo 100 COM per richiesta; il 14/10 risponde 502), in alternativa Discord `$request <indirizzo>`. I COM vanno poi convertiti in CCC (modulo `commerciomint`) per pagare le fee |
+| Ambiente | `dev-api.commercio.app/v1` scrive sulla **testnet** (`commercio-testnet11k`, nodo verificato il 14/10); `api.commercio.app/v1` scrive su mainnet |
+| Autenticazione | Keycloak `devlogin.commercio.app`, realm `commercio`, client `dev.commercio.app`, grant `password`. Variabili `CN_USERNAME` e `CN_PASSWORD`, solo nel `.env` |
+| Notarizzazione | `POST /sharedoc/process` con `hash` (sha-256 hex), `hash_algorithm`, `document_uuid`, `content_uri`, `metadata.{content_uri, schema.{uri, version}}`, `recipients` (`CN_RECIPIENT_ADDRESS`, prefisso `did:com:`) e `back_url` facoltativo. Risponde 202 con un `process_id` |
+| Esito | `GET /sharedoc/process/{process_id}` → `status` (`enqueued` … `success`/`failure`) e `doc_tx_hash`; oppure `POST` sul `back_url` quando ha finito. `GET /sharedoc/{document_uuid}` dà 404 finché la tx non è indicizzata |
+| Explorer | `https://testnet.commercio.network/transactions/detail/{txHash}`, lo stesso formato usato in `ms-carma-advisory` |
 
-**Messaggio**: `/commercionetwork.commercionetwork.documents.MsgShareDocument`, il "condividi un'impronta" nativo di Commercio, lo stesso concetto che usa l'ecosistema DOP Digital. I vincoli vengono dal `Validate()` della chain:
-- `sender` e `recipients`: il wallet del gioco (mandarlo a sé stessi è ammesso e comune);
-- `UUID`: un UUID v4 per messaggio;
-- `checksum`: `{ value: <hash dell'anello, hex>, algorithm: "sha-256" }`. Il valore deve essere esadecimale e lungo 64 caratteri;
-- `metadata.contentURI` e `metadata.schema.{URI, version}` sono obbligatori. Proposta: `https://civitek.upthere.it/api/chain/event/<eventId>` (endpoint pubblico con solo hash, prev_hash e data, niente nickname) e lo schema `https://civitek.upthere.it/schema/sneaker-passport-event` v`1`;
-- nessun `encryptionData` né `doSign`.
-
-**Un messaggio per evento, più messaggi per tx** (D10). Con `max_items_per_batch = 20` una tx costa circa 2,3M gas. Alla velocità di picco del gioco (~1,5 eventi/s) e con un batch in volo alla volta, il passaggio ⏳ → ✅ richiede batch (≤ 2 s) + inclusione nel blocco (~5 s).
-
-**Implementazione** (M4):
-- `@cosmjs/proto-signing` + `@cosmjs/stargate` 0.39 (CommonJS), con il tipo `MsgShareDocument` registrato via `protobufjs`;
-- `CHAIN_MNEMONIC` in `.env`, mai nel repo;
-- un solo wallet, con la sequence gestita in serie dal worker: non ci sono mai due batch in volo insieme.
+**Uso nel gioco** (`CommercioNotary`, M4): porting minimo delle chiamate di `@mvl/commercio-network`, con `fetch` nativo e `crypto.randomUUID`, senza axios/qs/uuid. Le stesse variabili d'ambiente.
+- **Per batch** (D10, proposta): un `sharedoc` per batch con `hash = sha256(notaryPayload(batch))`, cioè il pattern "hash cumulativo" già usato in Carma. `content_uri = https://civitek.upthere.it/api/chain/batch/<document_uuid>` restituisce `{ v, app, events: [[eventId, hash], …] }`: chiunque può ricalcolare l'hash del batch e confrontarlo con il checksum on-chain. Rientra nell'interfaccia `ChainNotary` attuale (un `txHash` per batch) senza toccare il worker.
+- **Per evento** (alternativa): un `sharedoc` per anello, con checksum = hash dell'anello. È più diretto da mostrare ai ragazzi, ma fa 1–1,5 chiamate API/s al picco; limiti e costi dell'account vanno verificati con Commercio.
+- `notarizeBatch` invia il processo e poi interroga `/sharedoc/process/{id}` finché non arriva `doc_tx_hash`, con timeout. Un solo batch in volo alla volta: durante l'attesa gli eventi si accumulano nel batch successivo. In produzione si può aggiungere il `back_url` (`/api/chain/commercio-callback`) per non dipendere solo dal polling.
+- Latenza attesa ⏳ → ✅: coda di commercio.app + un blocco (~5 s) + indicizzazione. Va misurata alla prima prova.
 
 ## 7. Client
 
