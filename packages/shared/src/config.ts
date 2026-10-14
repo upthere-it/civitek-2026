@@ -61,7 +61,17 @@ export interface PlayerCfg {
   start_coins: number;
   starter_item_pool: string[];
   max_inventory: number;
-  nickname: { pattern: string; number_digits: number; animals: string[]; editable: boolean };
+  nickname: {
+    pattern: string;
+    number_digits: number;
+    animals: string[];
+    /** Il nome proposto si può cambiare solo alla creazione del personaggio (D12). */
+    editable: string;
+    min_length: number;
+    max_length: number;
+    /** Regex Unicode (flag u): lettere e numeri, poi anche . _ - (niente spazi). */
+    allowed_pattern: string;
+  };
   recovery_code: { length: number; alphabet: string; display_format: string };
   inactivity_anonymize_days: number;
   rate_limit_actions_per_sec: number;
@@ -69,6 +79,8 @@ export interface PlayerCfg {
 
 export interface AvatarCfg {
   frame: { width: number; height: number; origin_x: number; origin_y: number };
+  /** Stile dell'avatar (ragazzo/ragazza): un tratto grafico, non un dato del giocatore. */
+  body_types: string[];
   skin_tones: string[];
   hair_styles: string[];
   hair_colors: string[];

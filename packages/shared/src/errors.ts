@@ -20,6 +20,9 @@ export const ERROR_MESSAGES: Record<string, string> = {
   ALREADY_VERIFIED: 'La Dott.ssa Hash l’ha già controllata.',
   PLAYER_NOT_FOUND: 'Giocatore non trovato.',
   ASSET_NOT_FOUND: 'Scarpa non trovata.',
+  NICKNAME_TAKEN: 'Questo nome è già preso: provane un altro.',
+  NICKNAME_INVALID: 'Nome non valido: da 3 a 14 lettere o numeri, senza spazi.',
+  NICKNAME_BLOCKED: 'Questo nome non si può usare. Scegline un altro.',
   AVATAR_ALREADY_SET: 'Il tuo personaggio è già pronto.',
   AVATAR_INVALID: 'Scelta non valida, riprova.',
   AVATAR_REQUIRED: 'Prima crea il tuo personaggio.',
@@ -34,7 +37,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
  * Codici delle SP che non arrivano al giocatore: il server li gestisce (ritenta la creazione del giocatore)
  * oppure sono violazioni di un invariante, che per il giocatore restano INTERNAL. TREASURY_LOW lo vedono solo i bot.
  */
-export const INTERNAL_SP_CODES: readonly string[] = ['DEVICE_TAKEN', 'NICKNAME_TAKEN', 'RECOVERY_TAKEN', 'LEDGER_INVALID', 'TREASURY_LOW'];
+export const INTERNAL_SP_CODES: readonly string[] = ['DEVICE_TAKEN', 'RECOVERY_TAKEN', 'LEDGER_INVALID', 'TREASURY_LOW'];
 
 export function errorMessage(code: string): string {
   return ERROR_MESSAGES[code] ?? ERROR_MESSAGES.INTERNAL;

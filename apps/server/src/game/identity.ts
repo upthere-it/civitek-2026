@@ -1,5 +1,5 @@
 import { createHash, createHmac, randomInt } from 'node:crypto';
-import type { PlayerCfg } from '@sp/shared';
+import { suggestNickname, type PlayerCfg } from '@sp/shared';
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -13,12 +13,9 @@ export const sha256 = (s: string) => createHash('sha256').update(s).digest('hex'
 /** Il device_id in chiaro non si salva: nel DB c'è solo sha256(device_id minuscolo). */
 export const deviceHash = (deviceId: string) => sha256(deviceId.toLowerCase());
 
-/** Nickname dal pattern di config (es. "{animal}{number}" → "Lince42"). Non modificabile dal giocatore. */
+/** Nickname proposto dal pattern di config (es. "{animal}{number}" → "Lince42"); il giocatore può cambiarlo solo alla creazione. */
 export function randomNickname(cfg: PlayerCfg['nickname'], extraDigits = 0): string {
-  const digits = cfg.number_digits + extraDigits;
-  const animal = cfg.animals[randomInt(cfg.animals.length)];
-  const number = String(randomInt(10 ** digits)).padStart(digits, '0');
-  return cfg.pattern.replace('{animal}', animal).replace('{number}', number);
+  return suggestNickname(cfg, randomInt, extraDigits);
 }
 
 /**

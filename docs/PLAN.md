@@ -111,6 +111,7 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 | D8 | Tentativi della certificazione: oggi `max_attempts` (5) × `batch_interval_ms` (2 s) vuol dire che 10 s di testnet giù mandano gli eventi in `FAILED` per sempre. Proposta: backoff (`chain_next_attempt_at`) oppure job che rimette in coda i `FAILED` ogni N minuti | Simone | con D1 | backoff |
 | D9 | Budget "primo caricamento < 1 MB": Phaser 3 da solo pesa 322 KB gzip (1,2 MB minificato), che `ASSETS.md` §8 non conta. Con asset (~330 KB) e font (~88 KB) si arriva a ~740 KB gzip prima di tilemap e suoni. Il budget è sul trasferito (gzip/brotli) o sul peso dei file? Se serve margine: build custom di Phaser senza Matter/fisica | Simone | 19/10 | gzip, margine da tenere d'occhio in M5 |
 | D10 | Commercio: un `sharedoc` **per batch** (hash cumulativo, come in Carma: già compatibile col worker) oppure **per evento** (l'hash del passaporto è esattamente quello on-chain, ma 1–1,5 chiamate API/s al picco) | Simone | 17/10 | per batch |
+| ~~D12~~ | ✅ **Chiusa (14/10)**: nome **scelto dal giocatore** con un default generato, modificabile solo alla creazione (formato da config, filtro `data/nickname_blocklist.json`, invito a non usare il vero nome); **stile Ragazzo/Ragazza** come tratto dell'avatar. Cambia la regola 6 di CLAUDE.md. Da riflettere nel testo privacy (D5) | Simone | — | — |
 | D11 | Credenziali commercio.app per il gioco (`CN_USERNAME`/`CN_PASSWORD`/`CN_RECIPIENT_ADDRESS`, ambiente dev = testnet): account dedicato o quello Upthere esistente. Vanno solo nel `.env`, mai nel repo | Simone | 18/10 | si resta su `MockNotary` |
 
 ## Note di sessione
@@ -202,3 +203,14 @@ _(Claude Code: aggiungi qui una riga per sessione con data, milestone, cosa è s
     - D6 (nomi NPC);
     - il DB `civitek` sul server di test non ha ancora la 008;
     - un drop lasciato aperto durante un riavvio del server resta in DB ma non viene ripreso: il prossimo si apre all'orario successivo.
+- **14/10 — Onboarding: nome scelto e stile Ragazzo/Ragazza (D12).**
+  - **Fatto**:
+    - creazione del personaggio in due passi: "Chi sei" (stile e nome proposto, 🎲 per un altro) e "Il tuo look";
+    - `sql/009_player_profile.sql`: `players.avatar_body` e `sp_player_set_profile` (nome e aspetto una volta sola, `NICKNAME_TAKEN` sull'unicità);
+    - nome: `nicknameFormatError`/`suggestNickname` in shared, filtro `NicknameFilter` lato server con `data/nickname_blocklist.json` (minuscole, accenti, numeri al posto delle lettere, lettere doppie);
+    - asset: corpo "ragazza" (`skinf_*`: ciglia e guance), gonna (`skirt_*`) e acconciatura `coda` per tutti, generati da `gen_avatar.py`. Boot a ~405 KB.
+  - **Test**: `nickname.spec` (formato, filtro, nessun falso positivo sui nomi proposti), gateway (nome valido, già preso anche con maiuscole diverse, non valido, vietato, stile al rientro); smoke su iPhone SE e regressione degli smoke M2 e M3.
+  - **Aperto**:
+    - nessun filtro di parole è perfetto: la lista va ampliata quando serve;
+    - il DB `civitek` non ha ancora la 009;
+    - testo privacy (D5) da aggiornare con il nome scelto.

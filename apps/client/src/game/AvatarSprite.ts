@@ -4,6 +4,8 @@ import { gameConfig } from '../config';
 
 /** Colori risolti dei layer: dagli indici del giocatore o espliciti (MC Suola, npcs.json). */
 export interface AvatarParts {
+  /** avatar.body_types: 'ragazzo' (corpo skin_, pantaloni) o 'ragazza' (corpo skinf_, gonna). */
+  bodyType: string;
   skin: number;
   hairStyle: string;
   hairColor: string;
@@ -14,6 +16,7 @@ export interface AvatarParts {
 export function partsFromLook(look: AvatarLook, shoesColor: string | null): AvatarParts {
   const a = gameConfig.avatar;
   return {
+    bodyType: a.body_types[look.body] ?? a.body_types[0],
     skin: look.skin,
     hairStyle: a.hair_styles[look.hair],
     hairColor: a.hair_colors[look.hairColor],
@@ -24,8 +27,14 @@ export function partsFromLook(look: AvatarLook, shoesColor: string | null): Avat
 
 const hex = (h: string) => parseInt(h.replace('#', ''), 16);
 
+/** Corpo e layer sotto la felpa per ogni stile (assets/avatar/avatar_manifest.json → body_types). */
+const BODY_LAYERS: Record<string, { body: string; lower: string }> = {
+  ragazzo: { body: 'skin', lower: 'pants' },
+  ragazza: { body: 'skinf', lower: 'skirt' },
+};
+
 /**
- * Avatar a 5 layer sovrapposti (docs/ASSETS.md §3): corpo, pantaloni, scarpe, felpa, capelli.
+ * Avatar a 5 layer sovrapposti (docs/ASSETS.md §3): corpo, pantaloni o gonna, scarpe, felpa, capelli.
  * Gli overlay sono in grigi e vengono tinti (solo WebGL). Gli sheet `side` guardano a destra.
  */
 export class AvatarSprite extends Phaser.GameObjects.Container {
@@ -35,9 +44,10 @@ export class AvatarSprite extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, parts: AvatarParts) {
     super(scene, x, y);
     const a = gameConfig.avatar;
+    const style = BODY_LAYERS[parts.bodyType] ?? BODY_LAYERS.ragazzo;
     const defs: [string, string | null][] = [
-      [`skin_${parts.skin}`, null],
-      ['pants', a.pants_color],
+      [`${style.body}_${parts.skin}`, null],
+      [style.lower, a.pants_color],
       ['shoes', parts.shoesColor],
       ['hoodie', parts.outfitColor],
       [`hair_${parts.hairStyle}`, parts.hairColor],

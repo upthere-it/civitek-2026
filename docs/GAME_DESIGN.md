@@ -18,7 +18,7 @@ Il gioco funziona **in autonomia** e resta **aperto** dopo la conferenza: nessun
 ## 2. Flusso del giocatore
 
 1. **QR → landing `/`**: fondo primary, logo Upthere bianco (SVG), titolo in Chillax e il bottone "Entra nel mercato" (accent-400 con testo primary). Sotto, un link piccolo: "Hai già giocato? Inserisci il codice".
-2. **device_id**: il client genera `crypto.randomUUID()`, lo salva in localStorage e lo manda nell'handshake socket. Il server crea il giocatore con un nickname generato (es. `Lince42`), 100 monete e una scarpa base regalata.
+2. **device_id**: il client genera `crypto.randomUUID()`, lo salva in localStorage e lo manda nell'handshake socket. Il server crea il giocatore con un nickname proposto (es. `Lince42`), 100 monete e una scarpa base regalata. Il giocatore può cambiare il nome solo nella creazione del personaggio (§3).
 3. **Avatar**: tre scelte in una sola schermata, con anteprima live, poi "Entra".
 4. **Villaggio**: parte la **prima run** di 5 minuti (§5).
 5. **Reveal** a fine prima run (§12). Dopo il reveal il mondo resta aperto e si continua a giocare senza timer.
@@ -27,12 +27,21 @@ Obiettivo di tempo: dalla scansione al villaggio in meno di 45 secondi.
 
 ## 3. Avatar
 
-Tre tratti, scelti con swatch o frecce in una sola schermata. Niente testo libero.
+Due passi, con l'anteprima live sempre visibile.
+
+**1. Chi sei**
+- **Stile**: Ragazzo o Ragazza (`avatar.body_types`). È un tratto grafico, come i capelli: il gioco non chiede né salva il genere del giocatore.
+- **Nome**: il gioco ne propone uno (pattern di `player.nickname`, es. `Lince42`) e un 🎲 ne propone altri. Il giocatore può scriverne uno suo, **solo qui**: poi resta fisso (D12).
+  - Regole: da `min_length` a `max_length` caratteri (3–14), lettere e numeri più `.`, `_` e `-`, niente spazi, unico nel villaggio (maiuscole e accenti non contano).
+  - Il server rifiuta parolacce, marchi reali e nomi riservati (Upthere, NPC, admin…) con `data/nickname_blocklist.json`, anche scritti con numeri al posto delle lettere.
+  - Sotto il campo: "Non usare il tuo vero nome."
+
+**2. Il tuo look**
 
 | Tratto | Opzioni |
 |---|---|
 | Pelle | 5 toni (`avatar.skin_tones`) |
-| Capelli | 3 stili (corti, lunghi, cappellino) × 6 colori (`avatar.hair_styles`, `avatar.hair_colors`) |
+| Capelli | 4 stili (corti, lunghi, cappellino, coda) × 6 colori (`avatar.hair_styles`, `avatar.hair_colors`) |
 | Felpa | 8 colori (`avatar.outfit_colors`) |
 
 L'avatar è composto da layer sovrapposti, tutti in frame da 64×64. I dettagli e il codice Phaser sono in `docs/ASSETS.md`.
@@ -252,7 +261,11 @@ Pagina `/schermo` per il proiettore. Mostra un ticker live degli eventi appena c
 | landing.cta | Entra nel mercato |
 | landing.recover | Hai già giocato? Inserisci il codice |
 | avatar.title | Crea il tuo personaggio |
-| avatar.labels | Pelle · Capelli · Felpa |
+| avatar.who | Chi sei nel villaggio |
+| avatar.name_hint | Te ne proponiamo uno: puoi cambiarlo adesso, poi resta quello. Non usare il tuo vero nome. |
+| avatar.labels | Stile · Nome · Pelle · Capelli · Felpa |
+| error.NICKNAME_TAKEN | Questo nome è già preso: provane un altro. |
+| error.NICKNAME_BLOCKED | Questo nome non si può usare. Scegline un altro. |
 | avatar.cta | Entra |
 | hud.coins | {n} monete |
 | hud.wardrobe | Armadio: {n} |

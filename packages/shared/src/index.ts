@@ -7,3 +7,4 @@ export * from './wardrobe';
 export * from './village';
 export * from './protocol';
 export * from './errors';
+export * from './nickname';

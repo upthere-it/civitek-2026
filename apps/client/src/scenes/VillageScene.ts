@@ -118,6 +118,7 @@ export class VillageScene extends Phaser.Scene {
     if (info.sprite.type === 'avatar') {
       const s = info.sprite;
       obj = new AvatarSprite(this, place.x, place.y, {
+        bodyType: gameConfig.avatar.body_types[0],
         skin: s.skin,
         hairStyle: s.hair_style,
         hairColor: s.hair_color,

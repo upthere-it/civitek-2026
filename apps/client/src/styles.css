@@ -184,6 +184,97 @@ canvas {
   cursor: pointer;
 }
 
+/* nella creazione del personaggio ogni scelta sta su una riga che scorre di lato: su un telefono basso
+   resta spazio per l'anteprima */
+.avatar .swatches,
+.avatar .chips {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.avatar .swatches::-webkit-scrollbar,
+.avatar .chips::-webkit-scrollbar {
+  display: none;
+}
+
+.avatar .swatch,
+.avatar .chip {
+  flex-shrink: 0;
+}
+
+/* creazione del personaggio, passo 1: stile e nome */
+.avatar-step {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.avatar-step[hidden] {
+  display: none;
+}
+
+.avatar-step-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.avatar-step-actions .btn {
+  flex: 1;
+  padding: 0 12px;
+}
+
+.name-row {
+  display: flex;
+  gap: 8px;
+}
+
+.name-input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 14px;
+  border: 2px solid var(--up-accent);
+  border-radius: 14px;
+  background: var(--up-accent-900);
+  color: #fff;
+  font: 600 18px var(--up-font-display);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.name-input[aria-invalid='true'] {
+  border-color: var(--up-warn);
+}
+
+.dice {
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--up-primary-700);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.name-hint {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* errore: bianco in grassetto sul fondo primary, il rosso warn solo come bordo del campo (ASSETS.md §7) */
+.name-error {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.name-error:empty {
+  display: none;
+}
+
 /* ---------------------------------------------------------------- HUD */
 .hud {
   position: absolute;

@@ -26,6 +26,7 @@ DOP Digital fa la stessa cosa con le bottiglie di vino. Il gioco funziona **in a
 | `data/game_config.json` | **Tutti** i numeri del gioco |
 | `data/game_items.json` | Catalogo in gioco (29 item, marchi fittizi, 16 silhouette) |
 | `data/npcs.json` | NPC, ruoli, battute, bottiglia demo DOP |
+| `data/nickname_blocklist.json` | Parole vietate nei nomi scelti dai giocatori. **Solo server**, mai nel bundle del client |
 | `data/catalog_reference.json` | Catalogo reale di riferimento (prezzi e rarità). **Uso interno, mai mostrato nel gioco** |
 | `apps/client/public/assets/` | Asset pronti: `manifest.json` per il loader, avatar a layer, atlas delle scarpe, pixel art curata |
 | `tools/` | Script Python che rigenerano dati e asset placeholder |
@@ -41,7 +42,8 @@ DOP Digital fa la stessa cosa con le bottiglie di vino. Il gioco funziona **in a
 6. **Gli utenti sono minorenni.**
    - Nessun dato personale: niente nome, email, telefono, posizione o foto.
    - Niente chat libera, solo emote predefinite.
-   - Nickname generati e non modificabili.
+   - Nickname proposto dal gioco; il giocatore può cambiarlo **solo alla creazione del personaggio**, poi resta fisso (D12). Il server applica lunghezza e caratteri da config (niente spazi) e il filtro di `data/nickname_blocklist.json`. La schermata invita a non usare il proprio vero nome.
+   - Lo stile ragazzo/ragazza è un tratto grafico dell'avatar, come i capelli: non è un dato del giocatore.
    - `device_id` = UUID v4 casuale generato dal client. **Niente fingerprinting.**
    - Anonimizzazione dopo 30 giorni di inattività.
    - Nessun analytics né tracker di terze parti.

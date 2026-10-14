@@ -1,10 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { listingPriceRange, wardrobeValue, type AvatarLook, type InventoryItem } from '@sp/shared';
+import {
+  listingPriceRange,
+  nicknameFormatError,
+  normalizeNickname,
+  wardrobeValue,
+  type AvatarLook,
+  type InventoryItem,
+} from '@sp/shared';
 import { recoverySecret } from '../config/env';
 import { GameConfigService } from '../config/game-config.service';
 import { DbService } from '../db/db.service';
 import { SpError } from '../db/sp-error';
 import { AssetsService } from './assets.service';
+import { NicknameFilter } from './nickname-filter';
 import {
   MAX_RECOVERY_ATTEMPTS,
   deviceHash,
@@ -18,6 +26,7 @@ export interface PlayerRow {
   id: number;
   nickname: string;
   coins: number;
+  avatar_body: number | null;
   avatar_skin: number | null;
   avatar_hair: number | null;
   avatar_hair_color: number | null;
@@ -40,6 +49,7 @@ const NICKNAME_ATTEMPTS = 12;
 export class PlayerService {
   private readonly logger = new Logger(PlayerService.name);
   private readonly secret = recoverySecret();
+  private readonly filter = NicknameFilter.fromRepo();
 
   constructor(
     private readonly db: DbService,
@@ -76,8 +86,29 @@ export class PlayerService {
     throw new SpError('BUSY');
   }
 
-  async setAvatar(playerId: number, look: AvatarLook): Promise<void> {
-    await this.db.call('sp_player_set_avatar', [playerId, look.skin, look.hair, look.hairColor, look.outfit]);
+  /**
+   * Creazione del personaggio: aspetto e nome (D12). Il nome è quello proposto dal gioco o uno scelto dal
+   * giocatore; qui si ricontrollano formato e parole vietate, la SP ricontrolla lunghezza e unicità.
+   */
+  async setProfile(playerId: number, look: AvatarLook, rawNickname: string | null): Promise<string> {
+    const [current] = await this.db.select<{ nickname: string }>('SELECT nickname FROM players WHERE id = ?', [playerId]);
+    if (!current) throw new SpError('PLAYER_NOT_FOUND');
+    const nickname = rawNickname === null ? current.nickname : normalizeNickname(rawNickname);
+    if (nickname !== current.nickname) {
+      const format = nicknameFormatError(nickname, this.cfg.player.nickname);
+      if (format) throw new SpError(format);
+      if (this.filter.isBlocked(nickname)) throw new SpError('NICKNAME_BLOCKED');
+    }
+    const [row] = await this.db.call<{ nickname: string }>('sp_player_set_profile', [
+      playerId,
+      nickname,
+      look.body,
+      look.skin,
+      look.hair,
+      look.hairColor,
+      look.outfit,
+    ]);
+    return row.nickname;
   }
 
   /** Codice da mostrare a questo device, se è quello registrato per il giocatore. */
@@ -93,7 +124,7 @@ export class PlayerService {
 
   async loadState(playerId: number): Promise<PlayerState> {
     const [row] = await this.db.select<PlayerRow>(
-      `SELECT id, nickname, coins, avatar_skin, avatar_hair, avatar_hair_color, avatar_outfit, recovery_hash,
+      `SELECT id, nickname, coins, avatar_body, avatar_skin, avatar_hair, avatar_hair_color, avatar_outfit, recovery_hash,
               ROUND(UNIX_TIMESTAMP(legend_ready_at) * 1000) AS legend_ready_ms
          FROM players WHERE id = ?`,
       [playerId],
@@ -159,5 +190,12 @@ export function lookOf(row: PlayerRow): AvatarLook | null {
   if (row.avatar_skin === null || row.avatar_hair === null || row.avatar_hair_color === null || row.avatar_outfit === null) {
     return null;
   }
-  return { skin: row.avatar_skin, hair: row.avatar_hair, hairColor: row.avatar_hair_color, outfit: row.avatar_outfit };
+  // avatar creati prima dello stile (009): ragazzo
+  return {
+    body: row.avatar_body ?? 0,
+    skin: row.avatar_skin,
+    hair: row.avatar_hair,
+    hairColor: row.avatar_hair_color,
+    outfit: row.avatar_outfit,
+  };
 }

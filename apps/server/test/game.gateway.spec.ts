@@ -55,12 +55,12 @@ function connect(deviceId: string = randomUUID()): { socket: Client; init: Promi
   };
 }
 
-const LOOK = { skin: 1, hair: 2, hairColor: 3, outfit: 4 };
+const LOOK = { body: 1, skin: 1, hair: 2, hairColor: 3, outfit: 4 };
 
 async function inWorld(deviceId = randomUUID()) {
   const c = connect(deviceId);
   const init = await c.init;
-  const res = await c.socket.timeout(3000).emitWithAck(C2S.AVATAR_SET, LOOK);
+  const res = await c.socket.timeout(3000).emitWithAck(C2S.AVATAR_SET, { ...LOOK, nickname: init.player.nickname });
   if (!res.ok) throw new Error(res.code);
   return { ...c, init, position: res.data };
 }
@@ -134,19 +134,57 @@ describe('handshake', () => {
   });
 });
 
+describe('nome scelto alla creazione (D12)', () => {
+  const create = async (nickname: string) => {
+    const c = connect();
+    await c.init;
+    return { c, res: await c.socket.emitWithAck(C2S.AVATAR_SET, { ...LOOK, nickname }) };
+  };
+
+  it('nome valido: salvato (spazi ai bordi tolti), visibile al rientro, poi non si cambia più', async () => {
+    const name = `Ninja${Date.now().toString(36).slice(-6)}`;
+    const { c, res } = await create(`  ${name} `);
+    expect(res).toMatchObject({ ok: true, data: { nickname: name } });
+    expect(await c.socket.emitWithAck(C2S.AVATAR_SET, { ...LOOK, nickname: 'AltroNome1' })).toMatchObject({
+      code: 'AVATAR_ALREADY_SET',
+    });
+  });
+
+  it('nome già preso (anche con maiuscole o accenti diversi), non valido, vietato', async () => {
+    const name = `Gufetto${Date.now().toString(36).slice(-5)}`;
+    expect((await create(name)).res.ok).toBe(true);
+    expect((await create(name.toUpperCase())).res).toMatchObject({ ok: false, code: 'NICKNAME_TAKEN', message: 'Questo nome è già preso: provane un altro.' });
+    expect((await create('ab')).res).toMatchObject({ code: 'NICKNAME_INVALID' });
+    expect((await create('Mario Rossi')).res).toMatchObject({ code: 'NICKNAME_INVALID' });
+    expect((await create('C4zz0ne')).res).toMatchObject({ code: 'NICKNAME_BLOCKED' });
+    expect((await create('NikeFan')).res).toMatchObject({ code: 'NICKNAME_BLOCKED' });
+  });
+
+  it('lo stile ragazza arriva agli altri nel profilo', async () => {
+    const deviceId = randomUUID();
+    await inWorld(deviceId);
+    clients.splice(0).forEach((c) => c.disconnect());
+    const again = await connect(deviceId).init;
+    expect(again.player.avatar).toMatchObject({ body: 1 });
+  });
+});
+
 describe('avatar', () => {
   it('si sceglie una volta, con indici validi, e fa entrare nel villaggio', async () => {
     const c = connect();
-    await c.init;
+    const { player } = await c.init;
+    const set = { ...LOOK, nickname: player.nickname };
     expect(await c.socket.emitWithAck(C2S.MOVE_TO, { x: 10, y: 10 })).toMatchObject({ ok: false, code: 'AVATAR_REQUIRED' });
-    expect(await c.socket.emitWithAck(C2S.AVATAR_SET, { ...LOOK, skin: cfg.config.avatar.skin_tones.length })).toMatchObject({
-      ok: false,
-      code: 'AVATAR_INVALID',
-    });
-    const ok = await c.socket.emitWithAck(C2S.AVATAR_SET, LOOK);
+    for (const bad of [{ skin: cfg.config.avatar.skin_tones.length }, { body: cfg.config.avatar.body_types.length }]) {
+      expect(await c.socket.emitWithAck(C2S.AVATAR_SET, { ...set, ...bad })).toMatchObject({ ok: false, code: 'AVATAR_INVALID' });
+    }
+    const ok = await c.socket.emitWithAck(C2S.AVATAR_SET, set);
     expect(ok.ok).toBe(true);
-    if (ok.ok) expect(isWalkable(app.get(WorldService).village.grid, ok.data)).toBe(true);
-    expect(await c.socket.emitWithAck(C2S.AVATAR_SET, LOOK)).toMatchObject({ ok: false, code: 'AVATAR_ALREADY_SET' });
+    if (ok.ok) {
+      expect(isWalkable(app.get(WorldService).village.grid, ok.data)).toBe(true);
+      expect(ok.data.nickname).toBe(player.nickname);
+    }
+    expect(await c.socket.emitWithAck(C2S.AVATAR_SET, set)).toMatchObject({ ok: false, code: 'AVATAR_ALREADY_SET' });
   });
 
   it('al rientro l’avatar c’è già e si parte nel villaggio', async () => {

@@ -377,7 +377,8 @@ DELIMITER ;
 | Procedura | Cosa fa | Errori |
 |---|---|---|
 | `sp_player_get_or_create(device_hash, nickname_candidate, recovery_hash)` ✅ M0 | Trova il giocatore dal device o lo crea: `GRANT` di 100 monete + `_sp_mint` della scarpa regalo a prezzo 0. Restituisce `player_id`, `created`, `gift_asset_id` | `NICKNAME_TAKEN` / `RECOVERY_TAKEN` (il server riprova con un altro valore), `DEVICE_TAKEN` (stesso device in parallelo: il server richiama la SP) |
-| `sp_player_set_avatar(player, skin, hair, hair_color, outfit)` | Solo se l'avatar non è ancora impostato. Gli indici sono validati contro `game_settings` | `AVATAR_ALREADY_SET`, `AVATAR_INVALID` |
+| `sp_player_set_avatar(player, skin, hair, hair_color, outfit)` | Solo se l'avatar non è ancora impostato. Gli indici sono validati contro `game_settings`. Resta per i chiamanti vecchi: la creazione del personaggio usa `sp_player_set_profile` | `AVATAR_ALREADY_SET`, `AVATAR_INVALID` |
+| `sp_player_set_profile(player, nickname, body, skin, hair, hair_color, outfit)` ✅ 009 | Creazione del personaggio (D12): stile, aspetto e nome, una volta sola. Ricontrolla la lunghezza del nome; il formato e le parole vietate li controlla il server prima. Un nome già usato (collation `_ai_ci`: maiuscole e accenti non contano) → 1062 → `NICKNAME_TAKEN` | `AVATAR_ALREADY_SET`, `AVATAR_INVALID`, `NICKNAME_INVALID`, `NICKNAME_TAKEN` |
 | `sp_player_recover(recovery_hash, device_hash)` | Associa il device al giocatore esistente | `CODE_NOT_FOUND` |
 | `sp_shop_buy(player, item)` ✅ M2 | Item con `"shop"` tra le sources: `_sp_move_coins(player→1, SHOP)` + `_sp_mint(minted_by 2)` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
 | `sp_listing_create(player, asset, price, perceived_value)` ✅ M0 | Prezzo tra `listing_min_price` e `perceived_value × listing_max_multiplier` (il valore lo passa il server, calcolato da `shared`) | `NOT_OWNER`, `ASSET_LOCKED`, `PRICE_OUT_OF_RANGE`, duplicato → `ALREADY_LISTED` |
@@ -398,7 +399,7 @@ DELIMITER ;
 | `sp_chain_mark_confirmed(batch_id, tx)` ✅ M0 | `CONFIRMED` + `chain_tx`. Restituisce `asset_id`, `from_id`, `to_id` per le notifiche | |
 | `sp_chain_mark_failed(batch_id, error, max_attempts)` ✅ M0 | Torna `PENDING`, oppure `FAILED` oltre `max_attempts` | |
 | `sp_economy_check()` ✅ M0 | Esegue gli invarianti I1–I6 e restituisce le violazioni | |
-| `sp_anonymize_inactive(days)` | Per i giocatori inattivi: azzera `device_hash`, `recovery_hash` e avatar, cancella `player_devices`, imposta `anonymized_at`. Le catene restano integre | |
+| `sp_anonymize_inactive(days)` | Per i giocatori inattivi: azzera `device_hash`, `recovery_hash` e avatar, **rimette un nickname generato al posto di quello scelto** (D12), cancella `player_devices`, imposta `anonymized_at`. Le catene restano integre | |
 
 Nota sul calcolo del valore. Il valore percepito si calcola in **TypeScript** (`shared/valuation.ts`), non in SQL, ed è l'unica implementazione. Le SP che ne hanno bisogno (limiti di prezzo, bot) lo ricevono dal server come parametro, già calcolato sugli stessi dati letti nella transazione.
 
@@ -417,7 +418,7 @@ Handshake: `io(url, { auth: { deviceId } })`. Il server calcola `sha256(deviceId
 | Evento | Payload |
 |---|---|
 | `session.recover` | `{ code }` |
-| `avatar.set` | `{ skin, hair, hairColor, outfit }` (indici) |
+| `avatar.set` | `{ body, skin, hair, hairColor, outfit, nickname }` (indici + nome). Ack `{ x, y, nickname }` con il nome salvato. Errori del nome: `NICKNAME_INVALID`, `NICKNAME_BLOCKED`, `NICKNAME_TAKEN` |
 | `move.to` | `{ x, y }` |
 | `emote.send` | `{ emote }` (solo emote da config) |
 | `shop.list` / `shop.buy` | `{}` / `{ itemId }` |

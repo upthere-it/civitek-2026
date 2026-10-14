@@ -181,16 +181,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   }
 
   @SubscribeMessage(C2S.AVATAR_SET)
-  async onAvatarSet(@ConnectedSocket() socket: GameSocket, @MessageBody() body: unknown): Promise<Ack<{ x: number; y: number }>> {
+  async onAvatarSet(
+    @ConnectedSocket() socket: GameSocket,
+    @MessageBody() body: unknown,
+  ): Promise<Ack<{ x: number; y: number; nickname: string }>> {
     const id = this.guard(socket);
     if (typeof id === 'string') return fail(id);
     const look = parseLook(body);
     if (!look) return fail('AVATAR_INVALID');
+    const nickname = (body as { nickname?: unknown }).nickname;
+    if (nickname !== undefined && typeof nickname !== 'string') return fail('NICKNAME_INVALID');
     try {
-      await this.players.setAvatar(id, look);
+      const saved = await this.players.setProfile(id, look, nickname ?? null);
       const state = await this.players.loadState(id);
       if (this.world.size >= this.cfg.config.world.max_players_per_room) return fail('WORLD_FULL');
-      return { ok: true, data: this.world.join(id, this.profileOf(state)) };
+      return { ok: true, data: { ...this.world.join(id, this.profileOf(state)), nickname: saved } };
     } catch (err) {
       return this.failFrom(err);
     }
@@ -468,5 +473,8 @@ function parseLook(body: unknown): AvatarLook | null {
   const b = body as Partial<AvatarLook> | null;
   if (!b) return null;
   const keys = ['skin', 'hair', 'hairColor', 'outfit'] as const;
-  return keys.every((k) => Number.isInteger(b[k])) ? { skin: b.skin!, hair: b.hair!, hairColor: b.hairColor!, outfit: b.outfit! } : null;
+  if (!keys.every((k) => Number.isInteger(b[k]))) return null;
+  // body assente (client vecchio) = ragazzo; se c'è, deve essere un intero (lo valida la SP)
+  if (b.body !== undefined && !Number.isInteger(b.body)) return null;
+  return { body: b.body ?? 0, skin: b.skin!, hair: b.hair!, hairColor: b.hairColor!, outfit: b.outfit! };
 }

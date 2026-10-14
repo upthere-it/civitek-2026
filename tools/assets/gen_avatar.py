@@ -2,9 +2,11 @@
 Genera i layer dell'avatar a partire da Body_A (Pixel Crawler Free Pack, Anokolisa).
 
 Output (frame 64x64, stesso layout degli sheet originali):
-  body/skin_{0..4}_{anim}_{dir}.png   corpo con pelle ricolorata (palette swap, occhi intatti)
+  body/skin_{0..4}_{anim}_{dir}.png   corpo "ragazzo" con pelle ricolorata (palette swap, occhi intatti)
+  body/skinf_{0..4}_{anim}_{dir}.png  corpo "ragazza": lo stesso, con ciglia e guance (avatar.body_types)
   layers/{layer}_{anim}_{dir}.png      overlay in scala di grigi da tingere a runtime (Phaser setTint)
-     layer = hoodie | pants | shoes | hair_corti | hair_lunghi | hair_cappellino
+     layer = hoodie | pants | skirt | shoes | hair_corti | hair_lunghi | hair_cappellino | hair_coda
+  Il corpo "ragazza" usa la gonna (skirt) al posto dei pantaloni.
 
 Sono PLACEHOLDER generati con euristiche sulle righe del corpo: vanno ritoccati in Aseprite.
 """
@@ -155,6 +157,34 @@ def hair_layer(px, d, style):
                     put(out, x, y0 + 6, O)
         return out
 
+    if style == "coda":
+        # base come i corti, più la coda: dietro la testa (side), giù lungo la schiena (up), un ciuffo di lato (down)
+        out = hair_layer(px, d, "corti")
+        if d == "down":
+            for y in range(y0 + 2, y0 + 12):
+                put(out, hx1 + 1, y, H); put(out, hx1 + 2, y, H if y < y0 + 10 else O); put(out, hx1 + 3, y, O)
+            put(out, hx1 + 1, y0 + 1, O); put(out, hx1 + 2, y0 + 1, O); put(out, hx1 + 2, y0 + 12, O)
+        elif d == "side":
+            for y in range(y0 + 3, y0 + 14):
+                w = 3 if y < y0 + 11 else 2
+                for k in range(1, w + 1):
+                    put(out, hx0 - k, y, H if k < w else HS)
+                put(out, hx0 - w - 1, y, O)
+            for k in range(0, 4):
+                put(out, hx0 - k, y0 + 14, O)
+            put(out, hx0 - 1, y0 + 2, O); put(out, hx0 - 2, y0 + 2, O)
+        else:  # up
+            mid = int(cx)
+            for y in range(y0 + 12, y0 + 20):
+                for x in (mid - 1, mid, mid + 1):
+                    put(out, x, y, H if x == mid else HS)
+                put(out, mid - 2, y, O); put(out, mid + 2, y, O)
+            for x in range(mid - 1, mid + 2):
+                put(out, x, y0 + 20, O)
+            for x in range(mid - 2, mid + 3):
+                put(out, x, y0 + 12, gray(0.40))  # elastico
+        return out
+
     # stili di capelli
     if d == "down":
         cover(lambda x, y: y <= y0 + 6 or (y <= y0 + 9 and (x - hx0 <= 2 or hx1 - x <= 2)))
@@ -191,6 +221,53 @@ def hair_layer(px, d, style):
     return out
 
 
+# segnaposto delle guance nel corpo "ragazza": skin_swap lo trasforma in un rosa sul tono di pelle
+BLUSH_MARK = (255, 0, 255)
+BLUSH = (224, 96, 128)
+
+
+def mix(a, b, k):
+    return tuple(int(x + (y - x) * k) for x, y in zip(a, b))
+
+
+def girl_face(fr, d):
+    """Ciglia (un pixel che allunga la riga sopra l'occhio verso l'esterno) e guance. Solo pixel di pelle."""
+    out = fr.copy()
+    px = out.load()
+    if d == "up":
+        return out
+    _, _, y0, _ = frame_bbox(px)
+    hx0, hx1 = head_bounds(px, y0)
+    marks = []
+    if d == "down":
+        marks = [((hx0 + 1, y0 + 8), BLACK), ((hx1 - 1, y0 + 8), BLACK),
+                 ((hx0 + 2, y0 + 10), BLUSH_MARK), ((hx1 - 2, y0 + 10), BLUSH_MARK)]
+    else:  # side: guarda a destra
+        marks = [((hx1 - 1, y0 + 8), BLACK), ((hx1 - 2, y0 + 11), BLUSH_MARK)]
+    for (x, y), c in marks:
+        if 0 <= x < FRAME and 0 <= y < FRAME and px[x, y][3] and px[x, y][:3] in SKIN_SET:
+            px[x, y] = c + (255,)
+    return out
+
+
+def skirt_layer(px, y0, y1):
+    """Gonna ad A sulle gambe, sotto le mani: larga quanto le gambe in alto, un pixel in più per lato in fondo."""
+    out = Image.new("RGBA", (FRAME, FRAME), (0, 0, 0, 0))
+    legs = [x for x in range(FRAME) if px[x, y0 + 24][3] > 0]
+    if not legs:
+        return out
+    x0, x1 = min(legs), max(legs)
+    top, bottom = y0 + 22, min(y0 + 26, y1 - 3)
+    for y in range(top, bottom + 1):
+        flare = 0 if y < top + 2 else 1
+        for x in range(x0 - flare, x1 + flare + 1):
+            edge = x in (x0 - flare, x1 + flare)
+            put(out, x, y, (0, 0, 0, 255) if edge else gray(0.85 if (x - x0) % 3 else 0.70))
+    for x in range(x0 - 1, x1 + 2):
+        put(out, x, bottom + 1, (0, 0, 0, 255))
+    return out
+
+
 def skin_swap(sheet, tone_hex):
     base = hex2rgb(tone_hex)
     mapping = {
@@ -198,6 +275,7 @@ def skin_swap(sheet, tone_hex):
         SKIN_SHADE: scale(base, 0.75),
         SKIN_HI: lighten(base, 0.30),
         SKIN_DARK: scale(base, 0.55),
+        BLUSH_MARK: mix(base, BLUSH, 0.45),
     }
     out = sheet.copy()
     px = out.load()
@@ -210,7 +288,7 @@ def skin_swap(sheet, tone_hex):
 
 
 manifest = {"frame": {"width": FRAME, "height": FRAME}, "animations": {}, "body": [], "layers": {}}
-LAYERS = ["pants", "shoes", "hoodie", "hair_corti", "hair_lunghi", "hair_cappellino"]
+LAYERS = ["pants", "skirt", "shoes", "hoodie", "hair_corti", "hair_lunghi", "hair_cappellino", "hair_coda"]
 
 for anim, (folder, prefix) in ANIMS.items():
     for d in DIRS:
@@ -231,10 +309,12 @@ for anim, (folder, prefix) in ANIMS.items():
                 "hoodie": body_layer(px, 0, lambda x, y: y0 + 14 <= y <= y0 + 21
                                      and not (y >= y0 + 19 and (x <= bx0 + 3 or x >= bx1 - 3))),
                 "pants": body_layer(px, 0, lambda x, y: y0 + 22 <= y <= y1),
+                "skirt": skirt_layer(px, y0, y1),
                 "shoes": shoes_layer(px, y0, y1),
                 "hair_corti": hair_layer(px, d, "corti"),
                 "hair_lunghi": hair_layer(px, d, "lunghi"),
                 "hair_cappellino": hair_layer(px, d, "cappellino"),
+                "hair_coda": hair_layer(px, d, "coda"),
             }
             for l, img in parts.items():
                 layers[l].alpha_composite(img, (i * FRAME, 0))
@@ -242,14 +322,20 @@ for anim, (folder, prefix) in ANIMS.items():
             p = os.path.join(OUT, "layers", f"{l}_{key}.png")
             img.save(p, optimize=True)
             manifest["layers"].setdefault(l, []).append(f"layers/{l}_{key}.png")
+        girl = Image.new("RGBA", sheet.size, (0, 0, 0, 0))
+        for i in range(n):
+            girl.alpha_composite(girl_face(sheet.crop((i * FRAME, 0, (i + 1) * FRAME, FRAME)), d), (i * FRAME, 0))
         for t, tone in enumerate(SKIN_TONES):
-            p = os.path.join(OUT, "body", f"skin_{t}_{key}.png")
-            skin_swap(sheet, tone).save(p, optimize=True)
+            skin_swap(sheet, tone).save(os.path.join(OUT, "body", f"skin_{t}_{key}.png"), optimize=True)
+            skin_swap(girl, tone).save(os.path.join(OUT, "body", f"skinf_{t}_{key}.png"), optimize=True)
         manifest["body"].append(f"body/skin_{{tone}}_{key}.png")
+        manifest["body"].append(f"body/skinf_{{tone}}_{key}.png")
 
-manifest["draw_order"] = ["body", "pants", "shoes", "hoodie", "hair"]
+manifest["draw_order"] = ["body", "pants|skirt", "shoes", "hoodie", "hair"]
+manifest["body_types"] = {"ragazzo": {"body": "skin", "lower": "pants"}, "ragazza": {"body": "skinf", "lower": "skirt"}}
 manifest["tint"] = {
     "pants": "fisso #2d3a5a (jeans)",
+    "skirt": "come pants (avatar.pants_color)",
     "shoes": "palette.upper della scarpa più preziosa posseduta (default #f4f4f4)",
     "hoodie": "avatar.outfit_colors[outfit]",
     "hair": "avatar.hair_colors[hair_color]",

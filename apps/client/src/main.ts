@@ -170,6 +170,7 @@ function pickAvatar(state: StateInit): void {
   const a = gameConfig.avatar;
   const random = (n: number) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
   const initial: AvatarLook = {
+    body: random(a.body_types.length),
     skin: random(a.skin_tones.length),
     hair: random(a.hair_styles.length),
     hairColor: random(a.hair_colors.length),
@@ -179,16 +180,21 @@ function pickAvatar(state: StateInit): void {
   const preview = () => game.scene.getScene('Avatar') as AvatarScene;
   const picker = showAvatarPicker(
     initial,
+    state.player.nickname,
     (look) => preview().setParts(partsFromLook(look, state.player.shoesColor)),
-    async (look) => {
+    async (look, nickname) => {
       try {
-        const pos = await request<{ x: number; y: number }>(() => socket!.timeout(ACK_TIMEOUT_MS).emitWithAck(C2S.AVATAR_SET, look));
+        const res = await request<{ x: number; y: number; nickname: string }>(() =>
+          socket!.timeout(ACK_TIMEOUT_MS).emitWithAck(C2S.AVATAR_SET, { ...look, nickname }),
+        );
         picker.close();
         window.removeEventListener('resize', fit);
         game.scene.stop('Avatar');
-        startVillage({ ...state, player: { ...state.player, avatar: look } }, look, pos);
+        store.me = { ...store.me, nickname: res.nickname };
+        startVillage({ ...state, player: { ...state.player, nickname: res.nickname, avatar: look } }, look, res);
       } catch (err) {
-        toast(err instanceof RequestError ? err.message : String(err));
+        if (err instanceof RequestError && err.code.startsWith('NICKNAME_')) picker.nameError(err.message);
+        else toast(err instanceof RequestError ? err.message : String(err));
       }
     },
   );

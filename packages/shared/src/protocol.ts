@@ -5,10 +5,16 @@ import type { Facing } from './village';
 
 /** Indici nelle liste di game_config.avatar. */
 export interface AvatarLook {
+  /** avatar.body_types: 0 ragazzo, 1 ragazza. */
+  body: number;
   skin: number;
   hair: number;
   hairColor: number;
   outfit: number;
+}
+
+export interface AvatarSet extends AvatarLook {
+  nickname: string;
 }
 
 /** Risposta (ack) a ogni richiesta client → server. */
@@ -227,7 +233,8 @@ export interface ServerToClientEvents {
 
 /** Eventi client → server, tutti con ack. */
 export interface ClientToServerEvents {
-  [C2S.AVATAR_SET]: (look: AvatarLook, ack: (r: Ack<{ x: number; y: number }>) => void) => void;
+  /** Creazione del personaggio: aspetto e nome (proposto dal gioco, modificabile solo qui). */
+  [C2S.AVATAR_SET]: (p: AvatarSet, ack: (r: Ack<{ x: number; y: number; nickname: string }>) => void) => void;
   [C2S.MOVE_TO]: (p: MoveTo, ack: (r: Ack<{ x: number; y: number }>) => void) => void;
   [C2S.EMOTE_SEND]: (p: { emote: string }, ack: (r: Ack) => void) => void;
   [C2S.SHOP_LIST]: (p: Record<string, never>, ack: (r: Ack<ShopEntry[]>) => void) => void;

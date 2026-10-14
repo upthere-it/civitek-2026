@@ -91,7 +91,10 @@
         "Tasso",
         "Scoiattolo"
       ],
-      "editable": false
+      "editable": "solo_alla_creazione",
+      "min_length": 3,
+      "max_length": 14,
+      "allowed_pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}._-]*$"
     },
     "recovery_code": {
       "length": 6,
@@ -108,7 +111,11 @@
       "origin_x": 0.5,
       "origin_y": 0.75
     },
-    "traits": "3 tratti: pelle (5 toni) · capelli (3 stili x 6 colori) · felpa (8 colori)",
+    "traits": "stile (ragazzo/ragazza) + 3 tratti: pelle (5 toni) · capelli (4 stili x 6 colori) · felpa (8 colori)",
+    "body_types": [
+      "ragazzo",
+      "ragazza"
+    ],
     "skin_tones": [
       "#f6d3b8",
       "#e3b08b",
@@ -119,7 +126,8 @@
     "hair_styles": [
       "corti",
       "lunghi",
-      "cappellino"
+      "cappellino",
+      "coda"
     ],
     "hair_colors": [
       "#2b1d14",

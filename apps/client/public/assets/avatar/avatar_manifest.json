@@ -37,11 +37,17 @@
   },
   "body": [
     "body/skin_{tone}_idle_down.png",
+    "body/skinf_{tone}_idle_down.png",
     "body/skin_{tone}_idle_side.png",
+    "body/skinf_{tone}_idle_side.png",
     "body/skin_{tone}_idle_up.png",
+    "body/skinf_{tone}_idle_up.png",
     "body/skin_{tone}_walk_down.png",
+    "body/skinf_{tone}_walk_down.png",
     "body/skin_{tone}_walk_side.png",
-    "body/skin_{tone}_walk_up.png"
+    "body/skinf_{tone}_walk_side.png",
+    "body/skin_{tone}_walk_up.png",
+    "body/skinf_{tone}_walk_up.png"
   ],
   "layers": {
     "pants": [
@@ -51,6 +57,14 @@
       "layers/pants_walk_down.png",
       "layers/pants_walk_side.png",
       "layers/pants_walk_up.png"
+    ],
+    "skirt": [
+      "layers/skirt_idle_down.png",
+      "layers/skirt_idle_side.png",
+      "layers/skirt_idle_up.png",
+      "layers/skirt_walk_down.png",
+      "layers/skirt_walk_side.png",
+      "layers/skirt_walk_up.png"
     ],
     "shoes": [
       "layers/shoes_idle_down.png",
@@ -91,17 +105,36 @@
       "layers/hair_cappellino_walk_down.png",
       "layers/hair_cappellino_walk_side.png",
       "layers/hair_cappellino_walk_up.png"
+    ],
+    "hair_coda": [
+      "layers/hair_coda_idle_down.png",
+      "layers/hair_coda_idle_side.png",
+      "layers/hair_coda_idle_up.png",
+      "layers/hair_coda_walk_down.png",
+      "layers/hair_coda_walk_side.png",
+      "layers/hair_coda_walk_up.png"
     ]
   },
   "draw_order": [
     "body",
-    "pants",
+    "pants|skirt",
     "shoes",
     "hoodie",
     "hair"
   ],
+  "body_types": {
+    "ragazzo": {
+      "body": "skin",
+      "lower": "pants"
+    },
+    "ragazza": {
+      "body": "skinf",
+      "lower": "skirt"
+    }
+  },
   "tint": {
     "pants": "fisso #2d3a5a (jeans)",
+    "skirt": "come pants (avatar.pants_color)",
     "shoes": "palette.upper della scarpa più preziosa posseduta (default #f4f4f4)",
     "hoodie": "avatar.outfit_colors[outfit]",
     "hair": "avatar.hair_colors[hair_color]"

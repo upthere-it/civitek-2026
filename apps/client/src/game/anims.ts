@@ -3,7 +3,7 @@ import { gameConfig } from '../config';
 import type { Manifest } from './manifest';
 
 // Solo le texture {layer}_{idle|walk}_{dir}: 'shoes' da solo è l'atlas delle icone (docs/ASSETS.md §3).
-const AVATAR_SHEET = /^(?:skin_\d|pants|shoes|hoodie|hair_[a-z]+)_(idle|walk)_(?:down|side|up)$/;
+const AVATAR_SHEET = /^(?:skinf?_\d|pants|skirt|shoes|hoodie|hair_[a-z]+)_(idle|walk)_(?:down|side|up)$/;
 
 /** Un'animazione per ogni sheet dell'avatar e degli NPC, con chiave = chiave della texture. */
 export function registerAnims(scene: Phaser.Scene, manifest: Manifest): void {
