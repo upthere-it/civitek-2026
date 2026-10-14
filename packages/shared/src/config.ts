@@ -125,9 +125,8 @@ export interface CommercioCfg {
   http_timeout_ms: number;
 }
 
+/** Suggerimenti dei primi minuti nel villaggio (GAME_DESIGN §5): niente timer né obiettivo. */
 export interface FirstRunCfg {
-  duration_sec: number;
-  objective: { type: string; multiplier: number };
   beats: { at_sec: number; id: string }[];
 }
 

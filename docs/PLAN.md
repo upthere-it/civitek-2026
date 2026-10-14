@@ -55,16 +55,16 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 > **Da fare: prova su un telefono vero (Simone).**
 
 ### M4 — Prima run e reveal (mar 20/10)
-- [x] Timer della prima run e beat (`run.beat`), obiettivo, badge "Mercante"
-- [x] Schermata reveal completa, con codice di recupero e CTA verso DOP Digital
-- [x] Recupero da un altro device (`sp_player_recover`)
+- [x] ~~Timer della prima run, obiettivo, badge "Mercante"~~ → suggerimenti dei primi minuti (`run.beat`) senza timer (14/10)
+- [x] ~~Schermata reveal~~ tolta il 14/10: la sfida è la classifica live
+- [x] Recupero da un altro device (`sp_player_recover`): server pronto, interfaccia sospesa il 14/10
 - [x] Enoteca DOP Digital con la bottiglia demo
-- [x] Classifica
+- [x] Classifica live: posizione nell'HUD, aggiornamenti dal server, podio
 - [x] `CommercioNotary` via API commercio.app (porting di `@mvl/commercio-network`, ARCHITECTURE §6), anticipato il 14/10: provato contro un finto commercio.app
 - [ ] Credenziali nel `.env` (D11), prima notarizzazione vera sulla testnet, `chain.notary = "commercio"`. Senza credenziali entro il 20/10 si resta su Mock
   - 14/10: `chain.notary = "commercio"` impostato, credenziali nel `.env` locale di Simone. Senza `CN_*` (sviluppo, test, CI) si ripiega sul Mock con un avviso; in produzione il server non parte. Manca la prima notarizzazione vera, da verificare nel log (`login commercio.app riuscito`) e sull'explorer
 
-**Accettazione**: run completa di 5 minuti su telefono vero, dal QR al reveal, senza intoppi.
+**Accettazione**: su telefono vero, dal QR al villaggio con suggerimenti e classifica live che si muove, senza intoppi.
 
 ### M5 — Feature freeze e collaudo (mer 21/10)
 - [ ] **Feature freeze**: da qui solo bugfix
@@ -234,3 +234,12 @@ _(Claude Code: aggiungi qui una riga per sessione con data, milestone, cosa è s
     - D11: credenziali commercio.app, per ora Mock;
     - "Condividi" del reveal (§16, tagliabile) non fatto;
     - prova della run completa su telefono vero (accettazione M4).
+- **14/10 — M4 rivista: via timer e reveal, classifica live (feedback di Simone).**
+  - **Fatto**:
+    - tolti timer, obiettivo +30%, badge "Mercante" e reveal; restano i suggerimenti dei primi minuti, più `hint_leaderboard` (1:00, "Apri");
+    - tolta l'interfaccia del codice di recupero (landing, profilo): il server resta pronto, GAME_DESIGN §14 dice a cosa serve;
+    - classifica live: loop lato server ogni `leaderboard.cache_sec` (3 s) solo con qualcuno nel villaggio, `leaderboard.updated` personalizzato a ogni socket quando cambia; posizione `🏆 4°` nell'HUD che pulsa quando cambia; podio 🥇🥈🥉;
+    - `chain.notary = "commercio"`: senza `CN_*` si ripiega sul Mock con un avviso, tranne in produzione.
+  - **DB**: nessuna migrazione nuova. `sp_run_complete` e le colonne `first_run_end_value`/`first_run_merchant` (010) restano ma non si usano più.
+  - **Test**: `npm test` 30 di shared + 142 del server; smoke su iPhone SE: posizione nell'HUD, podio, la posizione scende da sola dopo una verifica (7° → 9°), nessun errore in console.
+  - **Aperto**: DOP Digital ora arriva solo dall'Enoteca: valutare un suggerimento che ci porti; decidere se il codice di recupero serve.

@@ -1,22 +1,13 @@
-import { errorMessage, type Ack, type ClientToServerEvents, type HandshakeAuth, type ServerToClientEvents } from '@sp/shared';
+import { errorMessage, type Ack, type ClientToServerEvents, type ServerToClientEvents } from '@sp/shared';
 import { io, type Socket } from 'socket.io-client';
 
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 const ACK_TIMEOUT_MS = 5000;
 
-/**
- * Stessa origine: in sviluppo Vite fa da proxy a /socket.io, in produzione nginx. Con `recover` il server
- * associa prima questo telefono al giocatore del codice (GAME_DESIGN §14).
- */
-export function connectSocket(deviceId: string, recover?: string): GameSocket {
-  const auth: HandshakeAuth = recover ? { deviceId, recover } : { deviceId };
-  return io({ auth: { ...auth } });
-}
-
-/** Dopo il primo state.init il codice non serve più: le riconnessioni automatiche mandano solo il device. */
-export function forgetRecover(socket: GameSocket, deviceId: string): void {
-  socket.auth = { deviceId } satisfies HandshakeAuth;
+/** Stessa origine: in sviluppo Vite fa da proxy a /socket.io, in produzione nginx. */
+export function connectSocket(deviceId: string): GameSocket {
+  return io({ auth: { deviceId } });
 }
 
 export class RequestError extends Error {

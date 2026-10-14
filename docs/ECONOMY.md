@@ -111,15 +111,14 @@ WHERE ev.to_id <> a.owner_id;
 
 L'output deve mostrare:
 - l'andamento della tesoreria nel tempo;
-- il valore medio dell'armadio a 5 minuti, per tarare `first_run.objective.multiplier`;
-- la percentuale di giocatori che raggiunge l'obiettivo (target indicativo: 30–50%);
+- il valore medio dell'armadio a 5 e a 10 minuti, e la distanza fra primo e decimo in classifica (se il primo scappa via, la gara finisce);
 - nessuna violazione di I1–I6.
 
 ## 8. Leve di taratura
 
 | Sintomo | Leva |
 |---|---|
-| Obiettivo raggiunto da quasi tutti / da nessuno | `first_run.objective.multiplier` |
+| Il primo in classifica scappa via | `valuation.legend_max_counted`, `drops.quantity`, `economy.listing_max_multiplier` |
 | Prezzi in bacheca che crollano | alzare `bots.buy_pct` (es. 0,75) |
 | Tesoreria che si svuota | i bot si fermano già da soli; eventualmente abbassare `bots.buy_pct` |
 | Tesoreria che si gonfia troppo | abbassare `market_fee_pct` o `auth_cost` |

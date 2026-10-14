@@ -17,11 +17,10 @@ Il gioco funziona **in autonomia** e resta **aperto** dopo la conferenza: nessun
 
 ## 2. Flusso del giocatore
 
-1. **QR → landing `/`**: fondo primary, logo Upthere bianco (SVG), titolo in Chillax e il bottone "Entra nel mercato" (accent-400 con testo primary). Sotto, un link piccolo: "Hai già giocato? Inserisci il codice".
+1. **QR → landing `/`**: fondo primary, logo Upthere bianco (SVG), titolo in Chillax e il bottone "Entra nel mercato" (accent-400 con testo primary).
 2. **device_id**: il client genera `crypto.randomUUID()`, lo salva in localStorage e lo manda nell'handshake socket. Il server crea il giocatore con un nickname proposto (es. `Lince42`), 100 monete e una scarpa base regalata. Il giocatore può cambiare il nome solo nella creazione del personaggio (§3).
 3. **Avatar**: tre scelte in una sola schermata, con anteprima live, poi "Entra".
-4. **Villaggio**: parte la **prima run** di 5 minuti (§5).
-5. **Reveal** a fine prima run (§12). Dopo il reveal il mondo resta aperto e si continua a giocare senza timer.
+4. **Villaggio**: arrivano i suggerimenti dei primi minuti (§5) e nell'HUD c'è la propria posizione in **classifica live** (§13). Nessun timer: il mondo resta aperto.
 
 Obiettivo di tempo: dalla scansione al villaggio in meno di 45 secondi.
 
@@ -75,29 +74,25 @@ Mappa piccola, circa 2 schermate di telefono in verticale, disegnata con una til
 - **NPC ed edifici**: con un tap l'avatar cammina fino all'NPC e il pannello si apre all'arrivo. Così il gioco resta un gioco, ma senza far perdere tempo.
 - **Altri giocatori**: appaiono come avatar con il nickname sopra; si vedono solo quelli entro `world.visible_radius_px`. Si possono mandare **emote** (👋 🔥 😂 👟 💸 🤝). Niente chat libera.
 
-## 5. La prima run (5 minuti)
+## 5. I primi minuti: suggerimenti, nessun timer
 
-Gli eventi sono scanditi da `first_run.beats`. Ogni beat è un tooltip o un banner che non blocca il gioco e si chiude con un tap.
+**Cambiato il 14/10** (Simone): niente run a tempo, niente obiettivo personale né reveal. La sfida è la **classifica live** (§13), sempre visibile nell'HUD.
+
+Dal primo ingresso nel villaggio arrivano i suggerimenti di `first_run.beats`. Ogni beat è un banner che non blocca il gioco e si chiude con un tap; quelli su un posto hanno un bottone che porta lì. A una riconnessione quelli già passati non si ripetono.
 
 | t | Beat | Cosa vede il giocatore |
 |---|---|---|
 | 0:00 | `welcome` | "Benvenuto al villaggio! Hai 100 monete e il tuo primo paio." |
 | 0:15 | `tooltip_move` | "Tocca dove vuoi andare." |
-| 0:30 | `tooltip_passport` | "Apri il passaporto della tua scarpa: per ora c'è solo il tuo nome." |
-| 0:45 | `objective` | "Obiettivo: fai crescere del 30% il valore del tuo armadio prima che chiuda il mercato." |
-| 1:30 | `hint_stall` | "Da Tony Affari i prezzi sono bassi. Troppo bassi?" |
-| 2:30 | `hint_legend` | "MC Suola può far entrare la tua scarpa nella storia." |
-| 3:30 | `hint_market` | "Guarda la bacheca: qualcuno svende?" |
-| 4:30 | `closing_warning` | "Il mercato della tua prima giornata chiude tra 30 secondi." |
-| 5:00 | `reveal` | Schermata reveal (§12) |
+| 0:30 | `tooltip_passport` | "Apri il passaporto della tua scarpa: per ora c'è solo il tuo nome." (Apri) |
+| 1:00 | `hint_leaderboard` | "Guarda la classifica: chi ha l'armadio che vale di più?" (Apri) |
+| 1:30 | `hint_stall` | "Da Tony Affari i prezzi sono bassi. Troppo bassi?" (Vai) |
+| 2:30 | `hint_legend` | "MC Suola può far entrare la tua scarpa nella storia." (Vai) |
+| 3:30 | `hint_market` | "Guarda la bacheca: qualcuno svende?" (Vai) |
 
-Durante la run l'HUD mostra il conto alla rovescia e il valore da raggiungere (⏱ 4:12 · 🎯 169); i beat sui posti (Tony, MC Suola, bacheca, passaporto) hanno un bottone che porta lì.
+Nel frattempo partono anche i **drop di mondo** ogni 3 minuti (§11).
 
-Nel frattempo partono anche i **drop di mondo** ogni 3 minuti (§11), quindi in una run se ne vedono 1 o 2.
-
-**Obiettivo della run**: valore armadio finale ≥ valore iniziale × `first_run.objective.multiplier` (1,3, da tarare in playtest).
-- Valore armadio = monete + somma dei valori percepiti delle scarpe possedute.
-- Chi lo raggiunge riceve il badge "Mercante" nel reveal. Chi non lo raggiunge non perde nulla.
+Valore armadio = monete + somma dei valori percepiti delle scarpe possedute: è il numero della classifica.
 
 Come si fa crescere il valore (nessuna di queste strade viene spiegata a parole, si scoprono giocando):
 - comprando ai **drop**: la scarpa ha Upthere come primo proprietario e vale subito +25%;
@@ -217,30 +212,27 @@ I falsi si possono rivendere in bacheca, come succede nel mondo reale. Il passap
 - **Mint**: la scarpa viene coniata dalla **Banca Upthere** (`minted_by = 1`) direttamente al compratore. Nel passaporto il primo anello è "Creata da Upthere", quindi vale subito +25%.
 - **Numero di serie**: "n. X di 4".
 
-## 12. Reveal di fine prima run
+## 12. Reveal di fine prima run (tolto)
 
-È il momento da mostrare anche sul palco. Una schermata scrollabile:
+Tolto il 14/10 insieme al timer della prima run: la competizione passa dalla classifica live (§13). Il ponte verso DOP Digital resta nell'Enoteca (§15).
 
-1. **"La tua giornata al mercato"**: valore armadio iniziale → finale, badge "Mercante" se l'obiettivo è raggiunto, numero di scambi, falsi evitati o presi.
-2. **Il passaporto della tua scarpa più preziosa**, con timeline completa e badge on-chain.
-3. **Il ponte**: "Questa scarpa ha avuto {N} proprietari. Ogni passaggio è certificato su blockchain. DOP Digital fa la stessa cosa con le bottiglie di vino: inquadri il QR e vedi tutta la storia, dal vigneto al tavolo." Bottone **"Scopri DOP Digital"** → https://dopdigital.it/
-4. **Codice di recupero**, grande, con "Salvalo: ti serve per rientrare da un altro telefono".
-5. Bottoni: **"Continua a giocare"** e **"Condividi"** (§16, tagliabile).
+## 13. Classifica live
 
-## 13. Classifica
+- Top 10 per valore armadio (`leaderboard`), con nickname e avatar. Bot e account di sistema non ci sono.
+- **Sempre aggiornata**: il server la ricalcola ogni `leaderboard.cache_sec` mentre c'è qualcuno nel villaggio e la manda a tutti quando cambia. La classifica aperta si ridisegna da sola.
+- **Posizione nell'HUD** sempre visibile (`🏆 4°`): pulsa quando si sale o si scende; un tap apre la classifica.
+- **Podio**: 🥇🥈🥉 al posto del numero, righe evidenziate; il primo un po' più grande.
+- È sempre visibile anche la propria riga, anche fuori dalla top 10.
 
-- Top 10 per valore armadio (`leaderboard`), con nickname, avatar e 🏅 per chi ha il badge "Mercante". Bot e account di sistema non ci sono.
-- Si apre da un'icona nell'HUD.
-- È sempre visibile anche la propria posizione.
+## 14. Codice di recupero (sospeso)
 
-## 14. Codice di recupero
+**Interfaccia tolta il 14/10** finché non si decide se serve. A cosa serve: il gioco riconosce il ragazzo solo dal `device_id` nel browser, quindi chi cambia telefono o browser (per esempio apre il QR nel browser della fotocamera e poi in Safari) ricomincia da zero; il codice lo riporta al suo personaggio.
+
+Il meccanismo lato server c'è ed è testato (handshake `auth.recover`, `sp_player_recover`, limiti per IP e globali in `player.recovery_code`): per riattivarlo basta rimettere il campo sulla landing e il codice in un profilo.
 
 - 6 caratteri dall'alfabeto senza caratteri ambigui (`player.recovery_code`), mostrati come `XXX-XXX`.
-- Si genera alla creazione del giocatore e si mostra nel reveal e nel profilo.
 - Nel DB si salva solo l'hash SHA-256.
-- Inserendo il codice sulla landing, il `device_id` corrente viene associato al giocatore esistente. Il vecchio device resta valido.
-- Tentativi limitati per IP e in tutto il server (`player.recovery_code.attempts_*`): una classe intera dietro lo stesso NAT ci sta comoda, chi prova i codici a tappeto no.
-- Il codice si rivede nel profilo (tap sul nome nell'HUD), insieme al reveal della prima giornata.
+- Inserendo il codice, il `device_id` corrente viene associato al giocatore esistente. Il vecchio device resta valido.
 
 ## 15. Enoteca DOP Digital
 
@@ -265,7 +257,6 @@ Pagina `/schermo` per il proiettore. Mostra un ticker live degli eventi appena c
 |---|---|
 | landing.title | Ogni scarpa ha una storia. La tua inizia adesso. |
 | landing.cta | Entra nel mercato |
-| landing.recover | Hai già giocato? Inserisci il codice |
 | avatar.title | Crea il tuo personaggio |
 | avatar.who | Chi sei nel villaggio |
 | avatar.name_hint | Te ne proponiamo uno: puoi cambiarlo adesso, poi resta quello. Non usare il tuo vero nome. |
@@ -287,10 +278,6 @@ Pagina `/schermo` per il proiettore. Mostra un ticker live degli eventi appena c
 | error.DROP_SOLDOUT | Finite! Al prossimo drop. |
 | error.INVENTORY_FULL | Armadio pieno: vendi qualcosa prima. |
 | error.BUSY | Il mercato è affollato, riprova. |
-| reveal.bridge | Questa scarpa ha avuto {N} proprietari. Ogni passaggio è certificato su blockchain. DOP Digital fa la stessa cosa con le bottiglie di vino: inquadri il QR e vedi tutta la storia, dal vigneto al tavolo. |
-| reveal.cta_dop | Scopri DOP Digital |
-| reveal.code | Il tuo codice: {CODE}. Salvalo: ti serve per rientrare da un altro telefono. |
-| reveal.continue | Continua a giocare |
 
 ## 19. Fuori scope
 

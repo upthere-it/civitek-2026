@@ -128,11 +128,6 @@ export class PlayerService {
     return row.nickname;
   }
 
-  async recoveryHashOf(playerId: number): Promise<string | null> {
-    const [row] = await this.db.select<{ recovery_hash: string | null }>('SELECT recovery_hash FROM players WHERE id = ?', [playerId]);
-    return row?.recovery_hash ?? null;
-  }
-
   /** Codice da mostrare a questo device, se è quello registrato per il giocatore. */
   displayCode(deviceId: string, storedHash: string | null): string | null {
     if (!storedHash) return null;

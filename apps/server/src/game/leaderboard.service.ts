@@ -1,29 +1,66 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import { wardrobeValue, type Leaderboard, type LeaderboardRow } from '@sp/shared';
 import { GameConfigService } from '../config/game-config.service';
 import { DbService } from '../db/db.service';
 import { AssetsService } from './assets.service';
+import { GameEventsService } from './game-events.service';
+import { startLoop, stopLoop } from './loop';
 import { lookOf, type PlayerRow } from './player.service';
+import { WorldService } from './world.service';
 
 /**
- * Classifica per valore armadio (GAME_DESIGN §13): solo giocatori veri con l'avatar pronto, niente bot né
- * account anonimizzati. Si ricalcola al massimo ogni leaderboard.cache_sec: con 100 giocatori che la aprono
- * insieme è una lettura sola.
+ * Classifica live per valore armadio (GAME_DESIGN §13): solo giocatori veri con l'avatar pronto, niente bot
+ * né account anonimizzati. Si ricalcola al massimo ogni leaderboard.cache_sec (con 100 giocatori che la aprono
+ * insieme è una lettura sola) e, mentre c'è qualcuno nel villaggio, il loop la ricalcola con lo stesso ritmo e
+ * la manda a tutti se è cambiata (`leaderboard.updated`): posizione nell'HUD e classifica aperta si muovono da sole.
  */
 @Injectable()
-export class LeaderboardService {
+export class LeaderboardService implements OnModuleInit, OnModuleDestroy {
+  static readonly LOOP = 'leaderboard';
+
+  private readonly logger = new Logger(LeaderboardService.name);
   private cache: { at: number; rows: LeaderboardRow[] } | null = null;
   private pending: Promise<LeaderboardRow[]> | null = null;
+  /** Ultima classifica mandata: se non cambia, non si manda niente. */
+  private lastSent = '';
 
   constructor(
     private readonly db: DbService,
     private readonly cfg: GameConfigService,
     private readonly assets: AssetsService,
+    private readonly world: WorldService,
+    private readonly events: GameEventsService,
+    private readonly scheduler: SchedulerRegistry,
   ) {}
 
+  onModuleInit(): void {
+    startLoop(this.scheduler, LeaderboardService.LOOP, this.cfg.config.leaderboard.cache_sec * 1000, () => this.tick(), this.logger);
+  }
+
+  onModuleDestroy(): void {
+    stopLoop(this.scheduler, LeaderboardService.LOOP);
+  }
+
   async get(playerId: number, now = Date.now()): Promise<Leaderboard> {
-    const rows = await this.ranking(now);
+    return this.boardFor(await this.ranking(now), playerId);
+  }
+
+  /** Top uguale per tutti, più la riga di chi guarda (anche fuori dalla top). */
+  boardFor(rows: LeaderboardRow[], playerId: number): Leaderboard {
     return { top: rows.slice(0, this.cfg.config.leaderboard.size), me: rows.find((r) => r.playerId === playerId) ?? null };
+  }
+
+  /** Un giro: con qualcuno nel villaggio ricalcola e, se è cambiata, la manda (il gateway la personalizza). */
+  async tick(now = Date.now()): Promise<boolean> {
+    if (this.world.size === 0) return false;
+    this.invalidate();
+    const rows = await this.ranking(now);
+    const key = JSON.stringify(rows);
+    if (key === this.lastSent) return false;
+    this.lastSent = key;
+    this.events.emit({ type: 'leaderboard', rows });
+    return true;
   }
 
   /** Dimentica la cache (i test cambiano i saldi e rileggono subito). */
@@ -40,9 +77,9 @@ export class LeaderboardService {
   }
 
   private async compute(): Promise<LeaderboardRow[]> {
-    const players = await this.db.select<PlayerRow & { merchant: number }>(
+    const players = await this.db.select<PlayerRow>(
       `SELECT id, nickname, coins, avatar_body, avatar_skin, avatar_hair, avatar_hair_color, avatar_outfit,
-              NULL AS recovery_hash, NULL AS legend_ready_ms, first_run_merchant AS merchant
+              NULL AS recovery_hash, NULL AS legend_ready_ms
          FROM players
         WHERE is_system = 0 AND anonymized_at IS NULL AND avatar_skin IS NOT NULL`,
     );
@@ -71,7 +108,6 @@ export class LeaderboardService {
         look: lookOf(p)!,
         shoesColor: best ? (this.cfg.item(best.itemId)?.palette.upper ?? null) : null,
         value: wardrobeValue(p.coins, shoes.map((s) => s.value)),
-        merchant: Number(p.merchant) === 1,
       };
     });
     // a pari valore è davanti chi è arrivato prima

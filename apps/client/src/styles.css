@@ -943,56 +943,7 @@ a.cert-ok {
   font-size: 18px;
 }
 
-/* ---------------------------------------------------------------- M4: recupero, prima run, reveal, classifica */
-.link {
-  pointer-events: auto;
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font: 600 15px var(--up-font-body);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  min-height: 44px;
-  cursor: pointer;
-}
-
-.recover {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: min(80vw, 320px);
-}
-
-.recover[hidden] {
-  display: none;
-}
-
-.code-input {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 52px;
-  border: 2px solid var(--up-accent-400);
-  border-radius: 14px;
-  background: var(--up-accent-900);
-  color: #fff;
-  font: 600 26px var(--up-font-display);
-  letter-spacing: 0.18em;
-  text-align: center;
-  text-transform: uppercase;
-  -webkit-user-select: text;
-  user-select: text;
-}
-
-.code-input:focus {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
-}
-
-.code-input::placeholder {
-  color: var(--up-primary-700);
-}
-
+/* ---------------------------------------------------------------- M4: suggerimenti, classifica live, enoteca */
 .hud-head {
   display: flex;
   flex-direction: column;
@@ -1004,23 +955,39 @@ a.cert-ok {
   justify-content: center;
 }
 
-.run-pill {
+.rank-pill {
+  font: 600 15px var(--up-font-display);
   font-variant-numeric: tabular-nums;
 }
 
-.run-pill[hidden] {
+.rank-pill[hidden] {
   display: none;
 }
 
-.run-pill.reached {
-  background: var(--up-accent-400);
-  color: var(--up-primary);
+/* la posizione cambia: sale (accent-400, testo primary) o scende, un impulso solo */
+.rank-pill.up {
+  animation: rank-up 1.2s ease-out;
 }
 
-.hud-icon {
-  padding: 0;
-  width: 48px;
-  justify-content: center;
+.rank-pill.down {
+  animation: rank-down 1.2s ease-out;
+}
+
+@keyframes rank-up {
+  0%,
+  40% {
+    transform: scale(1.25);
+    background: var(--up-accent-400);
+    color: var(--up-primary);
+  }
+}
+
+@keyframes rank-down {
+  0%,
+  40% {
+    transform: scale(0.9);
+    background: var(--up-primary-700);
+  }
 }
 
 .beat-banner {
@@ -1047,98 +1014,6 @@ a.cert-ok {
   color: var(--up-primary);
 }
 
-.reveal {
-  z-index: 9; /* come i pannelli ma aperto dopo, quindi sopra; sotto gli avvisi */
-  background: var(--up-primary);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  -webkit-user-select: text;
-  user-select: text;
-}
-
-.reveal-inner {
-  width: 100%;
-  max-width: 520px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding-bottom: 24px;
-}
-
-.reveal .title {
-  font-size: clamp(24px, 7vw, 34px);
-}
-
-.reveal-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px;
-  border-radius: 18px;
-  background: var(--up-accent-900);
-}
-
-.reveal-card p {
-  margin: 0;
-}
-
-.reveal-values {
-  font: 600 22px var(--up-font-display);
-}
-
-.reveal-badge {
-  display: flex;
-  flex-direction: column;
-  align-self: flex-start;
-  padding: 8px 14px;
-  border-radius: 14px;
-  background: var(--up-accent-400);
-  color: var(--up-primary);
-  font: 600 20px var(--up-font-display);
-}
-
-.reveal-badge span {
-  font: 600 14px var(--up-font-body);
-}
-
-.reveal-stats {
-  font-size: 15px;
-}
-
-.reveal-h2 {
-  margin: 4px 0 0;
-  font: 600 18px var(--up-font-display);
-}
-
-.reveal-passport {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.reveal-bridge {
-  font-size: 16px;
-  line-height: 1.4;
-}
-
-.reveal-bridge .btn,
-.reveal-continue {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-}
-
-.code {
-  margin: 4px 0;
-  font: 600 36px var(--up-font-display);
-  letter-spacing: 0.14em;
-  color: var(--up-accent-400);
-  -webkit-user-select: all;
-  user-select: all;
-}
-
 .panel-foot a.btn {
   display: inline-flex;
   align-items: center;
@@ -1157,7 +1032,8 @@ a.cert-ok {
 }
 
 .lb-me {
-  outline: 2px solid var(--up-accent-400);
+  outline: 2px solid #fff;
+  outline-offset: -2px;
 }
 
 .lb-rank {
@@ -1184,6 +1060,26 @@ a.cert-ok {
 .lb-value {
   font: 600 16px var(--up-font-display);
   font-variant-numeric: tabular-nums;
+}
+
+.lb-podium {
+  min-height: 60px;
+  border: 2px solid var(--up-accent-400);
+}
+
+.lb-podium .lb-rank {
+  font-size: 26px;
+  width: 1.4em;
+  text-align: center;
+}
+
+.lb-1 {
+  background: var(--up-primary-700);
+}
+
+.lb-1 .lb-name,
+.lb-1 .lb-value {
+  font-size: 18px;
 }
 
 .lb-gap {

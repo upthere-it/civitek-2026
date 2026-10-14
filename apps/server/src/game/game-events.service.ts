@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Observable, Subject } from 'rxjs';
-import type { DropInfo, RunReveal } from '@sp/shared';
+import type { DropInfo, LeaderboardRow } from '@sp/shared';
 
-/** Cose successe fuori da una richiesta (loop di bot, bancarella, drop, MC Suola, prima run): il gateway le inoltra. */
+/** Cose successe fuori da una richiesta (loop di bot, bancarella, drop, MC Suola, suggerimenti, classifica): il gateway le inoltra. */
 export type GameEvent =
   | { type: 'market' }
   | { type: 'stall' }
@@ -13,7 +13,7 @@ export type GameEvent =
   | { type: 'drop.update'; dropId: number; sold: number }
   | { type: 'drop.closed'; dropId: number; nextAt: number }
   | { type: 'run.beat'; playerId: number; beatId: string }
-  | { type: 'run.end'; playerId: number; reveal: RunReveal };
+  | { type: 'leaderboard'; rows: LeaderboardRow[] };
 
 @Injectable()
 export class GameEventsService {

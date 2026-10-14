@@ -22,7 +22,6 @@ export const C2S = {
   DROP_STATE: 'drop.state',
   PASSPORT_GET: 'passport.get',
   LEADERBOARD_GET: 'leaderboard.get',
-  RUN_REVEAL: 'run.reveal',
 } as const;
 
 /** Server → client */
@@ -41,7 +40,7 @@ export const S2C = {
   STALL_UPDATED: 'stall.updated',
   LEGEND_RETURNED: 'legend.returned',
   RUN_BEAT: 'run.beat',
-  RUN_END: 'run.end',
+  LEADERBOARD_UPDATED: 'leaderboard.updated',
   ERROR: 'error',
 } as const;
 

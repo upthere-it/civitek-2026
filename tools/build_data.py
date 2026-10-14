@@ -296,18 +296,16 @@ game_config = {
         "side_left": "flipX dello sheet side",
     },
     "first_run": {
-        "duration_sec": 300,
-        "objective": {"type": "wardrobe_value_growth", "multiplier": 1.3, "_note": "da tarare in playtest"},
+        # suggerimenti dei primi minuti (GAME_DESIGN §5), dal momento in cui si entra nel villaggio.
+        # Niente timer né obiettivo (14/10): la sfida è la classifica live.
         "beats": [
             {"at_sec": 0, "id": "welcome"},
             {"at_sec": 15, "id": "tooltip_move"},
             {"at_sec": 30, "id": "tooltip_passport"},
-            {"at_sec": 45, "id": "objective"},
+            {"at_sec": 60, "id": "hint_leaderboard"},
             {"at_sec": 90, "id": "hint_stall"},
             {"at_sec": 150, "id": "hint_legend"},
             {"at_sec": 210, "id": "hint_market"},
-            {"at_sec": 270, "id": "closing_warning"},
-            {"at_sec": 300, "id": "reveal"},
         ],
     },
     "economy": {
@@ -398,7 +396,7 @@ game_config = {
             "http_timeout_ms": 10000,
         },
     },
-    "leaderboard": {"metric": "wardrobe_value", "size": 10, "cache_sec": 5},
+    "leaderboard": {"metric": "wardrobe_value", "size": 10, "cache_sec": 3},
 }
 
 # drop pool check

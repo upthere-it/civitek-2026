@@ -145,38 +145,9 @@ export interface InventoryUpdated {
   inventory: InventoryItem[];
 }
 
-/** Prima run (GAME_DESIGN §5). Orari in epoch ms sull'orologio del server. */
-export interface RunState {
-  startedAt: number;
-  endsAt: number;
-  startValue: number;
-  /** Valore armadio da raggiungere per il badge "Mercante". */
-  target: number;
-  completed: boolean;
-  merchant: boolean;
-}
-
-/** `run.beat`: un tooltip o banner della prima run (first_run.beats). */
+/** `run.beat`: un suggerimento dei primi minuti nel villaggio (first_run.beats). */
 export interface RunBeat {
   beatId: string;
-}
-
-/** Dati del reveal di fine prima run (GAME_DESIGN §12): `run.end` e, per rivederlo, `run.reveal`. */
-export interface RunReveal {
-  startValue: number;
-  endValue: number;
-  target: number;
-  merchant: boolean;
-  /** Compravendite (anelli TRANSFER con il giocatore) durante la run. */
-  trades: number;
-  /** Falsi comprati durante la run, smascherati o no: è il momento della verità. */
-  fakesBought: number;
-  /** Falsi che il giocatore ha fatto smascherare dalla Dott.ssa Hash durante la run. */
-  fakesSpotted: number;
-  /** La scarpa più preziosa che possiede adesso, con il numero di proprietari della sua catena. */
-  best: { assetId: number; itemId: string; owners: number } | null;
-  /** Il codice di recupero, se questo device lo conosce (è quello che l'ha generato). */
-  recoveryCode: string | null;
 }
 
 export interface LeaderboardRow {
@@ -186,10 +157,12 @@ export interface LeaderboardRow {
   look: AvatarLook;
   shoesColor: string | null;
   value: number;
-  merchant: boolean;
 }
 
-/** Classifica (GAME_DESIGN §13): top per valore armadio e la propria posizione, anche fuori dalla top. */
+/**
+ * Classifica live (GAME_DESIGN §13): top per valore armadio e la propria posizione, anche fuori dalla top.
+ * Arriva con `leaderboard.get` e poi da sola (`leaderboard.updated`) quando cambia qualcosa.
+ */
 export interface Leaderboard {
   top: LeaderboardRow[];
   me: LeaderboardRow | null;
@@ -210,8 +183,6 @@ export interface StateInit {
     legendReadyAt: number | null;
   };
   drop: DropState;
-  /** Prima run; null finché l'avatar non è pronto (parte all'ingresso nel villaggio). */
-  run: RunState | null;
   inventory: InventoryItem[];
   wardrobeValue: number;
   /** Posizione nel villaggio; null finché l'avatar non è pronto. */
@@ -288,16 +259,17 @@ export interface ServerToClientEvents {
   [S2C.DROP_CLOSED]: (m: { dropId: number; nextAt: number }) => void;
   /** MC Suola ha restituito la scarpa (al proprietario). */
   [S2C.LEGEND_RETURNED]: (m: { assetId: number }) => void;
+  /** Un suggerimento dei primi minuti (first_run.beats). */
   [S2C.RUN_BEAT]: (m: RunBeat) => void;
-  /** Fine della prima run: il reveal. */
-  [S2C.RUN_END]: (m: RunReveal) => void;
+  /** La classifica è cambiata: top e la propria posizione. */
+  [S2C.LEADERBOARD_UPDATED]: (m: Leaderboard) => void;
   [S2C.ERROR]: (e: ErrorEvent) => void;
 }
 
 /** Eventi client → server, tutti con ack. */
 export interface ClientToServerEvents {
   /** Creazione del personaggio: aspetto e nome (proposto dal gioco, modificabile solo qui). */
-  [C2S.AVATAR_SET]: (p: AvatarSet, ack: (r: Ack<{ x: number; y: number; nickname: string; run: RunState }>) => void) => void;
+  [C2S.AVATAR_SET]: (p: AvatarSet, ack: (r: Ack<{ x: number; y: number; nickname: string }>) => void) => void;
   [C2S.MOVE_TO]: (p: MoveTo, ack: (r: Ack<{ x: number; y: number }>) => void) => void;
   [C2S.EMOTE_SEND]: (p: { emote: string }, ack: (r: Ack) => void) => void;
   [C2S.SHOP_LIST]: (p: Record<string, never>, ack: (r: Ack<ShopEntry[]>) => void) => void;
@@ -314,6 +286,4 @@ export interface ClientToServerEvents {
   [C2S.DROP_STATE]: (p: Record<string, never>, ack: (r: Ack<DropState>) => void) => void;
   [C2S.DROP_CLAIM]: (p: { dropId: number }, ack: (r: Ack<{ assetId: number }>) => void) => void;
   [C2S.LEADERBOARD_GET]: (p: Record<string, never>, ack: (r: Ack<Leaderboard>) => void) => void;
-  /** Rivedere il reveal dopo la fine della prima run (dal profilo). */
-  [C2S.RUN_REVEAL]: (p: Record<string, never>, ack: (r: Ack<RunReveal>) => void) => void;
 }

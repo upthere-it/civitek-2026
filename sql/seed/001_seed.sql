@@ -78,9 +78,6 @@ INSERT INTO game_settings (name, value) VALUES
   ('avatar.animations.walk.frameRate', '10'),
   ('avatar.directions', '[\"down\",\"side\",\"up\"]'),
   ('avatar.side_left', 'flipX dello sheet side'),
-  ('first_run.duration_sec', '300'),
-  ('first_run.objective.type', 'wardrobe_value_growth'),
-  ('first_run.objective.multiplier', '1.3'),
   ('economy.system_players.treasury', '1'),
   ('economy.system_players.shop', '2'),
   ('economy.system_players.stall', '3'),
@@ -168,7 +165,7 @@ INSERT INTO game_settings (name, value) VALUES
   ('chain.commercio.http_timeout_ms', '10000'),
   ('leaderboard.metric', 'wardrobe_value'),
   ('leaderboard.size', '10'),
-  ('leaderboard.cache_sec', '5');
+  ('leaderboard.cache_sec', '3');
 
 -- VALUES() in ON DUPLICATE KEY UPDATE è deprecato da MySQL 8.0.20 ma funziona su tutta la 8.0
 -- (la sintassi con alias richiederebbe la 8.0.19, lo schema chiede solo la 8.0.16).

@@ -32,7 +32,6 @@ export const ERROR_MESSAGES: Record<string, string> = {
   WORLD_FULL: 'Il villaggio è pieno, riprova tra poco.',
   CODE_NOT_FOUND: 'Codice non trovato. Controlla le lettere e riprova.',
   RECOVER_LIMIT: 'Troppi tentativi. Aspetta un minuto e riprova.',
-  RUN_NOT_FINISHED: 'La tua prima giornata non è ancora finita.',
   INTERNAL: 'Qualcosa è andato storto, riprova.',
 };
 
@@ -45,7 +44,7 @@ export const INTERNAL_SP_CODES: readonly string[] = [
   'RECOVERY_TAKEN',
   'LEDGER_INVALID',
   'TREASURY_LOW',
-  // la run la chiude il server al tempo giusto: questi due vogliono dire un suo errore, non del giocatore
+  // sp_run_complete (010): la prima run a tempo è stata tolta il 14/10, la SP non la chiama più nessuno
   'RUN_NOT_STARTED',
   'RUN_NOT_OVER',
 ];

@@ -192,12 +192,6 @@
     "side_left": "flipX dello sheet side"
   },
   "first_run": {
-    "duration_sec": 300,
-    "objective": {
-      "type": "wardrobe_value_growth",
-      "multiplier": 1.3,
-      "_note": "da tarare in playtest"
-    },
     "beats": [
       {
         "at_sec": 0,
@@ -212,8 +206,8 @@
         "id": "tooltip_passport"
       },
       {
-        "at_sec": 45,
-        "id": "objective"
+        "at_sec": 60,
+        "id": "hint_leaderboard"
       },
       {
         "at_sec": 90,
@@ -226,14 +220,6 @@
       {
         "at_sec": 210,
         "id": "hint_market"
-      },
-      {
-        "at_sec": 270,
-        "id": "closing_warning"
-      },
-      {
-        "at_sec": 300,
-        "id": "reveal"
       }
     ]
   },
@@ -383,6 +369,6 @@
   "leaderboard": {
     "metric": "wardrobe_value",
     "size": 10,
-    "cache_sec": 5
+    "cache_sec": 3
   }
 }

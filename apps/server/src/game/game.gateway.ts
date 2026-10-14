@@ -22,8 +22,6 @@ import {
   type MarketPage,
   type MoveTo,
   type Passport,
-  type RunReveal,
-  type RunState,
   type ServerToClientEvents,
   type ShopEntry,
   type StallOffer,
@@ -147,11 +145,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         case 'run.beat':
           this.sockets.get(e.playerId)?.emit(S2C.RUN_BEAT, { beatId: e.beatId });
           break;
-        case 'run.end': {
-          const socket = this.sockets.get(e.playerId);
-          if (socket) socket.emit(S2C.RUN_END, await this.withCode(socket, e.reveal));
+        case 'leaderboard':
+          for (const [id, socket] of this.sockets) socket.emit(S2C.LEADERBOARD_UPDATED, this.leaderboard.boardFor(e.rows, id));
           break;
-        }
       }
     } catch (err) {
       this.logger.error(`inoltro di ${e.type} fallito: ${String(err)}`);
@@ -189,16 +185,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
       const state = await this.players.loadState(playerId);
       let position = null;
-      let run: RunState | null = null;
       if (state.look) {
         if (!this.world.has(playerId) && this.world.size >= this.cfg.config.world.max_players_per_room) {
           return this.reject(socket, 'WORLD_FULL');
         }
         position = this.world.join(playerId, this.profileOf(state));
-        run = await this.runs.enter(playerId, state.wardrobeValue);
+        await this.runs.enter(playerId, state.wardrobeValue);
       }
       if (!socket.connected) return;
-      socket.emit(S2C.STATE_INIT, this.stateInit(state, deviceId, position, run));
+      socket.emit(S2C.STATE_INIT, this.stateInit(state, deviceId, position));
     } catch (err) {
       const code = err instanceof SpError ? err.code : 'INTERNAL';
       if (code !== 'CODE_NOT_FOUND') this.logger.error(`handshake fallito: ${String(err)}`);
@@ -219,7 +214,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   async onAvatarSet(
     @ConnectedSocket() socket: GameSocket,
     @MessageBody() body: unknown,
-  ): Promise<Ack<{ x: number; y: number; nickname: string; run: RunState }>> {
+  ): Promise<Ack<{ x: number; y: number; nickname: string }>> {
     const id = this.guard(socket);
     if (typeof id === 'string') return fail(id);
     const look = parseLook(body);
@@ -231,9 +226,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       const state = await this.players.loadState(id);
       if (this.world.size >= this.cfg.config.world.max_players_per_room) return fail('WORLD_FULL');
       const position = this.world.join(id, this.profileOf(state));
-      // la prima run parte adesso, all'ingresso nel villaggio
-      const run = await this.runs.enter(id, state.wardrobeValue);
-      return { ok: true, data: { ...position, nickname: saved, run } };
+      // i suggerimenti dei primi minuti partono adesso, all'ingresso nel villaggio
+      await this.runs.enter(id, state.wardrobeValue);
+      return { ok: true, data: { ...position, nickname: saved } };
     } catch (err) {
       return this.failFrom(err);
     }
@@ -429,26 +424,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     });
   }
 
-  // ------------------------------------------------------------------ classifica e reveal (M4)
+  // ------------------------------------------------------------------ classifica (M4)
 
   @SubscribeMessage(C2S.LEADERBOARD_GET)
   async onLeaderboard(@ConnectedSocket() socket: GameSocket): Promise<Ack<Leaderboard>> {
     const id = this.guard(socket);
     if (typeof id === 'string') return fail(id);
     return this.run(() => this.leaderboard.get(id));
-  }
-
-  @SubscribeMessage(C2S.RUN_REVEAL)
-  async onRunReveal(@ConnectedSocket() socket: GameSocket): Promise<Ack<RunReveal>> {
-    const id = this.guard(socket);
-    if (typeof id === 'string') return fail(id);
-    return this.run(async () => this.withCode(socket, await this.runs.reveal(id)));
-  }
-
-  /** Il reveal mostra il codice di recupero, se questo device è quello che l'ha generato. */
-  private async withCode(socket: GameSocket, reveal: RunReveal): Promise<RunReveal> {
-    const hash = await this.players.recoveryHashOf(socket.data.playerId!);
-    return { ...reveal, recoveryCode: this.players.displayCode(socket.data.deviceId, hash) };
   }
 
   /** Saldo, armadio e colore delle scarpe dopo un'azione: ai giocatori coinvolti, se connessi. */
@@ -498,7 +480,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     return { nickname: state.row.nickname, look: state.look!, shoesColor: state.shoesColor };
   }
 
-  private stateInit(state: PlayerState, deviceId: string, position: { x: number; y: number } | null, run: RunState | null): StateInit {
+  private stateInit(state: PlayerState, deviceId: string, position: { x: number; y: number } | null): StateInit {
     return {
       serverTime: Date.now(),
       player: {
@@ -511,7 +493,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         legendReadyAt: state.row.legend_ready_ms === null ? null : Number(state.row.legend_ready_ms),
       },
       drop: this.drops.state(),
-      run,
       inventory: state.inventory,
       wardrobeValue: state.wardrobeValue,
       position,

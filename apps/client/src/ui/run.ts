@@ -1,4 +1,3 @@
-import { runGrowthPct, type RunState } from '@sp/shared';
 import { gameConfig } from '../config';
 import { bannerStack, h } from './dom';
 import { T } from './texts';
@@ -13,20 +12,14 @@ export interface BeatAction {
   run(): void;
 }
 
-/** Testo di un beat (first_run.beats → GAME_DESIGN §5); null se il beat non ha un testo (es. reveal). */
-export function beatText(beatId: string, run: RunState): string | null {
-  const fr = gameConfig.first_run;
+/** Testo di un beat (first_run.beats → GAME_DESIGN §5); null se il beat non ha un testo. */
+export function beatText(beatId: string): string | null {
   switch (beatId) {
     case 'welcome':
       return T.beats.welcome(gameConfig.player.start_coins);
-    case 'objective':
-      return T.beats.objective(runGrowthPct(fr.objective.multiplier), run.target);
-    case 'closing_warning': {
-      const at = fr.beats.find((b) => b.id === beatId)?.at_sec ?? fr.duration_sec;
-      return T.beats.closing_warning(fr.duration_sec - at);
-    }
     case 'tooltip_move':
     case 'tooltip_passport':
+    case 'hint_leaderboard':
     case 'hint_stall':
     case 'hint_legend':
     case 'hint_market':

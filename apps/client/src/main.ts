@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
-import { C2S, S2C, type AvatarLook, type InventoryUpdated, type Place, type RunState, type StateInit } from '@sp/shared';
+import { C2S, S2C, type AvatarLook, type InventoryUpdated, type Leaderboard, type Place, type StateInit } from '@sp/shared';
 import { gameConfig } from './config';
 import { partsFromLook } from './game/AvatarSprite';
 import { avatarThumb } from './game/avatarThumb';
 import { createApi, type Api } from './net/api';
 import { getDeviceId } from './net/device';
-import { ACK_TIMEOUT_MS, RequestError, connectSocket, forgetRecover, request, type GameSocket } from './net/socket';
+import { ACK_TIMEOUT_MS, RequestError, connectSocket, request, type GameSocket } from './net/socket';
 import { AvatarScene } from './scenes/AvatarScene';
 import { BOOT_PROGRESS, BOOT_READY, BootScene } from './scenes/BootScene';
 import { VillageScene } from './scenes/VillageScene';
@@ -23,9 +23,7 @@ import { openLegend } from './ui/legend';
 import { npcLine } from './ui/npc';
 import { panelsOpen } from './ui/panel';
 import { openPassport } from './ui/passport';
-import { openProfile } from './ui/profile';
-import { showReveal } from './ui/reveal';
-import { beatText, hideBeat, showBeat, type BeatAction } from './ui/run';
+import { beatText, showBeat, type BeatAction } from './ui/run';
 import { shoeName } from './ui/shoe';
 import { openShop } from './ui/shop';
 import { openStall } from './ui/stall';
@@ -68,30 +66,20 @@ let socket: GameSocket | null = null;
 let api: Api | null = null;
 let hud: ReturnType<typeof showHud> | null = null;
 let inVillage = false;
-/** Prima run del giocatore (state.init, avatar.set, run.end). */
-let run: RunState | null = null;
-/** Codice digitato sulla landing per rientrare: il server non lo rimostra a questo telefono, lo teniamo in memoria. */
-let knownCode: string | null = null;
+/** Arrivato il primo state.init: prima, un errore del server vuol dire sessione rifiutata. */
 let ready = false;
 
-const formatCode = (code: string) => {
-  let i = 0;
-  return gameConfig.player.recovery_code.display_format.replace(/X/g, () => code[i++] ?? '');
-};
-
-function enter(recoverCode?: string): void {
+function enter(): void {
   landing.setBusy(true);
   const { id } = getDeviceId();
-  // un tentativo di codice fallito ha chiuso la connessione: se ne apre una nuova
+  // una sessione rifiutata (villaggio pieno…) ha chiuso la connessione: se ne apre una nuova
   socket?.removeAllListeners();
   socket?.disconnect();
-  socket = connectSocket(id, recoverCode);
+  socket = connectSocket(id);
   api = createApi(socket);
   const s = socket;
   s.on(S2C.STATE_INIT, (state) => {
-    if (!ready && recoverCode) knownCode = formatCode(recoverCode);
     ready = true;
-    forgetRecover(s, id);
     void onState(state);
   });
   socket.on(S2C.WORLD_PLAYERS, (m) => village()?.applySnapshots(m.players, m.gone));
@@ -134,19 +122,13 @@ function enter(recoverCode?: string): void {
     publish('asset', m.assetId);
   });
   socket.on(S2C.RUN_BEAT, (m) => onBeat(m.beatId));
-  socket.on(S2C.RUN_END, (r) => {
-    run = run ? { ...run, completed: true, merchant: r.merchant } : run;
-    hud?.setRun(run);
-    hideBeat();
-    if (api) showReveal(api, r, knownCode);
-  });
+  socket.on(S2C.LEADERBOARD_UPDATED, (b) => setLeaderboard(b));
   socket.on(S2C.ERROR, (e) => {
     if (!ready) {
-      // sessione rifiutata prima di entrare (codice sbagliato, villaggio pieno…): si chiude e si può riprovare
+      // sessione rifiutata prima di entrare (villaggio pieno…): si chiude e si può riprovare
       s.disconnect();
       landing.setBusy(false);
-      if (e.code === 'CODE_NOT_FOUND' || e.code === 'RECOVER_LIMIT') landing.recoverError(e.message);
-      else toast(e.message);
+      toast(e.message);
       return;
     }
     if (e.code === 'SESSION_REPLACED') showBlocker(e.message, T.replacedCta, () => socket?.connect());
@@ -191,8 +173,6 @@ async function onState(state: StateInit): Promise<void> {
   store.clockOffset = state.serverTime - Date.now();
   store.drop = state.drop;
   store.legendReadyAt = state.player.legendReadyAt;
-  run = state.run;
-  hud?.setRun(run);
   setInventory({ coins: state.player.coins, wardrobeValue: state.wardrobeValue, inventory: state.inventory }, false);
   // dopo una riconnessione i pannelli aperti si ricaricano
   publish('market');
@@ -229,14 +209,13 @@ function pickAvatar(state: StateInit): void {
     (look) => preview().setParts(partsFromLook(look, state.player.shoesColor)),
     async (look, nickname) => {
       try {
-        const res = await request<{ x: number; y: number; nickname: string; run: RunState }>(() =>
+        const res = await request<{ x: number; y: number; nickname: string }>(() =>
           socket!.timeout(ACK_TIMEOUT_MS).emitWithAck(C2S.AVATAR_SET, { ...look, nickname }),
         );
         picker.close();
         window.removeEventListener('resize', fit);
         game.scene.stop('Avatar');
         store.me = { ...store.me, nickname: res.nickname };
-        run = res.run;
         startVillage({ ...state, player: { ...state.player, nickname: res.nickname, avatar: look } }, look, res);
       } catch (err) {
         if (err instanceof RequestError && err.code.startsWith('NICKNAME_')) picker.nameError(err.message);
@@ -270,28 +249,27 @@ function startVillage(state: StateInit, look: AvatarLook, position: { x: number;
       if (api && !panelsOpen()) openWardrobe(api);
     },
     onLeaderboard: leaderboard,
-    onProfile() {
-      if (!api || panelsOpen()) return;
-      const a = api;
-      openProfile(
-        { nickname: store.me.nickname, code: state.player.recoveryCode ?? knownCode, run },
-        async () => showReveal(a, await a.runReveal(), knownCode),
-        leaderboard,
-      );
-    },
   });
   hud.setWallet(store.coins, store.wardrobeValue);
-  hud.setRun(run);
+  // la posizione nell'HUD c'è da subito; poi la tiene aggiornata leaderboard.updated
+  hud.setRank(store.leaderboard);
+  api?.leaderboard().then(setLeaderboard, () => undefined);
+}
+
+function setLeaderboard(b: Leaderboard): void {
+  store.leaderboard = b;
+  hud?.setRank(b);
+  publish('leaderboard');
 }
 
 function leaderboard(): void {
-  if (api && !panelsOpen()) openLeaderboard(api, (look, shoesColor) => avatarThumb(game.textures, partsFromLook(look, shoesColor)));
+  if (!panelsOpen()) openLeaderboard((look, shoesColor) => avatarThumb(game.textures, partsFromLook(look, shoesColor)));
 }
 
-/** Beat della prima run: un banner, e dove serve un bottone che porta al posto giusto. */
+/** Suggerimento dei primi minuti: un banner, e dove serve un bottone che porta al posto giusto. */
 function onBeat(beatId: string): void {
-  if (!run || !inVillage) return;
-  const text = beatText(beatId, run);
+  if (!inVillage) return;
+  const text = beatText(beatId);
   if (!text) return;
   const go = (zone: string): BeatAction => ({ label: T.beatGo, run: () => village()?.goTo(zone) });
   const actions: Record<string, BeatAction | undefined> = {
@@ -302,6 +280,7 @@ function onBeat(beatId: string): void {
         if (api && shoe && !panelsOpen()) openPassport(api, shoe.assetId);
       },
     },
+    hint_leaderboard: { label: T.beatOpen, run: leaderboard },
     hint_stall: go('bancarella'),
     hint_legend: go('palco'),
     hint_market: go('bacheca'),
@@ -309,11 +288,8 @@ function onBeat(beatId: string): void {
   showBeat(text, actions[beatId]);
 }
 
-// conti alla rovescia nei pannelli aperti (drop, MC Suola) e nell'HUD (prima run)
-setInterval(() => {
-  publish('tick');
-  hud?.tick();
-}, 1000);
+// conti alla rovescia nei pannelli aperti (drop, MC Suola)
+setInterval(() => publish('tick'), 1000);
 
 /** All'arrivo da un NPC si apre il suo pannello. */
 function talk(place: Place): void {

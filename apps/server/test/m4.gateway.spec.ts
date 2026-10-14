@@ -1,4 +1,4 @@
-// Accettazione M4: prima run (beat, reveal, badge "Mercante"), recupero da un altro telefono, classifica.
+// Accettazione M4: suggerimenti dei primi minuti, recupero da un altro telefono (lato server), classifica live.
 // I loop sono spenti (GAME_LOOPS=off): RunService.tick() si chiama a mano, con l'orologio che serve.
 import { randomUUID } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
@@ -7,11 +7,9 @@ import { Test } from '@nestjs/testing';
 import {
   C2S,
   S2C,
-  runTarget,
   type ClientToServerEvents,
+  type Leaderboard,
   type RunBeat,
-  type RunReveal,
-  type RunState,
   type ServerToClientEvents,
   type StateInit,
 } from '@sp/shared';
@@ -20,7 +18,6 @@ import { AppModule } from '../src/app.module';
 import { CHAIN_NOTARY } from '../src/chain/chain-notary';
 import { MockNotary } from '../src/chain/mock-notary';
 import { LeaderboardService } from '../src/game/leaderboard.service';
-import { MechanicsService } from '../src/game/mechanics.service';
 import { RecoverLimiter, clientIp } from '../src/game/rate-limit';
 import { RunService } from '../src/game/run.service';
 import { cfg, openTestDb } from './helpers/db';
@@ -64,10 +61,10 @@ async function player(deviceId: string = randomUUID()): Promise<{ socket: Client
 const LOOK = { body: 1, skin: 0, hair: 1, hairColor: 0, outfit: 0 };
 
 /** Giocatore con l'avatar pronto: la prima run parte qui. */
-async function inVillage(): Promise<{ socket: Client; init: StateInit; deviceId: string; run: RunState }> {
+async function inVillage(): Promise<{ socket: Client; init: StateInit; deviceId: string }> {
   const p = await player();
-  const res = ok(await p.socket.emitWithAck(C2S.AVATAR_SET, { ...LOOK, nickname: p.init.player.nickname }));
-  return { ...p, run: res.run };
+  ok(await p.socket.emitWithAck(C2S.AVATAR_SET, { ...LOOK, nickname: p.init.player.nickname }));
+  return p;
 }
 
 function collect<T>(socket: Client, event: keyof ServerToClientEvents): T[] {
@@ -93,111 +90,45 @@ const ok = <T>(r: { ok: true; data: T } | { ok: false; code: string }): T => {
 
 const flush = () => new Promise((r) => setTimeout(r, 100));
 
-/** Porta indietro l'inizio della run (orologio del DB) e la fa ripartire nel servizio. */
-async function backdate(playerId: number, seconds: number, wardrobe: number): Promise<RunState> {
-  await db.select('UPDATE players SET first_run_started_at = NOW(6) - INTERVAL ? SECOND WHERE id = ?', [seconds, playerId]);
-  return app.get(RunService).enter(playerId, wardrobe);
+/** Inizio dei suggerimenti in epoch ms (orologio del DB). */
+async function startedAt(playerId: number): Promise<number> {
+  const [r] = await db.select<{ ms: number }>('SELECT ROUND(UNIX_TIMESTAMP(first_run_started_at) * 1000) AS ms FROM players WHERE id = ?', [
+    playerId,
+  ]);
+  return Number(r.ms);
 }
 
-describe('M4: prima run', () => {
-  it('parte alla creazione dell’avatar con l’obiettivo da config, e i beat arrivano al loro secondo', async () => {
-    const { socket, init, run: state } = await inVillage();
-    expect(state.completed).toBe(false);
-    expect(state.startValue).toBe(init.wardrobeValue);
-    expect(state.target).toBe(runTarget(init.wardrobeValue, run.objective.multiplier));
-    expect(state.endsAt - state.startedAt).toBe(run.duration_sec * 1000);
+describe('M4: suggerimenti dei primi minuti', () => {
+  it('partono alla creazione dell’avatar e arrivano al loro secondo, una volta sola', async () => {
+    const { socket, init } = await inVillage();
+    const t0 = await startedAt(init.player.id);
+    expect(t0).toBeGreaterThan(0);
 
     const beats = collect<RunBeat>(socket, S2C.RUN_BEAT);
     const runs = app.get(RunService);
-    await runs.tick(state.startedAt);
-    await runs.tick(state.startedAt + 45_000);
+    runs.tick(t0);
+    runs.tick(t0 + 45_000);
     await flush();
-    const upTo45 = run.beats.filter((b) => b.at_sec <= 45).map((b) => b.id);
-    expect(beats.map((b) => b.beatId)).toEqual(upTo45);
+    expect(beats.map((b) => b.beatId)).toEqual(run.beats.filter((b) => b.at_sec <= 45).map((b) => b.id));
 
-    // nessun beat si ripete e il "reveal" non è un beat: è run.end
-    await runs.tick(state.startedAt + (run.duration_sec - 1) * 1000);
+    const last = Math.max(...run.beats.map((b) => b.at_sec));
+    runs.tick(t0 + last * 1000);
+    runs.tick(t0 + last * 1000 + 60_000);
     await flush();
-    expect(beats.map((b) => b.beatId)).toEqual(run.beats.filter((b) => b.at_sec < run.duration_sec).map((b) => b.id));
+    expect(beats.map((b) => b.beatId)).toEqual(run.beats.map((b) => b.id));
   });
 
-  it('una riconnessione a metà run non ripete i beat già passati', async () => {
-    const { init, deviceId } = await inVillage();
-    await backdate(init.player.id, 100, init.wardrobeValue);
+  it('una riconnessione non ripete i suggerimenti già passati, e l’inizio non cambia', async () => {
+    const { init, deviceId, socket } = await inVillage();
+    await db.select('UPDATE players SET first_run_started_at = NOW(6) - INTERVAL 100 SECOND WHERE id = ?', [init.player.id]);
+    const t0 = await startedAt(init.player.id);
+    socket.disconnect();
     const again = await player(deviceId);
-    expect(again.init.run).toMatchObject({ completed: false, startValue: init.wardrobeValue });
+    expect(await startedAt(init.player.id)).toBe(t0);
     const beats = collect<RunBeat>(again.socket, S2C.RUN_BEAT);
-    await app.get(RunService).tick(again.init.run!.startedAt + 100_000);
+    app.get(RunService).tick(t0 + 100_000);
     await flush();
     expect(beats).toEqual([]);
-  });
-
-  it('il reveal prima della fine non c’è, e la SP non chiude una run in anticipo', async () => {
-    const { socket, init } = await inVillage();
-    const r = await socket.emitWithAck(C2S.RUN_REVEAL, {});
-    expect(r).toMatchObject({ ok: false, code: 'RUN_NOT_FINISHED' });
-    await expect(db.call('sp_run_complete', [init.player.id, 1, 0])).rejects.toMatchObject({ code: 'RUN_NOT_OVER' });
-  });
-
-  it('alla fine: reveal con valori, scambi, falsi presi e smascherati, scarpa più preziosa e codice', async () => {
-    const { socket, init } = await inVillage();
-    // durante la run: un falso da Tony Affari, poi la Dott.ssa Hash lo smaschera
-    await app.get(MechanicsService).restockStall();
-    const [offer] = ok(await socket.emitWithAck(C2S.STALL_LIST, {}));
-    ok(await socket.emitWithAck(C2S.STALL_BUY, { assetId: offer.assetId }));
-    expect(ok(await socket.emitWithAck(C2S.AUTH_REQUEST, { assetId: offer.assetId })).verdict).toBe('fake');
-
-    const state = await backdate(init.player.id, run.duration_sec + 1, init.wardrobeValue);
-    const end = next<RunReveal>(socket, S2C.RUN_END);
-    await app.get(RunService).tick(state.endsAt);
-    const reveal = await end;
-
-    const wardrobe = ok(await socket.emitWithAck(C2S.LEADERBOARD_GET, {})).me!.value;
-    expect(reveal).toMatchObject({
-      startValue: init.wardrobeValue,
-      endValue: wardrobe,
-      target: runTarget(init.wardrobeValue, run.objective.multiplier),
-      merchant: wardrobe >= runTarget(init.wardrobeValue, run.objective.multiplier),
-      trades: 1,
-      fakesBought: 1,
-      fakesSpotted: 1,
-      recoveryCode: init.player.recoveryCode,
-    });
-    // la più preziosa è il regalo (il falso smascherato vale poco): un solo proprietario, tu
-    expect(reveal.best).toEqual({ assetId: init.inventory[0].assetId, itemId: init.inventory[0].itemId, owners: 1 });
-
-    // si può rivedere, uguale; una seconda chiusura non cambia niente
-    expect(ok(await socket.emitWithAck(C2S.RUN_REVEAL, {}))).toEqual(reveal);
-    expect(await app.get(RunService).complete(init.player.id)).toEqual({ ...reveal, recoveryCode: null });
-  });
-
-  it('badge "Mercante" a chi raggiunge il target; la run chiusa resta chiusa alla riconnessione', async () => {
-    const { socket, init, deviceId } = await inVillage();
-    // valore iniziale più basso: l'armadio di adesso supera il target
-    await db.select('UPDATE players SET first_run_start_value = ? WHERE id = ?', [Math.floor(init.wardrobeValue / 2), init.player.id]);
-    const state = await backdate(init.player.id, run.duration_sec + 1, init.wardrobeValue);
-    const end = next<RunReveal>(socket, S2C.RUN_END);
-    await app.get(RunService).tick(state.endsAt);
-    expect((await end).merchant).toBe(true);
-
-    socket.disconnect();
-    const again = await player(deviceId);
-    expect(again.init.run).toMatchObject({ completed: true, merchant: true });
-    const ends = collect<RunReveal>(again.socket, S2C.RUN_END);
-    await app.get(RunService).tick(Date.now() + 3600_000);
-    await flush();
-    expect(ends).toEqual([]);
-  });
-
-  it('chi era offline alla fine riceve il reveal appena rientra', async () => {
-    const { socket, init, deviceId } = await inVillage();
-    socket.disconnect();
-    await db.select('UPDATE players SET first_run_started_at = NOW(6) - INTERVAL ? SECOND WHERE id = ?', [run.duration_sec + 60, init.player.id]);
-    const again = await player(deviceId);
-    expect(again.init.run?.completed).toBe(false);
-    const end = next<RunReveal>(again.socket, S2C.RUN_END);
-    await app.get(RunService).tick();
-    expect((await end).startValue).toBe(init.wardrobeValue);
   });
 });
 
@@ -214,7 +145,6 @@ describe('M4: recupero da un altro telefono', () => {
     expect(initB.player.avatar).toEqual(LOOK);
     // il codice lo conosce chi l'ha digitato: il server non lo rimostra a un device che non l'ha generato
     expect(initB.player.recoveryCode).toBeNull();
-    expect(initB.run?.completed).toBe(false);
 
     b.disconnect();
     const again = await player(a.deviceId);
@@ -269,5 +199,27 @@ describe('M4: classifica', () => {
     const fresh = await player();
     app.get(LeaderboardService).invalidate();
     expect(ok(await fresh.socket.emitWithAck(C2S.LEADERBOARD_GET, {})).me).toBeNull();
+  });
+
+  it('live: cambia un armadio → al giro dopo arriva a tutti, ognuno con la sua posizione; senza cambi niente', async () => {
+    const a = await inVillage();
+    const b = await inVillage();
+    const lb = app.get(LeaderboardService);
+    await lb.tick(); // allinea l'ultima classifica mandata
+    expect(await lb.tick()).toBe(false);
+
+    // b fa verificare il regalo: 3 monete in meno, l'armadio cambia
+    const updatedB = next<{ wardrobeValue: number }>(b.socket, S2C.INVENTORY_UPDATED);
+    ok(await b.socket.emitWithAck(C2S.AUTH_REQUEST, { assetId: b.init.inventory[0].assetId }));
+    const valueB = (await updatedB).wardrobeValue;
+    expect(valueB).not.toBe(b.init.wardrobeValue);
+
+    const toA = next<Leaderboard>(a.socket, S2C.LEADERBOARD_UPDATED);
+    const toB = next<Leaderboard>(b.socket, S2C.LEADERBOARD_UPDATED);
+    expect(await lb.tick()).toBe(true);
+    const [boardA, boardB] = await Promise.all([toA, toB]);
+    expect(boardA.me?.playerId).toBe(a.init.player.id);
+    expect(boardB.me).toMatchObject({ playerId: b.init.player.id, value: valueB });
+    expect(boardA.top).toEqual(boardB.top);
   });
 });

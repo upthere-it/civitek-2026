@@ -1,4 +1,4 @@
-import { C2S, type DropState, type Leaderboard, type MarketPage, type Passport, type RunReveal, type ShopEntry, type StallOffer } from '@sp/shared';
+import { C2S, type DropState, type Leaderboard, type MarketPage, type Passport, type ShopEntry, type StallOffer } from '@sp/shared';
 import { ACK_TIMEOUT_MS, request, type GameSocket } from './socket';
 
 /** Richieste del mercato: il client manda intenzioni, saldi e proprietà li decide il server. */
@@ -21,7 +21,6 @@ export function createApi(socket: GameSocket) {
     dropState: () => request<DropState>(() => s().emitWithAck(C2S.DROP_STATE, {})),
     dropClaim: (dropId: number) => request<{ assetId: number }>(() => s().emitWithAck(C2S.DROP_CLAIM, { dropId })),
     leaderboard: () => request<Leaderboard>(() => s().emitWithAck(C2S.LEADERBOARD_GET, {})),
-    runReveal: () => request<RunReveal>(() => s().emitWithAck(C2S.RUN_REVEAL, {})),
   };
 }
 
