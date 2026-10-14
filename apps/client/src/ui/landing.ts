@@ -12,6 +12,7 @@ export function showLanding(onEnter: () => void): { setProgress: (p: number) => 
     h('h1', { class: 'title' }, T.landingTitle),
     cta,
     progress,
+    h('a', { class: 'landing-privacy', href: '/privacy/' }, T.privacy),
   );
   let busy = false;
   cta.addEventListener('click', () => {

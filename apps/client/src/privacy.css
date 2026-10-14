@@ -1,0 +1,72 @@
+/* Pagina /privacy: testo da leggere, quindi si scorre e si seleziona (a differenza del gioco). */
+html,
+body {
+  margin: 0;
+  background: var(--up-primary, #490d50);
+  color: #fff;
+  font-family: var(--up-font-body);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.doc {
+  box-sizing: border-box;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: max(24px, env(safe-area-inset-top)) 20px max(32px, env(safe-area-inset-bottom));
+}
+
+.logo {
+  width: 140px;
+}
+
+h1,
+h2 {
+  font-family: var(--up-font-display);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 34px;
+  margin: 24px 0 8px;
+}
+
+h2 {
+  font-size: 21px;
+  margin: 28px 0 6px;
+  color: var(--up-accent-400);
+}
+
+.lead {
+  font-size: 19px;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+li + li {
+  margin-top: 6px;
+}
+
+a {
+  color: var(--up-accent-400);
+}
+
+.credits {
+  font-size: 15px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 28px;
+  min-height: 48px;
+  padding: 0 28px;
+  border-radius: 999px;
+  background: var(--up-accent-400);
+  color: var(--up-primary);
+  font: 600 18px var(--up-font-display);
+  text-decoration: none;
+}

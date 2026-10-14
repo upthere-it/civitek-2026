@@ -39,5 +39,12 @@ export default defineConfig({
     target: 'es2020', // Safari iOS 14+ e browser in-app
     assetsDir: 'static', // public/assets/ resta degli asset di gioco; qui i bundle con hash (cache lunga)
     assetsInlineLimit: 0, // gli asset pixel art restano file separati
+    rollupOptions: {
+      // il gioco e la pagina /privacy (privacy/index.html: /privacy/ sia con Vite sia con nginx)
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        privacy: fileURLToPath(new URL('./privacy/index.html', import.meta.url)),
+      },
+    },
   },
 });

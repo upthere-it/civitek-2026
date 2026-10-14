@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#490D50" />
+    <title>Privacy · Sneaker Passport</title>
+    <link rel="icon" href="/assets/brand/favicon.ico" />
+    <link rel="stylesheet" href="/assets/brand/fonts.css" />
+    <link rel="stylesheet" href="/src/privacy.css" />
+  </head>
+  <body>
+    <!-- Testo in bozza da validare (D5, docs/PLAN.md). I numeri arrivano da game_config.json (src/privacy.ts). -->
+    <main class="doc">
+      <a href="/" class="logo-link"><img class="logo" src="/assets/brand/logo_upthere_white.svg" alt="Upthere" /></a>
+      <h1>Privacy</h1>
+      <p class="lead">Sneaker Passport è un gioco di Upthere. Per giocare non ti chiediamo chi sei.</p>
+
+      <h2>Cosa salviamo</h2>
+      <ul>
+        <li>Un <strong>codice casuale</strong> che il tuo telefono crea la prima volta, per riconoscerti quando torni. Sul server ne teniamo solo l'impronta (hash), non il codice.</li>
+        <li>Il <strong>nome</strong> che scegli nel gioco. Non usare il tuo vero nome.</li>
+        <li>L'<strong>aspetto</strong> del personaggio (stile, pelle, capelli, felpa).</li>
+        <li>Quello che fai nel gioco: monete, scarpe, scambi.</li>
+      </ul>
+
+      <h2>Cosa non salviamo</h2>
+      <ul>
+        <li>Nome vero, email, numero di telefono, posizione, foto: non te li chiediamo mai.</li>
+        <li>Niente chat: si comunica solo con le emote.</li>
+        <li>Niente pubblicità, niente statistiche o tracciamenti di altre aziende. Font e immagini arrivano dal nostro server.</li>
+      </ul>
+
+      <h2>Blockchain</h2>
+      <p>Quando una scarpa cambia proprietario, il passaggio viene certificato su Commercio.network (rete di prova). Lì va solo un'impronta (hash) del passaggio: niente nomi né altri dati.</p>
+
+      <h2>Per quanto tempo</h2>
+      <p>Dopo <strong data-days>30</strong> giorni senza giocare cancelliamo il collegamento al tuo telefono, il nome e l'aspetto del personaggio. Restano solo i passaggi delle scarpe, a nome "Anonimo", perché le catene dei passaporti non si possono spezzare.</p>
+
+      <h2>Sul tuo telefono</h2>
+      <p>Nel browser salviamo solo il codice casuale (nella memoria locale del sito, non sono cookie). Se lo cancelli, il gioco non ti riconosce più e ricominci da capo.</p>
+
+      <h2>Chi siamo</h2>
+      <p>Il gioco è di <a href="https://upthere.it" target="_blank" rel="noopener noreferrer">Upthere s.r.l.</a>, per presentare <a href="https://dopdigital.it/" target="_blank" rel="noopener noreferrer">DOP Digital</a>. Per domande, anche da genitori e insegnanti, trovi i contatti sul sito di Upthere.</p>
+
+      <h2>Crediti</h2>
+      <p class="credits">Pixel art: Pixel Crawler di Anokolisa · Font: Chillax di Indian Type Foundry (Fontshare), DM Sans (SIL Open Font License). I marchi delle scarpe nel gioco sono inventati.</p>
+
+      <a class="btn" href="/">Torna al gioco</a>
+    </main>
+    <script type="module" src="/src/privacy.ts"></script>
+  </body>
+</html>

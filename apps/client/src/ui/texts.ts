@@ -4,6 +4,7 @@ export const T = {
   landingCta: 'Entra nel mercato',
   loading: (pct: number) => `Carico il villaggio… ${pct}%`,
   connecting: 'Entro…',
+  privacy: 'Privacy e crediti',
   avatarTitle: 'Crea il tuo personaggio',
   avatarWho: 'Chi sei nel villaggio',
   avatarLookTitle: 'Il tuo look',

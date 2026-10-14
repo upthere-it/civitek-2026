@@ -11,7 +11,7 @@ export interface HudActions {
 
 /**
  * HUD: nickname, monete, valore armadio e, sotto, la posizione in classifica sempre aggiornata (tap → classifica);
- * in basso armadio ed emote (niente chat libera).
+ * in basso armadio, logo Upthere ed emote (niente chat libera).
  */
 export function showHud(nickname: string, actions: HudActions) {
   const coins = h('span', { class: 'pill' });
@@ -44,7 +44,7 @@ export function showHud(nickname: string, actions: HudActions) {
       'div',
       { class: 'hud-bottom' },
       h('button', { class: 'hud-btn', type: 'button', onclick: actions.onWardrobe }, h('span', { 'aria-hidden': 'true' }, '👟'), T.wardrobeOpen),
-      h('span', { class: 'spacer' }),
+      h('span', { class: 'spacer hud-brand' }, h('img', { class: 'hud-logo', src: 'assets/brand/logo_upthere_white.svg', alt: 'Upthere' })),
       bar,
       toggle,
     ),

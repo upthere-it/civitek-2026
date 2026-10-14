@@ -88,6 +88,13 @@ canvas {
   max-width: 14em;
 }
 
+.landing-privacy {
+  position: absolute;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  color: var(--up-accent-400);
+  font-size: 14px;
+}
+
 .progress {
   width: min(60vw, 240px);
   height: 4px;
@@ -1108,4 +1115,18 @@ a.cert-ok {
 .badge-demo {
   background: var(--up-accent-400);
   color: var(--up-primary);
+}
+
+/* logo Upthere nell'HUD (CLAUDE.md regola 10): piccolo, su una pillola scura per leggersi sopra la mappa */
+.hud-brand {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.hud-logo {
+  width: 64px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--up-accent-900);
 }
