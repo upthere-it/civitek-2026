@@ -62,6 +62,7 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 - [x] Classifica
 - [x] `CommercioNotary` via API commercio.app (porting di `@mvl/commercio-network`, ARCHITECTURE §6), anticipato il 14/10: provato contro un finto commercio.app
 - [ ] Credenziali nel `.env` (D11), prima notarizzazione vera sulla testnet, `chain.notary = "commercio"`. Senza credenziali entro il 20/10 si resta su Mock
+  - 14/10: `chain.notary = "commercio"` impostato, credenziali nel `.env` locale di Simone. Senza `CN_*` (sviluppo, test, CI) si ripiega sul Mock con un avviso; in produzione il server non parte. Manca la prima notarizzazione vera, da verificare nel log (`login commercio.app riuscito`) e sull'explorer
 
 **Accettazione**: run completa di 5 minuti su telefono vero, dal QR al reveal, senza intoppi.
 

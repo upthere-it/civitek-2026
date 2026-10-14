@@ -378,7 +378,7 @@ game_config = {
     },
     "chain": {
         "enabled": True,
-        "notary": "mock",
+        "notary": "commercio",
         "network": "commercio-testnet11k",
         "batch_interval_ms": 2000,
         "max_items_per_batch": 20,

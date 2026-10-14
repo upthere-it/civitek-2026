@@ -149,7 +149,7 @@ INSERT INTO game_settings (name, value) VALUES
   ('world.emote_duration_ms', '2500'),
   ('world.reconcile_px', '24'),
   ('chain.enabled', '1'),
-  ('chain.notary', 'mock'),
+  ('chain.notary', 'commercio'),
   ('chain.network', 'commercio-testnet11k'),
   ('chain.batch_interval_ms', '2000'),
   ('chain.max_items_per_batch', '20'),

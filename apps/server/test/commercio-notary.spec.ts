@@ -163,12 +163,18 @@ describe('CommercioNotary', () => {
 describe('createNotary', () => {
   const withNotary = (notaryName: string) => ({ ...cfg.config, chain: { ...cfg.chain, notary: notaryName } });
 
-  it('mock di default', () => {
-    expect(createNotary(cfg.config, {})).toBeInstanceOf(MockNotary);
+  it('mock se la config lo chiede', () => {
+    expect(createNotary(withNotary('mock'), {})).toBeInstanceOf(MockNotary);
   });
 
-  it('commercio senza credenziali: errore che dice cosa manca', () => {
-    expect(() => createNotary(withNotary('commercio'), { CN_USERNAME: 'x' })).toThrow(/CN_PASSWORD, CN_RECIPIENT_ADDRESS/);
+  it('commercio senza credenziali in produzione: errore che dice cosa manca', () => {
+    expect(() => createNotary(withNotary('commercio'), { NODE_ENV: 'production', CN_USERNAME: 'x' })).toThrow(
+      /CN_PASSWORD, CN_RECIPIENT_ADDRESS/,
+    );
+  });
+
+  it('commercio senza credenziali fuori produzione: Mock (sviluppo senza .env, test, CI)', () => {
+    expect(createNotary(withNotary('commercio'), { NODE_ENV: 'test' })).toBeInstanceOf(MockNotary);
   });
 
   it('commercio con credenziali', () => {
