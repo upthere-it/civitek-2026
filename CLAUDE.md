@@ -92,7 +92,7 @@ Ci sono già stati problemi con Jest + ESM, quindi il server resta **CommonJS**.
 
 ## Comandi
 
-`npm run dev:server` · `npm run dev:client` · `npm test` · `npm run typecheck` · `npm run build` · `npm run db:migrate` · `npm run db:seed` · `npm run db:reset` (solo database `*_dev`, `*_test`, `*_staging`)
+`npm run dev` (migrazioni + seed, poi server e client) · `npm run dev:server` · `npm run dev:client` · `npm test` · `npm run typecheck` · `npm run build` · `npm run db:migrate` · `npm run db:seed` · `npm run db:reset` (solo database `*_dev`, `*_test`, `*_staging`)
 
 Da creare in M5: `npm run loadtest` · `npm run sim:economy`.
 

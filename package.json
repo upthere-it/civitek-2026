@@ -13,6 +13,7 @@
   },
   "scripts": {
     "build": "npm run build -w @sp/shared && npm run build -w @sp/server && npm run build -w @sp/client",
+    "dev": "tsx tools/dev.ts",
     "dev:server": "npm run build -w @sp/shared && npm run dev -w @sp/server",
     "dev:client": "npm run dev -w @sp/client",
     "test": "npm test -w @sp/shared && npm test -w @sp/server",
