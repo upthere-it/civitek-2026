@@ -80,6 +80,8 @@ export interface PlayerCfg {
     attempts_global_per_min: number;
   };
   inactivity_anonymize_days: number;
+  anonymize_every_min: number;
+  anonymize_batch: number;
   rate_limit_actions_per_sec: number;
 }
 

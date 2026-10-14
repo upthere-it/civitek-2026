@@ -55,6 +55,8 @@ INSERT INTO game_settings (name, value) VALUES
   ('player.recovery_code.attempts_per_ip_per_min', '10'),
   ('player.recovery_code.attempts_global_per_min', '120'),
   ('player.inactivity_anonymize_days', '30'),
+  ('player.anonymize_every_min', '60'),
+  ('player.anonymize_batch', '200'),
   ('player.rate_limit_actions_per_sec', '8'),
   ('avatar.frame.width', '64'),
   ('avatar.frame.height', '64'),

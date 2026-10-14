@@ -275,6 +275,9 @@ game_config = {
             "attempts_per_ip_per_min": 10, "attempts_global_per_min": 120,
         },
         "inactivity_anonymize_days": 30,
+        # job di anonimizzazione: ogni quanto gira e quanti giocatori per transazione
+        "anonymize_every_min": 60,
+        "anonymize_batch": 200,
         "rate_limit_actions_per_sec": 8,
     },
     "avatar": {

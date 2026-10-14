@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ChainModule } from '../chain/chain.module';
+import { AnonymizeService } from './anonymize.service';
 import { AssetsService } from './assets.service';
 import { BotService } from './bot.service';
 import { DropService } from './drop.service';
@@ -25,6 +26,7 @@ import { WorldService } from './world.service';
     BotService,
     RunService,
     LeaderboardService,
+    AnonymizeService,
     GameGateway,
   ],
 })
