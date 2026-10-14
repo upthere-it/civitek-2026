@@ -49,7 +49,7 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 - [ ] Recupero da un altro device (`sp_player_recover`)
 - [ ] Enoteca DOP Digital con la bottiglia demo
 - [ ] Classifica
-- [ ] Implementazione testnet di `ChainNotary` (se D1 è chiusa), altrimenti si resta su Mock
+- [ ] `CommercioNotary` (D1: Commercio.network testnet, vedi ARCHITECTURE §6) e `chain.notary = "commercio"`. Se il wallet non ha fondi entro il 20/10 si resta su Mock
 
 **Accettazione**: run completa di 5 minuti su telefono vero, dal QR al reveal, senza intoppi.
 
@@ -64,14 +64,14 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 - [ ] (facoltativo) ritocco in Aseprite dei layer avatar e delle icone delle scarpe
 
 ### M6 — Messa in produzione (gio 22/10)
-- [ ] Deploy (PM2 fork, nginx, HTTPS) sul dominio definitivo (D3), con `RECOVERY_SECRET` nel `.env` di produzione
+- [ ] Deploy (PM2 fork, nginx, HTTPS) su **civitek.upthere.it** (D3), con `RECOVERY_SECRET` e `CHAIN_MNEMONIC` nel `.env` di produzione
 - [ ] Reset del DB di produzione con script SQL a mano (non via MCP) + seed
-- [ ] Faucet della testnet ricaricato, se D1 è attiva
-- [ ] QR definitivo stampato e provato
+- [ ] Wallet della testnet con COM e CCC sufficienti per la giornata (le fee si pagano in `uccc`)
+- [ ] QR definitivo verso https://civitek.upthere.it stampato e provato
 - [ ] Prova generale con il team: 5+ telefoni, run completa
 
 ### Giorno della conferenza (ven 23/10)
-- [ ] Health check 1 ora prima (`/api/health`): DB, worker chain, saldo del faucet
+- [ ] Health check 1 ora prima (`/api/health`): DB, worker chain, saldo CCC del wallet
 - [ ] `pm2 logs` aperto su un portatile
 - [ ] Hotspot 4G di riserva
 - [ ] Pagina `/schermo` pronta sul proiettore (se non tagliata)
@@ -89,15 +89,17 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 
 | # | Decisione | Chi | Entro | Default se non decisa |
 |---|---|---|---|---|
-| D1 | Testnet e metodo di notarizzazione (Commercio.network testnet? endpoint, faucet, tipo di messaggio) | Simone | 15/10 | `MockNotary` |
+| ~~D1~~ | ✅ **Chiusa (14/10)**: **Commercio.network testnet** (`commercio-testnet11k`), notarizzazione con `MsgShareDocument` del modulo `documents`. Dettagli verificati in ARCHITECTURE §6 | Simone | — | — |
 | ~~D2~~ | ✅ **Chiusa (13/10)**: palette, logo (SVG dal sito), font Chillax + DM Sans self-hosted, insegne pixel. Tutto in `assets/brand/` | Simone | — | — |
-| D3 | Dominio e hosting, certificato TLS | Simone | 19/10 | — (bloccante per M6) |
+| ~~D3~~ | ✅ **Chiusa (14/10)**: dominio **civitek.upthere.it** (config `links.game`). Restano da fare: record DNS verso il server, certificato TLS, hosting | Simone | 19/10 | — (bloccante per M6) |
 | ~~D4~~ | ✅ **Chiusa (13/10)**: Pixel Crawler Free Pack (Anokolisa), uso commerciale ammesso. Avatar e icone delle scarpe sono placeholder generati; il ritocco in Aseprite è facoltativo | Simone | — | — |
 | D5 | Testo della pagina privacy (revisione interna) | Simone | 20/10 | testo bozza di Claude Code |
 | D6 | Nomi definitivi degli NPC (proposte in `npcs.json`) | Simone | 19/10 | nomi proposti |
 | D7 | `humanOwnersCount` nel valore percepito: conta i **passaggi** verso umani (scelta attuale: anche il ping-pong A→B→A pesa) oppure i giocatori **distinti**? | Simone | 16/10 | passaggi |
 | D8 | Tentativi della certificazione: oggi `max_attempts` (5) × `batch_interval_ms` (2 s) vuol dire che 10 s di testnet giù mandano gli eventi in `FAILED` per sempre. Proposta: backoff (`chain_next_attempt_at`) oppure job che rimette in coda i `FAILED` ogni N minuti | Simone | con D1 | backoff |
 | D9 | Budget "primo caricamento < 1 MB": Phaser 3 da solo pesa 322 KB gzip (1,2 MB minificato), che `ASSETS.md` §8 non conta. Con asset (~330 KB) e font (~88 KB) si arriva a ~740 KB gzip prima di tilemap e suoni. Il budget è sul trasferito (gzip/brotli) o sul peso dei file? Se serve margine: build custom di Phaser senza Matter/fisica | Simone | 19/10 | gzip, margine da tenere d'occhio in M5 |
+| D10 | Commercio: un `MsgShareDocument` **per evento** (checksum = hash dell'anello: quello che il ragazzo vede nel passaporto è esattamente quello sull'explorer) oppure uno **per batch** (checksum = sha256 del payload, ~20 volte meno gas) | Simone | 19/10 | per evento |
+| D11 | Fondi della testnet: il faucet (`/give`) il 14/10 risponde 502. Servono COM via Discord (`$request <indirizzo>`) o dal team Commercio, poi conversione in CCC per le fee | Simone | 18/10 | si resta su `MockNotary` |
 
 ## Note di sessione
 

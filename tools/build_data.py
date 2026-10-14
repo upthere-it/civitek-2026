@@ -252,7 +252,7 @@ game_config = {
             "warn": "bianco su warn = 4,47:1: usare solo testo bold >= 14 px oppure warn come bordo/icona su fondo chiaro",
         },
     },
-    "links": {"dop_digital": "https://dopdigital.it/"},
+    "links": {"dop_digital": "https://dopdigital.it/", "game": "https://civitek.upthere.it"},
     "player": {
         "start_coins": 100,
         "starter_item_pool": starter_pool,
@@ -356,11 +356,11 @@ game_config = {
     "chain": {
         "enabled": True,
         "notary": "mock",
-        "network": "TODO-D1",
+        "network": "commercio-testnet11k",
         "batch_interval_ms": 2000,
         "max_items_per_batch": 20,
         "max_attempts": 5,
-        "explorer_tx_url": "TODO-D1",
+        "explorer_tx_url": "https://testnet.commercio.network/transactions/detail/{txHash}",
         "certify": "MINT (tranne FAKE_MINT) + ogni evento con almeno un giocatore umano",
         "mock": {"min_delay_ms": 1500, "max_delay_ms": 4000},
     },

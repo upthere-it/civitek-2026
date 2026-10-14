@@ -77,6 +77,7 @@ export interface ChainCfg {
   batch_interval_ms: number;
   max_items_per_batch: number;
   max_attempts: number;
+  /** Template: {txHash} viene sostituito con l'hash della transazione. */
   explorer_tx_url: string;
   mock: { min_delay_ms: number; max_delay_ms: number };
 }
@@ -114,7 +115,7 @@ export interface GameConfig {
   version: string;
   conference: { date: string; expected_players: number };
   brand: { name: string; colors: Record<string, string>; signs: Record<string, string>; [k: string]: unknown };
-  links: { dop_digital: string };
+  links: { dop_digital: string; game: string };
   player: PlayerCfg;
   avatar: AvatarCfg;
   first_run: FirstRunCfg;

@@ -507,12 +507,30 @@ export class ChainWorker implements OnModuleInit {
 
 **Cosa va on-chain**: solo `{ v: 1, app: "sneaker-passport", events: [[eventId, hash], …] }`. Niente nickname, niente device, niente id giocatore. L'`eventId` è un numero interno senza significato fuori dal DB. Questo punto è importante perché la chain è immutabile e gli utenti sono minorenni.
 
-**Implementazione testnet (D1)**: in ordine di preferenza,
-1. Commercio.network testnet, se attiva: verificare endpoint, faucet e il tipo di messaggio per la notarizzazione;
-2. memo di una tx Cosmos;
-3. EVM testnet, con un evento da un contratto minimo.
+**Implementazione testnet: Commercio.network** (D1, chiusa il 14/10). I dati sotto sono stati verificati sul nodo il 14/10.
 
-Un solo wallet con la sequence/nonce gestita in serie dal worker, dato che non ci sono due batch in volo contemporaneamente. Se la chain lo permette, conviene inserire più messaggi nella stessa tx.
+| | |
+|---|---|
+| Rete | `commercio-testnet11k`, Cosmos SDK 0.45 (app commercionetwork 5.1.1), un blocco ogni 5 s circa, nessun limite di gas per blocco |
+| Endpoint | LCD `https://lcd-testnet.commercio.network`, RPC `https://rpc-testnet.commercio.network`, gRPC `grpc-testnet.commercio.network:9090` |
+| Explorer | Almerico, `https://testnet.commercio.network` (link alla tx in `chain.explorer_tx_url`, formato da verificare a mano) |
+| Indirizzi | prefisso bech32 `did:com:` |
+| Fee | in **`uccc`** (Commercio Cash Credit), non in `ucommercio`. Le tx recenti pagano 20.000 uccc con gas limit 1.000.000; un `MsgShareDocument` ne consuma circa 115.000 |
+| Faucet | `https://faucet-testnet.commercio.network/give?addr=…&amount=…` (al massimo 100 COM per richiesta; il 14/10 risponde 502), in alternativa Discord `$request <indirizzo>`. I COM vanno poi convertiti in CCC (modulo `commerciomint`) per pagare le fee |
+
+**Messaggio**: `/commercionetwork.commercionetwork.documents.MsgShareDocument`, il "condividi un'impronta" nativo di Commercio, lo stesso concetto che usa l'ecosistema DOP Digital. I vincoli vengono dal `Validate()` della chain:
+- `sender` e `recipients`: il wallet del gioco (mandarlo a sé stessi è ammesso e comune);
+- `UUID`: un UUID v4 per messaggio;
+- `checksum`: `{ value: <hash dell'anello, hex>, algorithm: "sha-256" }`. Il valore deve essere esadecimale e lungo 64 caratteri;
+- `metadata.contentURI` e `metadata.schema.{URI, version}` sono obbligatori. Proposta: `https://civitek.upthere.it/api/chain/event/<eventId>` (endpoint pubblico con solo hash, prev_hash e data, niente nickname) e lo schema `https://civitek.upthere.it/schema/sneaker-passport-event` v`1`;
+- nessun `encryptionData` né `doSign`.
+
+**Un messaggio per evento, più messaggi per tx** (D10). Con `max_items_per_batch = 20` una tx costa circa 2,3M gas. Alla velocità di picco del gioco (~1,5 eventi/s) e con un batch in volo alla volta, il passaggio ⏳ → ✅ richiede batch (≤ 2 s) + inclusione nel blocco (~5 s).
+
+**Implementazione** (M4):
+- `@cosmjs/proto-signing` + `@cosmjs/stargate` 0.39 (CommonJS), con il tipo `MsgShareDocument` registrato via `protobufjs`;
+- `CHAIN_MNEMONIC` in `.env`, mai nel repo;
+- un solo wallet, con la sequence gestita in serie dal worker: non ci sono mai due batch in volo insieme.
 
 ## 7. Client
 
@@ -560,8 +578,8 @@ module.exports = {
 };
 ```
 
-nginx:
-- HTTPS obbligatorio (serve anche per `crypto.randomUUID`);
+nginx su **civitek.upthere.it** (D3):
+- HTTPS obbligatorio (serve anche per `crypto.randomUUID`), certificato Let's Encrypt;
 - proxy di `/socket.io/` con gli header `Upgrade`/`Connection`;
 - gzip/brotli e cache lunga sugli asset con hash nel nome;
 - log di accesso con retention breve (7 giorni).

@@ -53,7 +53,8 @@
     }
   },
   "links": {
-    "dop_digital": "https://dopdigital.it/"
+    "dop_digital": "https://dopdigital.it/",
+    "game": "https://civitek.upthere.it"
   },
   "player": {
     "start_coins": 100,
@@ -299,11 +300,11 @@
   "chain": {
     "enabled": true,
     "notary": "mock",
-    "network": "TODO-D1",
+    "network": "commercio-testnet11k",
     "batch_interval_ms": 2000,
     "max_items_per_batch": 20,
     "max_attempts": 5,
-    "explorer_tx_url": "TODO-D1",
+    "explorer_tx_url": "https://testnet.commercio.network/transactions/detail/{txHash}",
     "certify": "MINT (tranne FAKE_MINT) + ogni evento con almeno un giocatore umano",
     "mock": {
       "min_delay_ms": 1500,

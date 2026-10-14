@@ -66,7 +66,8 @@ DOP Digital fa la stessa cosa con le bottiglie di vino. Il gioco funziona **in a
   - PM2 in **fork mode, 1 istanza**: lo stato socket è in memoria, quindi niente cluster mode.
 - **client**: Vite + TypeScript + Phaser 3 (`pixelArt: true`). L'UI è un overlay HTML/CSS sopra il canvas.
 - **shared**: tipi, nomi degli eventi socket, `perceivedValue()`. È la sorgente unica per server e client.
-- **chain**: interfaccia `ChainNotary`, con `MockNotary` per lo sviluppo (default) e un'implementazione testnet (decisione D1).
+- **chain**: interfaccia `ChainNotary`, con `MockNotary` per lo sviluppo (default) e `CommercioNotary` per **Commercio.network testnet** (D1, `MsgShareDocument`: vedi ARCHITECTURE §6).
+- **dominio**: https://civitek.upthere.it (D3).
 - **test**: Jest + ts-jest su server e shared. Lo script di load test usa Artillery con il motore socket.io.
 
 ### ESM / CommonJS
