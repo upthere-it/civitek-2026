@@ -246,20 +246,20 @@
     "shop_price": "base_value",
     "auth_cost": 3,
     "legend": {
-      "cost": 15,
+      "cost": 6,
       "wear_duration_sec": 10,
       "cooldown_sec": 60
     },
     "bots": {
       "count": 8,
-      "buy_pct": 0.7,
+      "buy_pct": 0.85,
       "sell_pct": 1.15,
       "min_treasury_pct_to_buy": 0.2,
       "tick_sec": 5,
       "max_inventory_per_bot": 6,
       "full_activity_below_humans_online": 10,
       "min_activity_at_humans_online": 40,
-      "min_activity": 0.2,
+      "min_activity": 0.5,
       "start_stock": 3,
       "restock_below": 2,
       "restock_count": 2,
@@ -317,7 +317,7 @@
   },
   "drops": {
     "interval_sec": 180,
-    "quantity": 4,
+    "quantity": 8,
     "window_sec": 60,
     "max_per_player": 1,
     "price": "base_value",

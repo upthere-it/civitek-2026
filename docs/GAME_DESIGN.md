@@ -195,7 +195,7 @@ I falsi si possono rivendere in bacheca, come succede nel mondo reale. Il passap
 
 ## 10. MC Suola (la Leggenda)
 
-- Costo: `economy.legend.cost` (15 monete).
+- Costo: `economy.legend.cost` (6 monete: con 15 sulle scarpe economiche si perdeva, vedi D13).
 - La scarpa resta "in prestito" per `wear_duration_sec` (10 s). In quel tempo è bloccata, non vendibile, e mostra l'etichetta "in prestito a MC Suola".
 - Nel passaporto si aggiungono due eventi certificati, `LEGEND_IN` e `LEGEND_OUT`, e `legend_count` sale di 1.
 - È un **prestito**, non una vendita: la scarpa resta del giocatore (nell'armadio con l'etichetta "In prestito a MC Suola"), la catena registra la custodia.
@@ -206,7 +206,7 @@ I falsi si possono rivendere in bacheca, come succede nel mondo reale. Il passap
 ## 11. Drop di mondo
 
 - **Frequenza**: ogni `drops.interval_sec` (180 s) su un orologio di mondo, uguale per tutti.
-- **Annuncio**: banner e suono, per esempio "Drop alla Banca Upthere: 4 paia di Shiro 66 a 64 monete. Hai 60 secondi."
+- **Annuncio**: banner e suono, per esempio "Drop alla Banca Upthere: 8 paia di Shiro 66 a 64 monete. Hai 60 secondi."
 - **Item**: estratto a caso tra i tier `hype`, `limited` e `upthere`, pesato con `drop_weight`.
 - **Quantità**: `quantity` (4). Chi arriva prima compra, al massimo 1 paio per giocatore per drop.
 - **Prezzo**: `base_value`, pagato alla tesoreria.

@@ -118,7 +118,7 @@ L'output deve mostrare:
 
 | Sintomo | Leva |
 |---|---|
-| MC Suola non conviene sulle scarpe economiche (sim 14/10: chi la usa chiude sotto la media) | `economy.legend.cost` (proposta D13: 6) |
+| MC Suola non conviene sulle scarpe economiche (sim 14/10: chi la usa chiude sotto la media) | `economy.legend.cost` (D13: da 15 a 6) |
 | Mercato fermo dopo 10–18 minuti: monete tutte in tesoreria | `economy.bots.buy_pct`, `economy.bots.min_activity` (i bot sono l'unica liquidità); un'entrata di monete non è nel design |
 | Il primo in classifica scappa via | `valuation.legend_max_counted`, `drops.quantity`, `economy.listing_max_multiplier` |
 | Prezzi in bacheca che crollano | alzare `bots.buy_pct` (es. 0,75) |

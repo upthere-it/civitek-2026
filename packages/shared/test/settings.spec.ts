@@ -11,7 +11,9 @@ describe('flattenSettings', () => {
 
   it('numeri e booleani in forma leggibile da CAST in SQL', () => {
     expect(map.get('economy.market_fee_pct')).toBe('5');
-    expect(map.get('economy.bots.buy_pct')).toBe('0.7');
+    // decimale senza zeri in coda (0.85, non 0.8500): lo legge CAST in SQL
+    expect(map.get('economy.bots.buy_pct')).toBe(String(gameConfig.economy.bots.buy_pct));
+    expect(map.get('economy.bots.buy_pct')).toMatch(/^0\.\d*[1-9]$/);
     expect(map.get('player.max_inventory')).toBe('12');
     expect(map.get('chain.enabled')).toBe('1');
   });

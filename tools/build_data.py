@@ -322,17 +322,18 @@ game_config = {
         "market_page_size": 50,
         "shop_price": "base_value",
         "auth_cost": 3,
-        "legend": {"cost": 15, "wear_duration_sec": 10, "cooldown_sec": 60},
+        # D13 (14/10): 6 e non 15, così MC Suola conviene anche sulle scarpe economiche (sim:economy)
+        "legend": {"cost": 6, "wear_duration_sec": 10, "cooldown_sec": 60},
         "bots": {
             "count": 8,
-            "buy_pct": 0.70,
+            "buy_pct": 0.85,  # D13: i bot sono la liquidità quando i giocatori finiscono le monete
             "sell_pct": 1.15,
             "min_treasury_pct_to_buy": 0.20,
             "tick_sec": 5,
             "max_inventory_per_bot": 6,
             "full_activity_below_humans_online": 10,
             "min_activity_at_humans_online": 40,
-            "min_activity": 0.2,
+            "min_activity": 0.5,  # D13: con tanti giocatori i bot restano attivi
             "start_stock": 3,
             "restock_below": 2,
             "restock_count": 2,
@@ -359,7 +360,7 @@ game_config = {
     },
     "drops": {
         "interval_sec": 180,
-        "quantity": 4,
+        "quantity": 8,  # D13: per 100 ragazzi
         "window_sec": 60,
         "max_per_player": 1,
         "price": "base_value",
@@ -439,7 +440,7 @@ npcs = {
         },
         {
             "player_id": 4, "role": "LEGEND", "name": "MC Suola", "zone": "palco", "sprite_key": "avatar", "sprite": {"type": "avatar", "skin": 3, "hair_style": "cappellino", "hair_color": "#f2c230", "outfit_color": "#1d1d1f", "shoes_color": "#c8102e", "note": "costruito con i layer dell'avatar: stesso stile dei giocatori, ma riconoscibile"},
-            "purpose": "Per 15 monete indossa la scarpa per 10 secondi: due anelli nel passaporto (LEGEND_IN/LEGEND_OUT) e +40% di valore.",
+            "purpose": "Per 6 monete indossa la scarpa per 10 secondi: due anelli nel passaporto (LEGEND_IN/LEGEND_OUT) e +40% di valore.",
             "lines": {
                 "idle": ["Le indosso dieci secondi e la tua scarpa entra nella storia.", "Non conta che le ho messe. Conta che si può dimostrare."],
                 "wearing": ["Un attimo che faccio due foto…"],
