@@ -28,9 +28,10 @@ export function partsFromLook(look: AvatarLook, shoesColor: string | null): Avat
 const hex = (h: string) => parseInt(h.replace('#', ''), 16);
 
 /** Corpo e layer sotto la felpa per ogni stile (assets/avatar/avatar_manifest.json → body_types). */
-const BODY_LAYERS: Record<string, { body: string; lower: string }> = {
-  ragazzo: { body: 'skin', lower: 'pants' },
-  ragazza: { body: 'skinf', lower: 'skirt' },
+const BODY_LAYERS: Record<string, { body: string; lower: string; lowerTint: 'pants' | 'outfit' }> = {
+  ragazzo: { body: 'skin', lower: 'pants', lowerTint: 'pants' },
+  // gonna dello stesso colore della felpa: insieme si leggono come un vestito
+  ragazza: { body: 'skinf', lower: 'skirt', lowerTint: 'outfit' },
 };
 
 /**
@@ -47,7 +48,7 @@ export class AvatarSprite extends Phaser.GameObjects.Container {
     const style = BODY_LAYERS[parts.bodyType] ?? BODY_LAYERS.ragazzo;
     const defs: [string, string | null][] = [
       [`${style.body}_${parts.skin}`, null],
-      [style.lower, a.pants_color],
+      [style.lower, style.lowerTint === 'outfit' ? parts.outfitColor : a.pants_color],
       ['shoes', parts.shoesColor],
       ['hoodie', parts.outfitColor],
       [`hair_${parts.hairStyle}`, parts.hairColor],

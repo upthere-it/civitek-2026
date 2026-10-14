@@ -31,8 +31,8 @@ apps/client/public/assets/
 ├── PREVIEW_village.png      anteprima della mappa del villaggio (collider in rosso, punti in giallo)
 ├── maps/village.json        mappa Tiled del villaggio (§6), generata da tools/assets/gen_village.py
 ├── avatar/
-│   ├── body/                skin_{0..4}_… (ragazzo) e skinf_{0..4}_… (ragazza: ciglia e guance), {idle|walk}_{down|side|up}.png
-│   ├── layers/              {pants|skirt|shoes|hoodie|hair_corti|hair_lunghi|hair_cappellino|hair_coda}_{anim}_{dir}.png  (ragazza: skirt al posto di pants)
+│   ├── body/                skin_{0..4}_… (ragazzo) e skinf_{0..4}_… (ragazza: ciglia, bocca e guance), {idle|walk}_{down|side|up}.png
+│   ├── layers/              {pants|skirt|shoes|hoodie|hair_{corti,lunghi,cappellino,coda,codini,caschetto}}_{anim}_{dir}.png  (ragazza: skirt, tinta come la felpa, al posto di pants)
 │   └── avatar_manifest.json
 ├── brand/
 │   ├── logo_upthere_white.svg / logo_upthere_primary.svg   logo vettoriale dal sito (bianco per fondi scuri, primary per fondi chiari)

@@ -93,6 +93,10 @@ export class PlayerService {
   async setProfile(playerId: number, look: AvatarLook, rawNickname: string | null): Promise<string> {
     const [current] = await this.db.select<{ nickname: string }>('SELECT nickname FROM players WHERE id = ?', [playerId]);
     if (!current) throw new SpError('PLAYER_NOT_FOUND');
+    // l'acconciatura deve essere tra quelle dello stile scelto (avatar.hair_by_body); gli indici li valida la SP
+    const { body_types, hair_by_body } = this.cfg.config.avatar;
+    const allowed = hair_by_body[body_types[look.body] ?? ''];
+    if (allowed && !allowed.includes(look.hair)) throw new SpError('AVATAR_INVALID');
     const nickname = rawNickname === null ? current.nickname : normalizeNickname(rawNickname);
     if (nickname !== current.nickname) {
       const format = nicknameFormatError(nickname, this.cfg.player.nickname);

@@ -275,10 +275,12 @@ game_config = {
     },
     "avatar": {
         "frame": {"width": 64, "height": 64, "origin_x": 0.5, "origin_y": 0.75},
-        "traits": "stile (ragazzo/ragazza) + 3 tratti: pelle (5 toni) · capelli (4 stili x 6 colori) · felpa (8 colori)",
+        "traits": "stile (ragazzo/ragazza) + 3 tratti: pelle (5 toni) · capelli (3 stili per il ragazzo, 4 per la ragazza, x 6 colori) · felpa (8 colori; per la ragazza anche la gonna: un vestito)",
         "body_types": ["ragazzo", "ragazza"],
         "skin_tones": ["#f6d3b8", "#e3b08b", "#c68863", "#8d5a3c", "#5c3a26"],
-        "hair_styles": ["corti", "lunghi", "cappellino", "coda"],
+        "hair_styles": ["corti", "lunghi", "cappellino", "coda", "codini", "caschetto"],
+        # acconciature proposte per ciascuno stile (indici in hair_styles): la ragazza si riconosce anche dai capelli
+        "hair_by_body": {"ragazzo": [0, 1, 2], "ragazza": [1, 3, 4, 5]},
         "hair_colors": ["#2b1d14", "#1a1a1a", "#8a5a2b", "#d9b45a", "#c8102e", "#2f6fdb"],
         "outfit_colors": ["#1d1d1f", "#f4f4f4", "#c8102e", "#2f6fdb", "#B26998", "#f2c230", "#7b4fd6", "#3a8f4f"],
         "pants_color": "#2d3a5a",

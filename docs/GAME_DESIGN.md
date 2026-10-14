@@ -41,8 +41,10 @@ Due passi, con l'anteprima live sempre visibile.
 | Tratto | Opzioni |
 |---|---|
 | Pelle | 5 toni (`avatar.skin_tones`) |
-| Capelli | 4 stili (corti, lunghi, cappellino, coda) × 6 colori (`avatar.hair_styles`, `avatar.hair_colors`) |
-| Felpa | 8 colori (`avatar.outfit_colors`) |
+| Capelli | ragazzo: corti, lunghi, cappellino · ragazza: lunghi, coda, codini, caschetto (`avatar.hair_by_body`) × 6 colori (`avatar.hair_colors`) |
+| Felpa | 8 colori (`avatar.outfit_colors`). Per la ragazza anche la gonna prende quel colore: insieme si leggono come un vestito |
+
+Lo stile si deve capire al primo sguardo anche a 64 px: per la ragazza contano il vestito, le acconciature dedicate, la bocca e le ciglia (corpo `skinf_*`), non i dettagli fini.
 
 L'avatar è composto da layer sovrapposti, tutti in frame da 64×64. I dettagli e il codice Phaser sono in `docs/ASSETS.md`.
 - **Base**: il corpo di Pixel Crawler, ricolorato nei 5 toni di pelle (palette swap, occhi intatti).

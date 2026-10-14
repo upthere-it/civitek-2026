@@ -5,8 +5,9 @@ Output (frame 64x64, stesso layout degli sheet originali):
   body/skin_{0..4}_{anim}_{dir}.png   corpo "ragazzo" con pelle ricolorata (palette swap, occhi intatti)
   body/skinf_{0..4}_{anim}_{dir}.png  corpo "ragazza": lo stesso, con ciglia e guance (avatar.body_types)
   layers/{layer}_{anim}_{dir}.png      overlay in scala di grigi da tingere a runtime (Phaser setTint)
-     layer = hoodie | pants | skirt | shoes | hair_corti | hair_lunghi | hair_cappellino | hair_coda
-  Il corpo "ragazza" usa la gonna (skirt) al posto dei pantaloni.
+     layer = hoodie | pants | skirt | shoes | hair_{corti,lunghi,cappellino,coda,codini,caschetto}
+  Il corpo "ragazza" usa la gonna (skirt, tinta come la felpa) al posto dei pantaloni; le acconciature
+  disponibili per ciascuno stile sono in avatar.hair_by_body.
 
 Sono PLACEHOLDER generati con euristiche sulle righe del corpo: vanno ritoccati in Aseprite.
 """
@@ -157,6 +158,47 @@ def hair_layer(px, d, style):
                     put(out, x, y0 + 6, O)
         return out
 
+    if style == "codini":
+        # due codini ai lati della testa (down/up), uno visibile dietro (side)
+        out = hair_layer(px, d, "corti")
+        def tail(xa, step):
+            for y in range(y0 + 4, y0 + 13):
+                for k in range(0, 3):
+                    put(out, xa + step * k, y, H if k < 2 else O)
+            for k in range(-1, 3):
+                put(out, xa + step * k, y0 + 13, O)
+            put(out, xa, y0 + 3, O); put(out, xa + step, y0 + 3, O)
+        if d in ("down", "up"):
+            tail(hx0 - 1, -1)
+            tail(hx1 + 1, 1)
+        else:
+            tail(hx0 - 1, -1)
+        return out
+
+    if style == "caschetto":
+        # caschetto con frangetta: copre i lati fino al mento, frangia dritta sulla fronte
+        if d == "down":
+            cover(lambda x, y: y <= y0 + 6 or (x - hx0 <= 2 or hx1 - x <= 2))
+            for y in range(y0 + 7, y0 + 13):
+                put(out, hx0 - 1, y, O); put(out, hx1 + 1, y, O)
+            for x in range(hx0 - 1, hx0 + 3):
+                put(out, x, y0 + 13, O)
+            for x in range(hx1 - 2, hx1 + 2):
+                put(out, x, y0 + 13, O)
+            for x in range(hx0 + 3, hx1 - 2):
+                put(out, x, y0 + 7, O)
+        elif d == "up":
+            cover(lambda x, y: y <= y0 + 13)
+            for x in range(hx0, hx1 + 1):
+                put(out, x, y0 + 13, O)
+        else:
+            cover(lambda x, y: y <= y0 + 6 or x <= cx + 1)
+            for y in range(y0 + 7, y0 + 13):
+                put(out, hx0 - 1, y, O)
+            for x in range(hx0 - 1, int(cx) + 3):
+                put(out, x, y0 + 13, O)
+        return out
+
     if style == "coda":
         # base come i corti, più la coda: dietro la testa (side), giù lungo la schiena (up), un ciuffo di lato (down)
         out = hair_layer(px, d, "corti")
@@ -224,6 +266,9 @@ def hair_layer(px, d, style):
 # segnaposto delle guance nel corpo "ragazza": skin_swap lo trasforma in un rosa sul tono di pelle
 BLUSH_MARK = (255, 0, 255)
 BLUSH = (224, 96, 128)
+# segnaposto della bocca, come le guance
+MOUTH_MARK = (0, 255, 255)
+MOUTH = (196, 52, 92)
 
 
 def mix(a, b, k):
@@ -231,19 +276,22 @@ def mix(a, b, k):
 
 
 def girl_face(fr, d):
-    """Ciglia (un pixel che allunga la riga sopra l'occhio verso l'esterno) e guance. Solo pixel di pelle."""
+    """Ciglia marcate (due pixel che allungano la riga sopra l'occhio verso l'esterno), bocca e guance."""
     out = fr.copy()
     px = out.load()
     if d == "up":
         return out
     _, _, y0, _ = frame_bbox(px)
     hx0, hx1 = head_bounds(px, y0)
-    marks = []
+    cx = (hx0 + hx1) // 2
     if d == "down":
-        marks = [((hx0 + 1, y0 + 8), BLACK), ((hx1 - 1, y0 + 8), BLACK),
-                 ((hx0 + 2, y0 + 10), BLUSH_MARK), ((hx1 - 2, y0 + 10), BLUSH_MARK)]
+        marks = [((hx0 + 1, y0 + 8), BLACK), ((hx0 + 1, y0 + 7), BLACK),
+                 ((hx1 - 1, y0 + 8), BLACK), ((hx1 - 1, y0 + 7), BLACK),
+                 ((hx0 + 2, y0 + 10), BLUSH_MARK), ((hx1 - 2, y0 + 10), BLUSH_MARK),
+                 ((cx, y0 + 11), MOUTH_MARK), ((cx + 1, y0 + 11), MOUTH_MARK)]
     else:  # side: guarda a destra
-        marks = [((hx1 - 1, y0 + 8), BLACK), ((hx1 - 2, y0 + 11), BLUSH_MARK)]
+        marks = [((hx1 - 1, y0 + 8), BLACK), ((hx1 - 1, y0 + 7), BLACK),
+                 ((hx1 - 3, y0 + 10), BLUSH_MARK), ((hx1 - 1, y0 + 11), MOUTH_MARK)]
     for (x, y), c in marks:
         if 0 <= x < FRAME and 0 <= y < FRAME and px[x, y][3] and px[x, y][:3] in SKIN_SET:
             px[x, y] = c + (255,)
@@ -251,20 +299,20 @@ def girl_face(fr, d):
 
 
 def skirt_layer(px, y0, y1):
-    """Gonna ad A sulle gambe, sotto le mani: larga quanto le gambe in alto, un pixel in più per lato in fondo."""
+    """Gonna corta e svasata (tinta come la felpa: insieme fanno un vestito), gambe scoperte sotto."""
     out = Image.new("RGBA", (FRAME, FRAME), (0, 0, 0, 0))
     legs = [x for x in range(FRAME) if px[x, y0 + 24][3] > 0]
     if not legs:
         return out
     x0, x1 = min(legs), max(legs)
-    top, bottom = y0 + 22, min(y0 + 26, y1 - 3)
-    for y in range(top, bottom + 1):
-        flare = 0 if y < top + 2 else 1
+    top = y0 + 22
+    for k, y in enumerate(range(top, top + 4)):
+        flare = (0, 1, 2, 3)[k]
         for x in range(x0 - flare, x1 + flare + 1):
             edge = x in (x0 - flare, x1 + flare)
-            put(out, x, y, (0, 0, 0, 255) if edge else gray(0.85 if (x - x0) % 3 else 0.70))
-    for x in range(x0 - 1, x1 + 2):
-        put(out, x, bottom + 1, (0, 0, 0, 255))
+            put(out, x, y, (0, 0, 0, 255) if edge else gray(0.92 if (x - x0 + k) % 4 else 0.74))
+    for x in range(x0 - 3, x1 + 4):
+        put(out, x, top + 4, (0, 0, 0, 255))
     return out
 
 
@@ -276,6 +324,7 @@ def skin_swap(sheet, tone_hex):
         SKIN_HI: lighten(base, 0.30),
         SKIN_DARK: scale(base, 0.55),
         BLUSH_MARK: mix(base, BLUSH, 0.45),
+        MOUTH_MARK: mix(base, MOUTH, 0.75),
     }
     out = sheet.copy()
     px = out.load()
@@ -288,7 +337,8 @@ def skin_swap(sheet, tone_hex):
 
 
 manifest = {"frame": {"width": FRAME, "height": FRAME}, "animations": {}, "body": [], "layers": {}}
-LAYERS = ["pants", "skirt", "shoes", "hoodie", "hair_corti", "hair_lunghi", "hair_cappellino", "hair_coda"]
+LAYERS = ["pants", "skirt", "shoes", "hoodie", "hair_corti", "hair_lunghi", "hair_cappellino", "hair_coda",
+          "hair_codini", "hair_caschetto"]
 
 for anim, (folder, prefix) in ANIMS.items():
     for d in DIRS:
@@ -315,6 +365,8 @@ for anim, (folder, prefix) in ANIMS.items():
                 "hair_lunghi": hair_layer(px, d, "lunghi"),
                 "hair_cappellino": hair_layer(px, d, "cappellino"),
                 "hair_coda": hair_layer(px, d, "coda"),
+                "hair_codini": hair_layer(px, d, "codini"),
+                "hair_caschetto": hair_layer(px, d, "caschetto"),
             }
             for l, img in parts.items():
                 layers[l].alpha_composite(img, (i * FRAME, 0))
@@ -335,7 +387,7 @@ manifest["draw_order"] = ["body", "pants|skirt", "shoes", "hoodie", "hair"]
 manifest["body_types"] = {"ragazzo": {"body": "skin", "lower": "pants"}, "ragazza": {"body": "skinf", "lower": "skirt"}}
 manifest["tint"] = {
     "pants": "fisso #2d3a5a (jeans)",
-    "skirt": "come pants (avatar.pants_color)",
+    "skirt": "come la felpa (avatar.outfit_colors[outfit]): insieme fanno un vestito",
     "shoes": "palette.upper della scarpa più preziosa posseduta (default #f4f4f4)",
     "hoodie": "avatar.outfit_colors[outfit]",
     "hair": "avatar.hair_colors[hair_color]",

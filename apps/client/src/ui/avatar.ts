@@ -109,15 +109,27 @@ export function showAvatarPicker(
     return row;
   };
 
+  // acconciature dello stile scelto (avatar.hair_by_body): cambiano quando si cambia stile
   const styles = h('div', { class: 'chips', role: 'radiogroup', 'aria-label': T.avatarHair });
-  a.hair_styles.forEach((style, i) => {
-    const b = h('button', { class: 'chip', type: 'button', role: 'radio' }, T.hairStyles[style] ?? style);
-    b.addEventListener('click', () => {
-      look.hair = i;
-      refresh();
-    });
-    styles.append(b);
-  });
+  const hairOptions = () => a.hair_by_body[a.body_types[look.body]] ?? a.hair_styles.map((_, i) => i);
+  let hairFor = -1;
+  const renderStyles = () => {
+    if (hairFor === look.body) return;
+    hairFor = look.body;
+    const options = hairOptions();
+    if (!options.includes(look.hair)) look.hair = options[0];
+    styles.replaceChildren(
+      ...options.map((i) => {
+        const style = a.hair_styles[i];
+        const b = h('button', { class: 'chip', type: 'button', role: 'radio', 'data-hair': String(i) }, T.hairStyles[style] ?? style);
+        b.addEventListener('click', () => {
+          look.hair = i;
+          refresh();
+        });
+        return b;
+      }),
+    );
+  };
 
   const skin = swatches(T.avatarSkin, a.skin_tones, 'skin');
   const hairColor = swatches(T.avatarHair, a.hair_colors, 'hairColor');
@@ -154,9 +166,10 @@ export function showAvatarPicker(
     [...row.children].forEach((c, i) => c.setAttribute('aria-checked', String(i === index)));
   }
   function refresh() {
+    renderStyles();
     mark(bodies, look.body);
     mark(skin, look.skin);
-    mark(styles, look.hair);
+    [...styles.children].forEach((c) => c.setAttribute('aria-checked', String((c as HTMLElement).dataset.hair === String(look.hair))));
     mark(hairColor, look.hairColor);
     mark(outfit, look.outfit);
     onChange({ ...look });

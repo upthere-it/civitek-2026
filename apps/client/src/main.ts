@@ -169,10 +169,12 @@ async function onState(state: StateInit): Promise<void> {
 function pickAvatar(state: StateInit): void {
   const a = gameConfig.avatar;
   const random = (n: number) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
+  const body = random(a.body_types.length);
+  const hairs = a.hair_by_body[a.body_types[body]];
   const initial: AvatarLook = {
-    body: random(a.body_types.length),
+    body,
     skin: random(a.skin_tones.length),
-    hair: random(a.hair_styles.length),
+    hair: hairs[random(hairs.length)],
     hairColor: random(a.hair_colors.length),
     outfit: random(a.outfit_colors.length),
   };

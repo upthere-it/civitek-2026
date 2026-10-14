@@ -214,3 +214,4 @@ _(Claude Code: aggiungi qui una riga per sessione con data, milestone, cosa è s
     - nessun filtro di parole è perfetto: la lista va ampliata quando serve;
     - il DB `civitek` non ha ancora la 009;
     - testo privacy (D5) da aggiornare con il nome scelto.
+  - **Rivisto dopo il feedback di Simone ("la ragazza non si riconosce")**: ciglia e guance a 64 px non bastavano. Ora la ragazza ha il vestito (gonna corta e svasata tinta come la felpa, gambe scoperte), acconciature dedicate (lunghi, coda, codini, caschetto: `avatar.hair_by_body`, il server rifiuta le altre), bocca e ciglia marcate.

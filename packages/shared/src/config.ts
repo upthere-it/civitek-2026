@@ -83,6 +83,8 @@ export interface AvatarCfg {
   body_types: string[];
   skin_tones: string[];
   hair_styles: string[];
+  /** Indici in hair_styles proposti per ciascuno stile di body_types. */
+  hair_by_body: Record<string, number[]>;
   hair_colors: string[];
   outfit_colors: string[];
   pants_color: string;

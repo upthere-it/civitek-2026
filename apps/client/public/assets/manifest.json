@@ -340,7 +340,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 918
+   "bytes": 948
   },
   {
    "key": "skinf_0_idle_side",
@@ -351,7 +351,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 906
+   "bytes": 898
   },
   {
    "key": "skinf_0_idle_up",
@@ -373,7 +373,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 1226
+   "bytes": 1247
   },
   {
    "key": "skinf_0_walk_side",
@@ -384,7 +384,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 1170
+   "bytes": 1177
   },
   {
    "key": "skinf_0_walk_up",
@@ -406,7 +406,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 904
+   "bytes": 945
   },
   {
    "key": "skinf_1_idle_side",
@@ -417,7 +417,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 910
+   "bytes": 921
   },
   {
    "key": "skinf_1_idle_up",
@@ -439,7 +439,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 1186
+   "bytes": 1208
   },
   {
    "key": "skinf_1_walk_side",
@@ -450,7 +450,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 1179
+   "bytes": 1187
   },
   {
    "key": "skinf_1_walk_up",
@@ -472,7 +472,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 916
+   "bytes": 953
   },
   {
    "key": "skinf_2_idle_side",
@@ -483,7 +483,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 920
+   "bytes": 929
   },
   {
    "key": "skinf_2_idle_up",
@@ -505,7 +505,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 1196
+   "bytes": 1216
   },
   {
    "key": "skinf_2_walk_side",
@@ -516,7 +516,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 1215
+   "bytes": 1221
   },
   {
    "key": "skinf_2_walk_up",
@@ -538,7 +538,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 907
+   "bytes": 946
   },
   {
    "key": "skinf_3_idle_side",
@@ -549,7 +549,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 926
+   "bytes": 935
   },
   {
    "key": "skinf_3_idle_up",
@@ -571,7 +571,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 1190
+   "bytes": 1211
   },
   {
    "key": "skinf_3_walk_side",
@@ -582,7 +582,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 1216
+   "bytes": 1222
   },
   {
    "key": "skinf_3_walk_up",
@@ -604,7 +604,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 913
+   "bytes": 917
   },
   {
    "key": "skinf_4_idle_side",
@@ -615,7 +615,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 923
+   "bytes": 933
   },
   {
    "key": "skinf_4_idle_up",
@@ -637,7 +637,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 1190
+   "bytes": 1208
   },
   {
    "key": "skinf_4_walk_side",
@@ -648,7 +648,7 @@
    "originX": 0.5,
    "originY": 0.75,
    "group": "avatar_body",
-   "bytes": 1206
+   "bytes": 1225
   },
   {
    "key": "skinf_4_walk_up",
@@ -728,6 +728,72 @@
    "bytes": 369
   },
   {
+   "key": "hair_caschetto_idle_down",
+   "path": "assets/avatar/layers/hair_caschetto_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 390
+  },
+  {
+   "key": "hair_caschetto_idle_side",
+   "path": "assets/avatar/layers/hair_caschetto_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 365
+  },
+  {
+   "key": "hair_caschetto_idle_up",
+   "path": "assets/avatar/layers/hair_caschetto_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 293
+  },
+  {
+   "key": "hair_caschetto_walk_down",
+   "path": "assets/avatar/layers/hair_caschetto_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 431
+  },
+  {
+   "key": "hair_caschetto_walk_side",
+   "path": "assets/avatar/layers/hair_caschetto_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 419
+  },
+  {
+   "key": "hair_caschetto_walk_up",
+   "path": "assets/avatar/layers/hair_caschetto_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 333
+  },
+  {
    "key": "hair_coda_idle_down",
    "path": "assets/avatar/layers/hair_coda_idle_down.png",
    "frameWidth": 64,
@@ -792,6 +858,72 @@
    "originY": 0.6094,
    "group": "avatar_layer",
    "bytes": 416
+  },
+  {
+   "key": "hair_codini_idle_down",
+   "path": "assets/avatar/layers/hair_codini_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 391
+  },
+  {
+   "key": "hair_codini_idle_side",
+   "path": "assets/avatar/layers/hair_codini_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 369
+  },
+  {
+   "key": "hair_codini_idle_up",
+   "path": "assets/avatar/layers/hair_codini_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 359
+  },
+  {
+   "key": "hair_codini_walk_down",
+   "path": "assets/avatar/layers/hair_codini_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 432
+  },
+  {
+   "key": "hair_codini_walk_side",
+   "path": "assets/avatar/layers/hair_codini_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 425
+  },
+  {
+   "key": "hair_codini_walk_up",
+   "path": "assets/avatar/layers/hair_codini_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 389
   },
   {
    "key": "hair_corti_idle_down",
@@ -1130,9 +1262,9 @@
    "frameHeight": 64,
    "frames": 4,
    "originX": 0.5,
-   "originY": 0.7188,
+   "originY": 0.7031,
    "group": "avatar_layer",
-   "bytes": 241
+   "bytes": 290
   },
   {
    "key": "skirt_idle_side",
@@ -1141,9 +1273,9 @@
    "frameHeight": 64,
    "frames": 4,
    "originX": 0.5,
-   "originY": 0.7188,
+   "originY": 0.7031,
    "group": "avatar_layer",
-   "bytes": 248
+   "bytes": 297
   },
   {
    "key": "skirt_idle_up",
@@ -1152,9 +1284,9 @@
    "frameHeight": 64,
    "frames": 4,
    "originX": 0.5,
-   "originY": 0.7188,
+   "originY": 0.7031,
    "group": "avatar_layer",
-   "bytes": 246
+   "bytes": 291
   },
   {
    "key": "skirt_walk_down",
@@ -1163,9 +1295,9 @@
    "frameHeight": 64,
    "frames": 6,
    "originX": 0.5,
-   "originY": 0.7188,
+   "originY": 0.7031,
    "group": "avatar_layer",
-   "bytes": 300
+   "bytes": 324
   },
   {
    "key": "skirt_walk_side",
@@ -1174,9 +1306,9 @@
    "frameHeight": 64,
    "frames": 6,
    "originX": 0.5,
-   "originY": 0.7188,
+   "originY": 0.7031,
    "group": "avatar_layer",
-   "bytes": 300
+   "bytes": 340
   },
   {
    "key": "skirt_walk_up",
@@ -1187,7 +1319,7 @@
    "originX": 0.5,
    "originY": 0.7031,
    "group": "avatar_layer",
-   "bytes": 288
+   "bytes": 319
   },
   {
    "key": "npc_rogue_idle",
@@ -1465,5 +1597,5 @@
   "assets/vendor/pixel-crawler/characters/* (sorgenti per rigenerare l'avatar)",
   "assets/vendor/pixel-crawler/buildings/roofs.png (sorgente: in gioco roofs_upthere.png)"
  ],
- "total_boot_bytes": 414902
+ "total_boot_bytes": 420066
 }

@@ -55,7 +55,8 @@ function connect(deviceId: string = randomUUID()): { socket: Client; init: Promi
   };
 }
 
-const LOOK = { body: 1, skin: 1, hair: 2, hairColor: 3, outfit: 4 };
+// ragazza con i capelli lunghi (in avatar.hair_by_body.ragazza)
+const LOOK = { body: 1, skin: 1, hair: 1, hairColor: 3, outfit: 4 };
 
 async function inWorld(deviceId = randomUUID()) {
   const c = connect(deviceId);
@@ -175,7 +176,12 @@ describe('avatar', () => {
     const { player } = await c.init;
     const set = { ...LOOK, nickname: player.nickname };
     expect(await c.socket.emitWithAck(C2S.MOVE_TO, { x: 10, y: 10 })).toMatchObject({ ok: false, code: 'AVATAR_REQUIRED' });
-    for (const bad of [{ skin: cfg.config.avatar.skin_tones.length }, { body: cfg.config.avatar.body_types.length }]) {
+    const boyOnly = cfg.config.avatar.hair_by_body.ragazzo.find((i) => !cfg.config.avatar.hair_by_body.ragazza.includes(i))!;
+    for (const bad of [
+      { skin: cfg.config.avatar.skin_tones.length },
+      { body: cfg.config.avatar.body_types.length },
+      { hair: boyOnly }, // acconciatura che lo stile ragazza non propone
+    ]) {
       expect(await c.socket.emitWithAck(C2S.AVATAR_SET, { ...set, ...bad })).toMatchObject({ ok: false, code: 'AVATAR_INVALID' });
     }
     const ok = await c.socket.emitWithAck(C2S.AVATAR_SET, set);
