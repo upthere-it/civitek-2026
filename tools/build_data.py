@@ -304,6 +304,7 @@ game_config = {
             {"at_sec": 30, "id": "tooltip_passport"},
             {"at_sec": 60, "id": "hint_leaderboard"},
             {"at_sec": 90, "id": "hint_stall"},
+            {"at_sec": 120, "id": "hint_enoteca"},
             {"at_sec": 150, "id": "hint_legend"},
             {"at_sec": 210, "id": "hint_market"},
         ],

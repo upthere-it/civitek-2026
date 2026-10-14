@@ -214,6 +214,10 @@
         "id": "hint_stall"
       },
       {
+        "at_sec": 120,
+        "id": "hint_enoteca"
+      },
+      {
         "at_sec": 150,
         "id": "hint_legend"
       },

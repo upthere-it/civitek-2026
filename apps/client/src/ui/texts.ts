@@ -154,6 +154,7 @@ export const T = {
     tooltip_passport: () => 'Apri il passaporto della tua scarpa: per ora c’è solo il tuo nome.',
     hint_leaderboard: () => 'Guarda la classifica: chi ha l’armadio che vale di più?',
     hint_stall: () => 'Da Tony Affari i prezzi sono bassi. Troppo bassi?',
+    hint_enoteca: () => 'Le scarpe hanno un passaporto. Anche il vino: passa dall’Enoteca DOP Digital.',
     hint_legend: () => 'MC Suola può far entrare la tua scarpa nella storia.',
     hint_market: () => 'Guarda la bacheca: qualcuno svende?',
   },

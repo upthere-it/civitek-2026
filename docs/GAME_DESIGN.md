@@ -87,6 +87,7 @@ Dal primo ingresso nel villaggio arrivano i suggerimenti di `first_run.beats`. O
 | 0:30 | `tooltip_passport` | "Apri il passaporto della tua scarpa: per ora c'è solo il tuo nome." (Apri) |
 | 1:00 | `hint_leaderboard` | "Guarda la classifica: chi ha l'armadio che vale di più?" (Apri) |
 | 1:30 | `hint_stall` | "Da Tony Affari i prezzi sono bassi. Troppo bassi?" (Vai) |
+| 2:00 | `hint_enoteca` | "Le scarpe hanno un passaporto. Anche il vino: passa dall'Enoteca DOP Digital." (Vai): è il ponte verso DOP Digital, dopo che il reveal è stato tolto |
 | 2:30 | `hint_legend` | "MC Suola può far entrare la tua scarpa nella storia." (Vai) |
 | 3:30 | `hint_market` | "Guarda la bacheca: qualcuno svende?" (Vai) |
 

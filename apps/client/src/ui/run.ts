@@ -21,6 +21,7 @@ export function beatText(beatId: string): string | null {
     case 'tooltip_passport':
     case 'hint_leaderboard':
     case 'hint_stall':
+    case 'hint_enoteca':
     case 'hint_legend':
     case 'hint_market':
       return T.beats[beatId]();

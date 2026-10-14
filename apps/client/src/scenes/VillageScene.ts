@@ -80,6 +80,9 @@ export class VillageScene extends Phaser.Scene {
 
     this.input.on(Phaser.Input.Events.POINTER_UP, (p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
       if (over.length) return; // tap su un NPC: gestito dal suo handler
+      // Phaser sente il rilascio su tutta la finestra: un tap su un bottone HTML (il "Vai" di un banner) non è un
+      // tap sulla mappa, e camminare lì cancellerebbe la destinazione che il bottone ha appena dato
+      if (p.downElement !== this.game.canvas) return;
       this.walkTo({ x: p.worldX, y: p.worldY }, null);
     });
   }

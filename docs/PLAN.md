@@ -242,4 +242,6 @@ _(Claude Code: aggiungi qui una riga per sessione con data, milestone, cosa è s
     - `chain.notary = "commercio"`: senza `CN_*` si ripiega sul Mock con un avviso, tranne in produzione.
   - **DB**: nessuna migrazione nuova. `sp_run_complete` e le colonne `first_run_end_value`/`first_run_merchant` (010) restano ma non si usano più.
   - **Test**: `npm test` 30 di shared + 142 del server; smoke su iPhone SE: posizione nell'HUD, podio, la posizione scende da sola dopo una verifica (7° → 9°), nessun errore in console.
-  - **Aperto**: DOP Digital ora arriva solo dall'Enoteca: valutare un suggerimento che ci porti; decidere se il codice di recupero serve.
+  - **Aperto**: decidere se il codice di recupero serve.
+  - **Aggiunto dopo**: suggerimento `hint_enoteca` a 2:00 con "Vai" all'Enoteca, il ponte verso DOP Digital al posto del reveal.
+  - **Bug trovato e corretto**: Phaser sente il rilascio del dito su tutta la finestra, quindi il tap sul "Vai" di un banner (anche quello del drop) diventava anche un tap sulla mappa e cancellava la destinazione. Ora la mappa ignora i tap che non partono dal canvas.

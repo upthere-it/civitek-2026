@@ -282,6 +282,7 @@ function onBeat(beatId: string): void {
     },
     hint_leaderboard: { label: T.beatOpen, run: leaderboard },
     hint_stall: go('bancarella'),
+    hint_enoteca: go('enoteca'),
     hint_legend: go('palco'),
     hint_market: go('bacheca'),
   };
