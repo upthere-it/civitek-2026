@@ -14,7 +14,7 @@ cp .env.example .env          # credenziali MySQL
 npm install
 npm run db:reset              # crea sneaker_passport_dev: migrazioni + seed
 npm test                      # shared + server (usa sneaker_passport_test, che viene azzerato)
-npm run dev                   # migrazioni nuove + seed, poi server (:3000) e client (:5173) insieme
+npm run dev                   # server (:3000) e client (:5173) insieme; il DB non lo tocca
 ```
 `npm run dev` prefissa l'output con `[server]` e `[client]`; Ctrl+C li ferma tutti e due. Per avviarli separati restano `npm run dev:server` e `npm run dev:client`.
 

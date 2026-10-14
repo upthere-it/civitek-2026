@@ -1,21 +1,9 @@
-// npm run dev: prepara il DB di sviluppo e avvia server e client insieme, con l'output prefissato.
+// npm run dev: avvia server e client insieme, con l'output prefissato. Il database non si tocca:
+// migrazioni e seed si lanciano a parte (npm run db:migrate / db:seed).
 // Niente dipendenze (concurrently & co.): child_process di Node. Ctrl+C ferma tutto; se uno dei due muore, si ferma anche l'altro.
-import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
 
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-
-function step(label: string, args: string[]): void {
-  console.log(`\n▶ ${label}`);
-  const r = spawnSync(npm, args, { stdio: 'inherit' });
-  if (r.status !== 0) {
-    console.error(`\n✖ ${label} fallito. MySQL è acceso e le credenziali in .env sono giuste?`);
-    process.exit(r.status ?? 1);
-  }
-}
-
-// migrazioni nuove e seed (idempotente) sul database di DB_NAME
-step('migrazioni', ['run', 'db:migrate']);
-step('seed', ['run', 'db:seed']);
 
 const colors = { server: '\x1b[35m', client: '\x1b[36m' } as const;
 const children: ChildProcess[] = [];
