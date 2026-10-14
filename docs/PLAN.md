@@ -70,9 +70,9 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 - [ ] **Feature freeze**: da qui solo bugfix
 - [ ] Test su Safari iOS, Chrome Android e browser in-app della fotocamera (iOS e Android)
 - [ ] `npm run loadtest`: 150 client socket.io per 10 minuti, nessun errore, p95 delle azioni < 300 ms
-- [ ] `npm run sim:economy`: taratura di `first_run.objective.multiplier`, invarianti verdi
+- [ ] `npm run sim:economy`: tesoreria nel tempo, distacco fra primo e decimo in classifica, invarianti verdi
 - [ ] Pagina `/privacy`, job di anonimizzazione
-- [ ] Brand Upthere in UI: `fonts.css` + variabili colore, logo SVG in landing/HUD/reveal, insegne sugli edifici nella tilemap
+- [ ] Brand Upthere in UI: `fonts.css` + variabili colore, logo SVG in landing/HUD, insegne sugli edifici nella tilemap
 - [ ] Crediti in `/privacy`: Pixel Crawler (Anokolisa), Chillax (ITF/Fontshare), DM Sans (OFL)
 - [ ] (facoltativo) ritocco in Aseprite dei layer avatar e delle icone delle scarpe
 
@@ -96,7 +96,7 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 3. Drop ogni 3' (i drop restano, ma solo a intervalli più lunghi o all'apertura)
 4. Bot "intelligenti" → bot con ordini fissi
 
-**Non si tagliano mai**: passaporto, falsi + Dott.ssa Hash, MC Suola, certificazione (anche solo mock), reveal con il ponte verso DOP Digital.
+**Non si tagliano mai**: passaporto, falsi + Dott.ssa Hash, MC Suola, certificazione (anche solo mock), Enoteca DOP Digital con il suo suggerimento (il ponte verso DOP Digital, dopo che il reveal è stato tolto).
 
 ## Decisioni aperte
 

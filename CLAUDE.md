@@ -70,7 +70,7 @@ DOP Digital fa la stessa cosa con le bottiglie di vino. Il gioco funziona **in a
 - **shared**: tipi, nomi degli eventi socket, `perceivedValue()`. È la sorgente unica per server e client.
 - **chain**: interfaccia `ChainNotary`, con `CommercioNotary` per **Commercio.network testnet** (D1, `chain.notary = "commercio"`) tramite le API commercio.app, come `@mvl/commercio-network` nel repo `microservices` (vedi ARCHITECTURE §6), e `MockNotary`. Senza `CN_*` nel `.env` si ripiega sul Mock con un avviso, tranne in produzione, dove il server non parte.
 - **dominio**: https://civitek.upthere.it (D3).
-- **test**: Jest + ts-jest su server e shared. Lo script di load test usa Artillery con il motore socket.io.
+- **test**: Jest + ts-jest su server e shared. Load test e simulazione dell'economia usano giocatori simulati con `socket.io-client` (`tools/lib/sim-clients.ts`), non Artillery: misurano ogni ack e usano i tipi del protocollo.
 
 ### ESM / CommonJS
 Ci sono già stati problemi con Jest + ESM, quindi il server resta **CommonJS**.
@@ -96,7 +96,7 @@ Ci sono già stati problemi con Jest + ESM, quindi il server resta **CommonJS**.
 
 `npm run dev` (server e client insieme, senza toccare il DB) · `npm run dev:server` · `npm run dev:client` · `npm test` · `npm run typecheck` · `npm run build` · `npm run db:migrate` · `npm run db:seed` · `npm run db:reset` (solo database `*_dev`, `*_test`, `*_staging`)
 
-Da creare in M5: `npm run loadtest` · `npm run sim:economy`.
+`npm run loadtest` (150 client per 10 min, p95 degli ack < 300 ms) · `npm run sim:economy` (100 giocatori per 30 min, tesoreria, distacco in classifica, invarianti). Entrambi vogliono un server acceso; fuori da localhost serve `--yes`, perché i giocatori finti finiscono nel DB e in classifica.
 
 `npm test` azzera e ricrea il database di test (`DB_TEST_NAME`, default `sneaker_passport_test`): serve un MySQL 8 raggiungibile con le credenziali di `.env` (vedi `.env.example`).
 

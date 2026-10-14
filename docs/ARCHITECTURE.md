@@ -53,7 +53,7 @@ sneaker-passport/
 │   ├── src/main.ts, scenes/ (Boot, Avatar, Village), ui/ (overlay HTML), net/
 │   └── public/assets/         GIÀ PRESENTE: manifest.json, avatar/, shoes/, vendor/pixel-crawler/ (vedi ASSETS.md)
 │                              da aggiungere: tilemap Tiled del villaggio, suoni
-├── tools/                     seed-from-json.ts, sim-economy.ts, loadtest.yml (da creare)
+├── tools/                     seed-from-json.ts, loadtest.ts, sim-economy.ts (giocatori simulati in lib/sim-clients.ts)
 │   ├── build_data.py          rigenera data/*.json
 │   └── assets/                gen_avatar.py, gen_shoes.py, preview_avatar.py (rigenerano gli asset placeholder)
 ├── vendor/                    pack originale Pixel Crawler (zip, con i sorgenti .aseprite): non servito al client
@@ -607,7 +607,7 @@ nginx su **civitek.upthere.it** (D3):
 
 - Nessun dato personale raccolto. Il `device_id` è salvato solo come hash.
 - Il codice di recupero è salvato solo come hash.
-- Job giornaliero `sp_anonymize_inactive(player.inactivity_anonymize_days)`.
+- Job `AnonymizeService`: ogni `player.anonymize_every_min` chiama `sp_anonymize_inactive(player.inactivity_anonymize_days, player.anonymize_batch)` finché ne trova (M5, `sql/011`). Nome al posto di quello scelto: `Anonimo <id>` (lo spazio non è ammesso nei nomi dei giocatori, quindi non si scontra).
 - Nessun analytics, cookie di terze parti, font o CDN esterni a runtime: tutto è servito dal nostro dominio.
-- Pagina `/privacy` con un testo breve da validare (D5).
+- Pagina `/privacy/` (`apps/client/privacy/index.html`, entry separata di Vite, linkata dalla landing): testo in bozza da validare (D5), giorni di anonimizzazione da config, crediti di pixel art e font.
 - On-chain solo hash (§6).

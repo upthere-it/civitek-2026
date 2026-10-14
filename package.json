@@ -21,8 +21,8 @@
     "db:migrate": "tsx tools/db.ts migrate",
     "db:seed": "tsx tools/seed-from-json.ts && tsx tools/db.ts seed",
     "db:reset": "tsx tools/seed-from-json.ts && tsx tools/db.ts reset",
-    "loadtest": "node -e \"console.error('loadtest: da creare in M5 (tools/loadtest.yml)'); process.exit(1)\"",
-    "sim:economy": "node -e \"console.error('sim:economy: da creare in M5 (tools/sim-economy.ts)'); process.exit(1)\""
+    "loadtest": "tsx tools/loadtest.ts",
+    "sim:economy": "tsx tools/sim-economy.ts"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
