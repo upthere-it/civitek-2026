@@ -118,6 +118,11 @@ function walkablePoint(): { x: number; y: number } {
 
 const pick = <T>(list: readonly T[]): T => list[randomInt(list.length)];
 
+/** Sotto queste monete (la scarpa più economica del Negozio ne costa 22) si svende per tornare liquidi. */
+const CASH_LOW = 20;
+/** Il preset "Svendi" del client (texts.ts pricePresets). */
+const SVENDI = 0.8;
+
 export class SimClient {
   readonly socket: GameSocket;
   playerId = 0;
@@ -271,7 +276,9 @@ export class SimClient {
         const free = this.unlisted();
         if (!free.length) break;
         const it = pick(free);
-        const price = Math.max(e.listing_min_price, Math.min(it.maxListPrice, Math.round(it.perceivedValue * this.profile.sellFactor)));
+        // senza monete per comprare niente si svende (il preset "Svendi" del selettore di prezzo)
+        const factor = this.coins < CASH_LOW ? SVENDI : this.profile.sellFactor;
+        const price = Math.max(e.listing_min_price, Math.min(it.maxListPrice, Math.round(it.perceivedValue * factor)));
         await this.req(C2S.LISTING_CREATE, { assetId: it.assetId, price });
         break;
       }

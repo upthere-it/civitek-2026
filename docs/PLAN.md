@@ -69,11 +69,11 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 ### M5 — Feature freeze e collaudo (mer 21/10)
 - [ ] **Feature freeze**: da qui solo bugfix
 - [ ] Test su Safari iOS, Chrome Android e browser in-app della fotocamera (iOS e Android)
-- [ ] `npm run loadtest`: 150 client socket.io per 10 minuti, nessun errore, p95 delle azioni < 300 ms
-- [ ] `npm run sim:economy`: tesoreria nel tempo, distacco fra primo e decimo in classifica, invarianti verdi
-- [ ] Pagina `/privacy`, job di anonimizzazione
-- [ ] Brand Upthere in UI: `fonts.css` + variabili colore, logo SVG in landing/HUD, insegne sugli edifici nella tilemap
-- [ ] Crediti in `/privacy`: Pixel Crawler (Anokolisa), Chillax (ITF/Fontshare), DM Sans (OFL)
+- [x] `npm run loadtest`: 150 client socket.io per 10 minuti, nessun errore, p95 delle azioni < 300 ms (14/10: 40.574 azioni, 0 guasti, p95 11 ms, sul server di sviluppo locale)
+- [x] `npm run sim:economy`: tesoreria nel tempo, distacco fra primo e decimo in classifica, invarianti verdi (strumento fatto e lanciato; la taratura aspetta la decisione D13)
+- [x] Pagina `/privacy`, job di anonimizzazione
+- [x] Brand Upthere in UI: `fonts.css` + variabili colore, logo SVG in landing/HUD, insegne sugli edifici nella tilemap
+- [x] Crediti in `/privacy`: Pixel Crawler (Anokolisa), Chillax (ITF/Fontshare), DM Sans (OFL)
 - [ ] (facoltativo) ritocco in Aseprite dei layer avatar e delle icone delle scarpe
 
 ### M6 — Messa in produzione (gio 22/10)
@@ -113,6 +113,7 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 | D9 | Budget "primo caricamento < 1 MB": Phaser 3 da solo pesa 322 KB gzip (1,2 MB minificato), che `ASSETS.md` §8 non conta. Con asset (~330 KB) e font (~88 KB) si arriva a ~740 KB gzip prima di tilemap e suoni. Il budget è sul trasferito (gzip/brotli) o sul peso dei file? Se serve margine: build custom di Phaser senza Matter/fisica | Simone | 19/10 | gzip, margine da tenere d'occhio in M5 |
 | D10 | Commercio: un `sharedoc` **per batch** (hash cumulativo, come in Carma: già compatibile col worker) oppure **per evento** (l'hash del passaporto è esattamente quello on-chain, ma 1–1,5 chiamate API/s al picco) | Simone | 17/10 | per batch |
 | ~~D12~~ | ✅ **Chiusa (14/10)**: nome **scelto dal giocatore** con un default generato, modificabile solo alla creazione (formato da config, filtro `data/nickname_blocklist.json`, invito a non usare il vero nome); **stile Ragazzo/Ragazza** come tratto dell'avatar. Cambia la regola 6 di CLAUDE.md. Da riflettere nel testo privacy (D5) | Simone | — | — |
+| D13 | Taratura dell'economia per la classifica live (vedi nota del 14/10, M5): MC Suola a 6 monete, drop da 8 paia, bot che comprano fino all'85% e più attivi con tanti giocatori | Simone | 20/10 | config attuale |
 | D11 | Credenziali commercio.app per il gioco (`CN_USERNAME`/`CN_PASSWORD`/`CN_RECIPIENT_ADDRESS`, ambiente dev = testnet): account dedicato o quello Upthere esistente. Vanno solo nel `.env`, mai nel repo | Simone | 18/10 | si resta su `MockNotary` |
 
 ## Note di sessione
@@ -245,3 +246,16 @@ _(Claude Code: aggiungi qui una riga per sessione con data, milestone, cosa è s
   - **Aperto**: decidere se il codice di recupero serve.
   - **Aggiunto dopo**: suggerimento `hint_enoteca` a 2:00 con "Vai" all'Enoteca, il ponte verso DOP Digital al posto del reveal.
   - **Bug trovato e corretto**: Phaser sente il rilascio del dito su tutta la finestra, quindi il tap sul "Vai" di un banner (anche quello del drop) diventava anche un tap sulla mappa e cancellava la destinazione. Ora la mappa ignora i tap che non partono dal canvas.
+- **14/10 — M5 (in attesa di telefoni veri e della decisione D13).**
+  - **Fatto**:
+    - `sql/011_anonymize.sql` + `AnonymizeService`: dopo `player.inactivity_anonymize_days` senza connessioni via device, codice, aspetto e nome scelto ("Anonimo <id>"); restano monete, scarpe e catene;
+    - pagina `/privacy/` (bozza D5 per minorenni, crediti), link dalla landing; logo Upthere nell'HUD;
+    - `npm run loadtest` e `npm run sim:economy` con giocatori simulati `socket.io-client` (`tools/lib/sim-clients.ts`), non Artillery.
+  - **Load test** (150 client, 10 min, server di sviluppo locale con MySQL locale): 150/150 connessi in 30 s, 40.574 azioni (67/s), 0 guasti, p95 11 ms, p99 19 ms, massimo 787 ms (`shop.buy`). Nessun errore nel log del server.
+  - **Peso del primo caricamento** (D9): codice 346 KB gzip + asset di boot 347 KB gzip + font 53 KB ≈ **748 KB**, sotto 1 MB.
+  - **Simulazione dell'economia** (100 giocatori, 5 comportamenti): invarianti sempre verdi, ma
+    - l'armadio medio **scende** (128 → 118 in 12 min): fuori dai drop l'economia ha solo uscite (commissioni, Dott.ssa Hash, bot che comprano al 70% e vendono al 115%, falsi);
+    - **MC Suola fa perdere**: 15 monete per +40% su una scarpa da 22–30 sono 9–12 di valore. Chi la usa chiude sotto gli altri (110 contro 118 di media), il contrario del messaggio 2;
+    - dopo 10–18 minuti il mercato **si ferma**: le monete finiscono in tesoreria (+9.000) e nessuno ha più contanti; classifica ferma, distacco primo-decimo 9–12.
+    - Con la config candidata D13 (MC Suola 6, drop 8, bot 85% e `min_activity` 0,5): armadio medio 127 → 124, chi usa MC Suola chiude a 127 (sopra la media), affaristi 134. Migliora, ma il blocco a ~10 minuti resta: per la gara lunga servirebbe un'entrata di monete (non c'è nel design).
+  - **Aperto**: D13; prova su telefoni veri (Safari iOS, Chrome Android, browser in-app); feature freeze da dichiarare.
