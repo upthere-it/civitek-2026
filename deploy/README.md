@@ -47,6 +47,9 @@ Per un **reset** della produzione (prima della prova generale o della conferenza
 
 ## 2. Codice e `.env`
 
+⚠️ Il repo va in `/srv/civitek`, **mai sotto `/var/www/html`**: il sito di default di nginx serve quella
+cartella così com'è, e da `http://<ip>/<cartella>/.env` uscirebbero le password del DB e di commercio.app.
+
 ```bash
 git clone <repo> /srv/civitek && cd /srv/civitek
 npm ci
