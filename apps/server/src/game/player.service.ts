@@ -7,21 +7,12 @@ import {
   type AvatarLook,
   type InventoryItem,
 } from '@sp/shared';
-import { recoverySecret } from '../config/env';
 import { GameConfigService } from '../config/game-config.service';
 import { DbService } from '../db/db.service';
 import { SpError } from '../db/sp-error';
 import { AssetsService } from './assets.service';
 import { NicknameFilter } from './nickname-filter';
-import {
-  MAX_RECOVERY_ATTEMPTS,
-  deviceHash,
-  formatCode,
-  normalizeCode,
-  randomNickname,
-  recoveryCode,
-  recoveryHash,
-} from './identity';
+import { deviceHash, randomNickname } from './identity';
 
 export interface PlayerRow {
   id: number;
@@ -32,7 +23,6 @@ export interface PlayerRow {
   avatar_hair: number | null;
   avatar_hair_color: number | null;
   avatar_outfit: number | null;
-  recovery_hash: string | null;
   legend_ready_ms: number | null;
 }
 
@@ -49,7 +39,6 @@ const NICKNAME_ATTEMPTS = 12;
 @Injectable()
 export class PlayerService {
   private readonly logger = new Logger(PlayerService.name);
-  private readonly secret = recoverySecret();
   private readonly filter = NicknameFilter.fromRepo();
 
   constructor(
@@ -58,45 +47,30 @@ export class PlayerService {
     private readonly assets: AssetsService,
   ) {}
 
-  /** Giocatore del device (creato se nuovo, con nickname e codice generati qui). */
+  /**
+   * Giocatore del device (creato se nuovo, con il nickname proposto generato qui). Il codice di recupero è stato
+   * tolto il 16/10: il terzo parametro della SP (recovery_hash) resta e si passa NULL.
+   */
   async getOrCreate(deviceId: string): Promise<{ playerId: number; created: boolean }> {
-    const { nickname, recovery_code } = this.cfg.player;
-    let recoveryAttempt = 0;
+    const { nickname } = this.cfg.player;
     for (let i = 0; i < NICKNAME_ATTEMPTS * 2; i++) {
       // dopo metà tentativi il numero del nickname prende una cifra in più (spazio esaurito)
       const nick = randomNickname(nickname, i >= NICKNAME_ATTEMPTS ? 1 : 0);
-      const code = recoveryCode(this.secret, deviceId, recoveryAttempt, recovery_code);
       try {
         const [row] = await this.db.call<{ player_id: number; created: number }>('sp_player_get_or_create', [
           deviceHash(deviceId),
           nick,
-          recoveryHash(code),
+          null,
         ]);
         return { playerId: row.player_id, created: row.created === 1 };
       } catch (err) {
         if (!(err instanceof SpError)) throw err;
         if (err.code === 'NICKNAME_TAKEN' || err.code === 'DEVICE_TAKEN') continue;
-        if (err.code === 'RECOVERY_TAKEN' && recoveryAttempt + 1 < MAX_RECOVERY_ATTEMPTS) {
-          recoveryAttempt++;
-          continue;
-        }
         throw err;
       }
     }
     this.logger.error('nessun nickname libero dopo tutti i tentativi');
     throw new SpError('BUSY');
-  }
-
-  /**
-   * Recupero da un altro telefono (GAME_DESIGN §14): associa il device al giocatore del codice. Un codice fuori
-   * formato non arriva al DB; per chi prova risponde come uno sbagliato.
-   */
-  async recover(deviceId: string, rawCode: string): Promise<number> {
-    const { length, alphabet } = this.cfg.player.recovery_code;
-    const code = normalizeCode(rawCode);
-    if (code.length !== length || [...code].some((c) => !alphabet.includes(c))) throw new SpError('CODE_NOT_FOUND');
-    const [row] = await this.db.call<{ player_id: number }>('sp_player_recover', [recoveryHash(code), deviceHash(deviceId)]);
-    return row.player_id;
   }
 
   /**
@@ -128,20 +102,9 @@ export class PlayerService {
     return row.nickname;
   }
 
-  /** Codice da mostrare a questo device, se è quello registrato per il giocatore. */
-  displayCode(deviceId: string, storedHash: string | null): string | null {
-    if (!storedHash) return null;
-    const cfg = this.cfg.player.recovery_code;
-    for (let attempt = 0; attempt < MAX_RECOVERY_ATTEMPTS; attempt++) {
-      const code = recoveryCode(this.secret, deviceId, attempt, cfg);
-      if (recoveryHash(code) === storedHash) return formatCode(code, cfg.display_format);
-    }
-    return null; // device associato con il codice (M4): il codice lo conosce già chi l'ha digitato
-  }
-
   async loadState(playerId: number): Promise<PlayerState> {
     const [row] = await this.db.select<PlayerRow>(
-      `SELECT id, nickname, coins, avatar_body, avatar_skin, avatar_hair, avatar_hair_color, avatar_outfit, recovery_hash,
+      `SELECT id, nickname, coins, avatar_body, avatar_skin, avatar_hair, avatar_hair_color, avatar_outfit,
               ROUND(UNIX_TIMESTAMP(legend_ready_at) * 1000) AS legend_ready_ms
          FROM players WHERE id = ?`,
       [playerId],

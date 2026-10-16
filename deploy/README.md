@@ -40,7 +40,7 @@ Per un **reset** della produzione (prima della prova generale o della conferenza
   `sp_bot_buy`, `sp_bot_restock`, `sp_chain_claim_batch`, `sp_chain_mark_confirmed`, `sp_chain_mark_failed`,
   `sp_chain_recover_sending`, `sp_drop_claim`, `sp_drop_open`, `sp_economy_check`, `sp_legend_return`,
   `sp_legend_wear`, `sp_listing_buy`, `sp_listing_cancel`, `sp_listing_create`, `sp_player_get_or_create`,
-  `sp_player_recover`, `sp_player_set_avatar`, `sp_player_set_profile`, `sp_run_complete` (non più usata),
+  `sp_player_recover` (non più usata), `sp_player_set_avatar`, `sp_player_set_profile`, `sp_run_complete` (non più usata),
   `sp_run_start`, `sp_shop_buy`, `sp_stall_buy`, `sp_stall_restock`, `sp_treasury_seed`
 - **Tabelle**: `asset_events`, `assets`, `coin_ledger`, `drop_claims`, `drops`, `game_settings`,
   `item_counters`, `items`, `market_listings`, `player_devices`, `players`, `schema_migrations`
@@ -59,9 +59,8 @@ mkdir -p logs
 | Chiave | Valore |
 |---|---|
 | `DB_HOST` `DB_PORT` `DB_USER` `DB_PASSWORD` `DB_NAME` | il database del passo 1 |
-| `RECOVERY_SECRET` | ≥ 32 caratteri casuali: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. **Non cambiarlo dopo il lancio** |
 | `CN_USERNAME` `CN_PASSWORD` `CN_RECIPIENT_ADDRESS` | commercio.app (D11). In produzione senza queste il server **non parte** |
-| `HEALTH_TOKEN` | casuale come sopra: abilita `/api/health?full=1` |
+| `HEALTH_TOKEN` | casuale (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`): abilita `/api/health?full=1` |
 
 `NODE_ENV=production`, `HOST=127.0.0.1` e `PORT=3000` li imposta `ecosystem.config.js`.
 

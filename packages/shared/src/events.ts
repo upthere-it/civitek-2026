@@ -1,9 +1,6 @@
 // Nomi degli eventi socket (ARCHITECTURE §5), formato `dominio.azione`.
 
-/**
- * Client → server. Il recupero con il codice non è un evento: viaggia nell'handshake (`auth.recover`, vedi
- * HandshakeAuth), così un telefono nuovo non crea un giocatore vuoto prima di inserire il codice.
- */
+/** Client → server */
 export const C2S = {
   AVATAR_SET: 'avatar.set',
   MOVE_TO: 'move.to',

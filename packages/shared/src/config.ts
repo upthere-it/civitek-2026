@@ -72,13 +72,6 @@ export interface PlayerCfg {
     /** Regex Unicode (flag u): lettere e numeri, poi anche . _ - (niente spazi). */
     allowed_pattern: string;
   };
-  recovery_code: {
-    length: number;
-    alphabet: string;
-    display_format: string;
-    attempts_per_ip_per_min: number;
-    attempts_global_per_min: number;
-  };
   inactivity_anonymize_days: number;
   anonymize_every_min: number;
   anonymize_batch: number;

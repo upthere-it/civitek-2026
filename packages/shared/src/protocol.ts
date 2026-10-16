@@ -21,8 +21,6 @@ export interface AvatarSet extends AvatarLook {
 export interface HandshakeAuth {
   /** UUID v4 casuale generato dal client: l'unico dato salvato sul telefono. */
   deviceId: string;
-  /** Codice di recupero digitato sulla landing: associa questo device al giocatore del codice (GAME_DESIGN §14). */
-  recover?: string;
 }
 
 /** Risposta (ack) a ogni richiesta client → server. */
@@ -175,8 +173,6 @@ export interface StateInit {
     nickname: string;
     avatar: AvatarLook | null;
     coins: number;
-    /** Codice di recupero "XXX-XXX": il DB ne ha solo l'hash, il server lo ricava dal device. */
-    recoveryCode: string | null;
     /** palette.upper della scarpa con valore percepito più alto (colore delle scarpe dell'avatar). */
     shoesColor: string | null;
     /** Epoch ms: da quando MC Suola accetta un'altra scarpa da questo giocatore. */

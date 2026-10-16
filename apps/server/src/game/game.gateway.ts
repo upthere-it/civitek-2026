@@ -41,7 +41,7 @@ import { LeaderboardService } from './leaderboard.service';
 import { MarketService } from './market.service';
 import { MechanicsService } from './mechanics.service';
 import { PlayerService, type PlayerState } from './player.service';
-import { RateLimiter, RecoverLimiter, clientIp } from './rate-limit';
+import { RateLimiter } from './rate-limit';
 import { RunService } from './run.service';
 import { WorldService } from './world.service';
 
@@ -77,7 +77,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   private readonly sockets = new Map<number, GameSocket>();
   private certified?: Subscription;
   private gameEvents?: Subscription;
-  private readonly recoverLimiter: RecoverLimiter;
 
   constructor(
     private readonly players: PlayerService,
@@ -92,10 +91,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     private readonly events: GameEventsService,
     private readonly runs: RunService,
     private readonly leaderboard: LeaderboardService,
-  ) {
-    const { attempts_per_ip_per_min, attempts_global_per_min } = this.cfg.player.recovery_code;
-    this.recoverLimiter = new RecoverLimiter(attempts_per_ip_per_min, attempts_global_per_min);
-  }
+  ) {}
 
   onModuleInit(): void {
     const hz = this.cfg.config.world.tick_hz;
@@ -165,14 +161,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     if (!isDeviceId(deviceId)) return this.reject(socket, 'DEVICE_INVALID');
     socket.data = { deviceId, limiter: new RateLimiter(this.cfg.player.rate_limit_actions_per_sec) };
     try {
-      // codice di recupero dalla landing: prima si associa il device, poi getOrCreate trova quel giocatore
-      const recover: unknown = socket.handshake.auth?.recover;
-      if (recover !== undefined) {
-        if (typeof recover !== 'string') return this.reject(socket, 'CODE_NOT_FOUND');
-        const ip = clientIp(socket.handshake.address, socket.handshake.headers['x-forwarded-for']);
-        if (!this.recoverLimiter.take(ip)) return this.reject(socket, 'RECOVER_LIMIT');
-        await this.players.recover(deviceId, recover);
-      }
       const { playerId } = await this.players.getOrCreate(deviceId);
       if (!socket.connected) return;
       const previous = this.sockets.get(playerId);
@@ -193,10 +181,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         await this.runs.enter(playerId, state.wardrobeValue);
       }
       if (!socket.connected) return;
-      socket.emit(S2C.STATE_INIT, this.stateInit(state, deviceId, position));
+      socket.emit(S2C.STATE_INIT, this.stateInit(state, position));
     } catch (err) {
       const code = err instanceof SpError ? err.code : 'INTERNAL';
-      if (code !== 'CODE_NOT_FOUND') this.logger.error(`handshake fallito: ${String(err)}`);
+      this.logger.error(`handshake fallito: ${String(err)}`);
       this.reject(socket, code);
     }
   }
@@ -480,7 +468,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     return { nickname: state.row.nickname, look: state.look!, shoesColor: state.shoesColor };
   }
 
-  private stateInit(state: PlayerState, deviceId: string, position: { x: number; y: number } | null): StateInit {
+  private stateInit(state: PlayerState, position: { x: number; y: number } | null): StateInit {
     return {
       serverTime: Date.now(),
       player: {
@@ -488,7 +476,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         nickname: state.row.nickname,
         avatar: state.look,
         coins: state.row.coins,
-        recoveryCode: this.players.displayCode(deviceId, state.row.recovery_hash),
         shoesColor: state.shoesColor,
         legendReadyAt: state.row.legend_ready_ms === null ? null : Number(state.row.legend_ready_ms),
       },

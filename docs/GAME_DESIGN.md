@@ -105,7 +105,7 @@ Come si fa crescere il valore (nessuna di queste strade viene spiegata a parole,
 
 Dopo la prima run il timer sparisce e restano tutte le meccaniche: negozio, bacheca, drop ogni 3', Tony Affari, Dott.ssa Hash, MC Suola, classifica.
 
-Chi torna giorni dopo ritrova tutto: con lo stesso telefono basta riaprire il link, da un altro dispositivo serve il codice di recupero (§14).
+Chi torna giorni dopo ritrova tutto riaprendo il link dallo stesso telefono e dallo stesso browser. Da un altro dispositivo si ricomincia da capo (il codice di recupero è stato tolto, §14).
 
 ## 7. Il passaporto digitale
 
@@ -225,15 +225,9 @@ Tolto il 14/10 insieme al timer della prima run: la competizione passa dalla cla
 - **Podio**: 🥇🥈🥉 al posto del numero, righe evidenziate; il primo un po' più grande.
 - È sempre visibile anche la propria riga, anche fuori dalla top 10.
 
-## 14. Codice di recupero (sospeso)
+## 14. Codice di recupero (tolto)
 
-**Interfaccia tolta il 14/10** finché non si decide se serve. A cosa serve: il gioco riconosce il ragazzo solo dal `device_id` nel browser, quindi chi cambia telefono o browser (per esempio apre il QR nel browser della fotocamera e poi in Safari) ricomincia da zero; il codice lo riporta al suo personaggio.
-
-Il meccanismo lato server c'è ed è testato (handshake `auth.recover`, `sp_player_recover`, limiti per IP e globali in `player.recovery_code`): per riattivarlo basta rimettere il campo sulla landing e il codice in un profilo.
-
-- 6 caratteri dall'alfabeto senza caratteri ambigui (`player.recovery_code`), mostrati come `XXX-XXX`.
-- Nel DB si salva solo l'hash SHA-256.
-- Inserendo il codice, il `device_id` corrente viene associato al giocatore esistente. Il vecchio device resta valido.
+Tolto il 16/10 (Simone): non serve per l'evento. Il gioco riconosce il ragazzo solo dal `device_id` salvato nel browser; chi cambia telefono o browser (per esempio apre il QR nel browser della fotocamera e poi in Safari) ricomincia con un personaggio nuovo. Nel DB restano, inutilizzate, la colonna `players.recovery_hash` (sempre NULL) e la SP `sp_player_recover`.
 
 ## 15. Enoteca DOP Digital
 

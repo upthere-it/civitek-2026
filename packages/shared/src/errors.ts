@@ -30,8 +30,6 @@ export const ERROR_MESSAGES: Record<string, string> = {
   DEVICE_INVALID: 'Non riesco a riconoscere questo telefono. Ricarica la pagina.',
   SESSION_REPLACED: 'Il gioco è aperto in un’altra scheda.',
   WORLD_FULL: 'Il villaggio è pieno, riprova tra poco.',
-  CODE_NOT_FOUND: 'Codice non trovato. Controlla le lettere e riprova.',
-  RECOVER_LIMIT: 'Troppi tentativi. Aspetta un minuto e riprova.',
   INTERNAL: 'Qualcosa è andato storto, riprova.',
 };
 
@@ -47,6 +45,8 @@ export const INTERNAL_SP_CODES: readonly string[] = [
   // sp_run_complete (010): la prima run a tempo è stata tolta il 14/10, la SP non la chiama più nessuno
   'RUN_NOT_STARTED',
   'RUN_NOT_OVER',
+  // sp_player_recover (010): il codice di recupero è stato tolto il 16/10, la SP non la chiama più nessuno
+  'CODE_NOT_FOUND',
 ];
 
 export function errorMessage(code: string): string {

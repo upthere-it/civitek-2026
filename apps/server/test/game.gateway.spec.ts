@@ -19,7 +19,6 @@ import { AppModule } from '../src/app.module';
 import { CHAIN_NOTARY } from '../src/chain/chain-notary';
 import { MockNotary } from '../src/chain/mock-notary';
 import { WorldService } from '../src/game/world.service';
-import { recoveryHash } from '../src/game/identity';
 import { DbService } from '../src/db/db.service';
 import { cfg } from './helpers/db';
 
@@ -100,24 +99,22 @@ describe('handshake', () => {
     expect(init.wardrobeValue).toBe(start + gift.perceivedValue);
     expect(init.player.shoesColor).toBe(cfg.item(gift.itemId)!.palette.upper);
 
-    // codice "XXX-XXX" dall'alfabeto senza caratteri ambigui; nel DB c'è solo il suo hash
-    const { alphabet } = cfg.player.recovery_code;
-    expect(init.player.recoveryCode).toMatch(new RegExp(`^[${alphabet}]{3}-[${alphabet}]{3}$`));
-    const [row] = await app.get(DbService).select<{ recovery_hash: string; device_hash: string }>(
+    // nel DB c'è solo l'hash del device; niente codice di recupero (tolto il 16/10)
+    const [row] = await app.get(DbService).select<{ recovery_hash: string | null; device_hash: string }>(
       'SELECT recovery_hash, device_hash FROM players WHERE id = ?',
       [init.player.id],
     );
-    expect(row.recovery_hash).toBe(recoveryHash(init.player.recoveryCode!));
+    expect(row.recovery_hash).toBeNull();
     expect(row.device_hash).not.toContain(deviceId.slice(0, 8));
+    expect(init.player).not.toHaveProperty('recoveryCode');
   });
 
-  it('stesso device: stesso giocatore e stesso codice', async () => {
+  it('stesso device: stesso giocatore', async () => {
     const deviceId = randomUUID();
     const first = await connect(deviceId).init;
     clients.splice(0).forEach((c) => c.disconnect());
     const again = await connect(deviceId).init;
     expect(again.player.id).toBe(first.player.id);
-    expect(again.player.recoveryCode).toBe(first.player.recoveryCode);
     expect(again.inventory).toEqual(first.inventory);
   });
 

@@ -1,4 +1,4 @@
-// Accettazione M4: suggerimenti dei primi minuti, recupero da un altro telefono (lato server), classifica live.
+// Accettazione M4: suggerimenti dei primi minuti e classifica live.
 // I loop sono spenti (GAME_LOOPS=off): RunService.tick() si chiama a mano, con l'orologio che serve.
 import { randomUUID } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
@@ -18,7 +18,6 @@ import { AppModule } from '../src/app.module';
 import { CHAIN_NOTARY } from '../src/chain/chain-notary';
 import { MockNotary } from '../src/chain/mock-notary';
 import { LeaderboardService } from '../src/game/leaderboard.service';
-import { RecoverLimiter, clientIp } from '../src/game/rate-limit';
 import { RunService } from '../src/game/run.service';
 import { cfg, openTestDb } from './helpers/db';
 
@@ -46,7 +45,7 @@ afterAll(async () => {
   await db.onModuleDestroy();
 });
 
-function connect(auth: { deviceId: string; recover?: string }): Client {
+function connect(auth: { deviceId: string }): Client {
   const socket: Client = io(url, { auth, transports: ['websocket'], forceNew: true, reconnection: false });
   clients.push(socket);
   return socket;
@@ -129,58 +128,6 @@ describe('M4: suggerimenti dei primi minuti', () => {
     app.get(RunService).tick(t0 + 100_000);
     await flush();
     expect(beats).toEqual([]);
-  });
-});
-
-describe('M4: recupero da un altro telefono', () => {
-  it('il codice (anche minuscolo, con il trattino) apre lo stesso giocatore; il vecchio device resta valido', async () => {
-    const a = await inVillage();
-    const code = a.init.player.recoveryCode!;
-    expect(code).toMatch(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
-
-    const b = connect({ deviceId: randomUUID(), recover: code.toLowerCase() });
-    const initB = await new Promise<StateInit>((resolve) => b.once(S2C.STATE_INIT, resolve));
-    expect(initB.player.id).toBe(a.init.player.id);
-    expect(initB.player.nickname).toBe(a.init.player.nickname);
-    expect(initB.player.avatar).toEqual(LOOK);
-    // il codice lo conosce chi l'ha digitato: il server non lo rimostra a un device che non l'ha generato
-    expect(initB.player.recoveryCode).toBeNull();
-
-    b.disconnect();
-    const again = await player(a.deviceId);
-    expect(again.init.player.id).toBe(a.init.player.id);
-    expect(again.init.player.recoveryCode).toBe(code);
-  });
-
-  it('un codice sbagliato non crea un giocatore e chiude la connessione con CODE_NOT_FOUND', async () => {
-    const deviceId = randomUUID();
-    const s = connect({ deviceId, recover: 'ZZZ-ZZZ' });
-    const err = await next<{ code: string }>(s, S2C.ERROR);
-    expect(err.code).toBe('CODE_NOT_FOUND');
-    const [n] = await db.select<{ n: number }>('SELECT COUNT(*) AS n FROM player_devices WHERE device_hash = SHA2(?, 256)', [deviceId]);
-    expect(Number(n.n)).toBe(0);
-  });
-
-  it('limite di tentativi per IP e globale, a finestre di un minuto', () => {
-    const l = new RecoverLimiter(2, 3);
-    const t = 60_000 * 1000;
-    expect([l.take('a', t), l.take('a', t), l.take('a', t)]).toEqual([true, true, false]);
-    expect([l.take('b', t), l.take('c', t)]).toEqual([true, false]); // globale esaurito
-    expect(l.take('a', t + 60_000)).toBe(true); // minuto nuovo
-  });
-
-  it('IP del client: dietro nginx l’ultimo di X-Forwarded-For, altrimenti l’indirizzo della connessione', () => {
-    expect(clientIp('127.0.0.1', '6.6.6.6, 10.0.0.7')).toBe('10.0.0.7');
-    expect(clientIp('::ffff:127.0.0.1', '10.0.0.7')).toBe('10.0.0.7');
-    expect(clientIp('10.0.0.9', '6.6.6.6')).toBe('10.0.0.9');
-    expect(clientIp('127.0.0.1', undefined)).toBe('127.0.0.1');
-  });
-
-  it('codice fuori formato (lunghezza, lettere fuori alfabeto): CODE_NOT_FOUND', async () => {
-    for (const recover of ['abc', 'OOO-III']) {
-      const s = connect({ deviceId: randomUUID(), recover });
-      expect((await next<{ code: string }>(s, S2C.ERROR)).code).toBe('CODE_NOT_FOUND');
-    }
   });
 });
 

@@ -97,7 +97,7 @@ CREATE TABLE players (
   avatar_hair_color TINYINT UNSIGNED NULL,         -- indice in avatar.hair_colors
   avatar_outfit TINYINT UNSIGNED NULL,
   coins         INT NOT NULL DEFAULT 0,
-  recovery_hash CHAR(64) NULL,
+  recovery_hash CHAR(64) NULL,                    -- non più usata: codice di recupero tolto il 16/10
   first_run_started_at   DATETIME(6) NULL,
   first_run_completed_at DATETIME(6) NULL,
   first_run_start_value  INT NULL,                -- valore armadio al primo ingresso (010)
@@ -113,7 +113,7 @@ CREATE TABLE players (
   KEY ix_players_last_seen (is_system, last_seen_at)
 ) ENGINE=InnoDB;
 
-CREATE TABLE player_devices (           -- un giocatore può avere più device (codice di recupero)
+CREATE TABLE player_devices (           -- device del giocatore (oggi uno: il recupero col codice è stato tolto)
   device_hash CHAR(64) NOT NULL PRIMARY KEY,
   player_id   BIGINT NOT NULL,
   created_at  DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -382,7 +382,7 @@ DELIMITER ;
 | `sp_player_get_or_create(device_hash, nickname_candidate, recovery_hash)` ✅ M0 | Trova il giocatore dal device o lo crea: `GRANT` di 100 monete + `_sp_mint` della scarpa regalo a prezzo 0. Restituisce `player_id`, `created`, `gift_asset_id` | `NICKNAME_TAKEN` / `RECOVERY_TAKEN` (il server riprova con un altro valore), `DEVICE_TAKEN` (stesso device in parallelo: il server richiama la SP) |
 | `sp_player_set_avatar(player, skin, hair, hair_color, outfit)` | Solo se l'avatar non è ancora impostato. Gli indici sono validati contro `game_settings`. Resta per i chiamanti vecchi: la creazione del personaggio usa `sp_player_set_profile` | `AVATAR_ALREADY_SET`, `AVATAR_INVALID` |
 | `sp_player_set_profile(player, nickname, body, skin, hair, hair_color, outfit)` ✅ 009 | Creazione del personaggio (D12): stile, aspetto e nome, una volta sola. Ricontrolla la lunghezza del nome; il formato e le parole vietate li controlla il server prima. Un nome già usato (collation `_ai_ci`: maiuscole e accenti non contano) → 1062 → `NICKNAME_TAKEN` | `AVATAR_ALREADY_SET`, `AVATAR_INVALID`, `NICKNAME_INVALID`, `NICKNAME_TAKEN` |
-| `sp_player_recover(recovery_hash, device_hash)` ✅ M4 | Associa il device al giocatore del codice (`player_devices`, upsert). Il vecchio device resta valido; se questo device era di un altro giocatore, ora apre quello del codice. Giocatori anonimizzati esclusi | `CODE_NOT_FOUND` |
+| `sp_player_recover(recovery_hash, device_hash)` (010, **non più usata**) | Associava un device al giocatore del codice di recupero, tolto il 16/10 | `CODE_NOT_FOUND` |
 | `sp_run_start(player, start_value)` ✅ M4 | Segna il primo ingresso nel villaggio (da lì si contano i suggerimenti) col valore armadio di quel momento. Idempotente. Restituisce `started_ms` | `PLAYER_NOT_FOUND` |
 | `sp_run_complete(player, end_value, merchant)` (010, **non più usata**) | Chiudeva la prima run a tempo, tolta il 14/10. Legge `first_run.duration_sec`, che non è più in config: non va chiamata | `RUN_NOT_STARTED`, `RUN_NOT_OVER` |
 | `sp_shop_buy(player, item)` ✅ M2 | Item con `"shop"` tra le sources: `_sp_move_coins(player→1, SHOP)` + `_sp_mint(minted_by 2)` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
@@ -410,14 +410,12 @@ Nota sul calcolo del valore. Il valore percepito si calcola in **TypeScript** (`
 
 ## 5. Protocollo socket
 
-Handshake: `io(url, { auth: { deviceId, recover? } })` (`HandshakeAuth`). Il server calcola `sha256(deviceId)` con `crypto` e risolve il giocatore.
+Handshake: `io(url, { auth: { deviceId } })` (`HandshakeAuth`). Il server calcola `sha256(deviceId)` con `crypto` e risolve il giocatore.
 
-- **Recupero da un altro telefono** (M4, **interfaccia sospesa dal 14/10**, il server resta pronto): il codice della landing viaggia nell'handshake (`auth.recover`), non in un evento, così un telefono nuovo non crea un giocatore vuoto prima di inserirlo. Il server chiama `sp_player_recover` e poi prosegue come sempre. Codice sbagliato o fuori formato → `error CODE_NOT_FOUND`; oltre `player.recovery_code.attempts_per_ip_per_min` tentativi per IP o `attempts_global_per_min` in tutto il server → `RECOVER_LIMIT`. Dietro nginx l'IP è l'ultimo indirizzo di `X-Forwarded-For`. Dopo il primo `state.init` il client toglie il codice dall'handshake. Il server non rimostra il codice a un device che non l'ha generato (`recoveryCode: null`): il client tiene in memoria quello digitato.
 - Una sessione rifiutata riceve `error` e il client chiude da sé; il server chiude comunque dopo 1 s (chiudere subito fa fallire con 400 il polling di socket.io già in volo).
 
 - `deviceId` deve essere un UUID v4, altrimenti `error DEVICE_INVALID` e disconnessione.
 - **Una sessione per giocatore**: una seconda scheda sostituisce la prima, che riceve `SESSION_REPLACED`.
-- **Codice di recupero**: è `HMAC-SHA256(RECOVERY_SECRET, deviceId)` mappato sull'alfabeto di `player.recovery_code`. Nel DB va solo `sha256(codice)`, ma il server può sempre rimostrarlo al device che l'ha generato (`state.init.player.recoveryCode`) senza salvarlo. In produzione `RECOVERY_SECRET` è obbligatorio e non va cambiato dopo il lancio, altrimenti i codici già mostrati non tornano più.
 - Ogni richiesta client → server ha un ack `{ ok: true, data } | { ok: false, code, message }`, con il messaggio già in italiano (`packages/shared/src/errors.ts`).
 - I tipi degli eventi sono in `packages/shared/src/protocol.ts` (`ServerToClientEvents`, `ClientToServerEvents`) e tipizzano socket.io su entrambi i lati.
 
@@ -586,13 +584,12 @@ Runbook completo in **`deploy/README.md`** (M6). In breve:
 - `ecosystem.config.js` (root): PM2, **una istanza in fork mode** (stato socket in memoria), `HOST=127.0.0.1`, `PORT=3000`, `NODE_ENV=production`, log in `logs/`;
 - `deploy/nginx/civitek.upthere.it.conf`: HTTPS (Let's Encrypt; serve anche per `crypto.randomUUID`), proxy di `/socket.io/` con `Upgrade`/`Connection` e di `/api/`, `X-Forwarded-For` con `$proxy_add_x_forwarded_for` (il server ne prende l'ultimo indirizzo), cache lunga su `/static/` (hash nel nome), breve su `/assets/`, `index.html` sempre rivalidato, IP troncati nei log di accesso;
 - DB di produzione a mano: `npm run db:bundle` genera `deploy/out/civitek_completo_<data>.sql` (migrazioni + `schema_migrations` con i checksum + seed; si ferma su un DB già in uso) oppure, per aggiornare, `-- --from NNN`;
-- in produzione il server non parte senza `RECOVERY_SECRET` e `CN_*`;
+- in produzione il server non parte senza `CN_*`;
 - `GET /api/health`: DB, coda della certificazione (`pending`, `failed`, evento più vecchio in coda oltre `chain.health_max_pending_sec`), giocatori online; `?full=1` con l'header `x-health-token` = `HEALTH_TOKEN` aggiunge login e saldo commercio.app (`/wallet/balance`). 200 con `status` ok/warn, 503 se il DB non risponde.
 
 ## 10. Privacy (implementazione)
 
 - Nessun dato personale raccolto. Il `device_id` è salvato solo come hash.
-- Il codice di recupero è salvato solo come hash.
 - Job `AnonymizeService`: ogni `player.anonymize_every_min` chiama `sp_anonymize_inactive(player.inactivity_anonymize_days, player.anonymize_batch)` finché ne trova (M5, `sql/011`). Nome al posto di quello scelto: `Anonimo <id>` (lo spazio non è ammesso nei nomi dei giocatori, quindi non si scontra).
 - Nessun analytics, cookie di terze parti, font o CDN esterni a runtime: tutto è servito dal nostro dominio.
 - Pagina `/privacy/` (`apps/client/privacy/index.html`, entry separata di Vite, linkata dalla landing): testo in bozza da validare (D5), giorni di anonimizzazione da config, crediti di pixel art e font.

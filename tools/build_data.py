@@ -269,11 +269,6 @@ game_config = {
             "max_length": 14,
             "allowed_pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}._-]*$",
         },
-        "recovery_code": {
-            "length": 6, "alphabet": "ABCDEFGHJKMNPQRSTUVWXYZ23456789", "display_format": "XXX-XXX",
-            # tentativi di recupero: per IP (una classe dietro lo stesso NAT ci sta comoda) e in tutto il server
-            "attempts_per_ip_per_min": 10, "attempts_global_per_min": 120,
-        },
         "inactivity_anonymize_days": 30,
         # job di anonimizzazione: ogni quanto gira e quanti giocatori per transazione
         "anonymize_every_min": 60,

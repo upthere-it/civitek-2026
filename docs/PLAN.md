@@ -57,7 +57,7 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 ### M4 — Prima run e reveal (mar 20/10)
 - [x] ~~Timer della prima run, obiettivo, badge "Mercante"~~ → suggerimenti dei primi minuti (`run.beat`) senza timer (14/10)
 - [x] ~~Schermata reveal~~ tolta il 14/10: la sfida è la classifica live
-- [x] Recupero da un altro device (`sp_player_recover`): server pronto, interfaccia sospesa il 14/10
+- [x] ~~Recupero da un altro device (`sp_player_recover`)~~: tolto del tutto il 16/10
 - [x] Enoteca DOP Digital con la bottiglia demo
 - [x] Classifica live: posizione nell'HUD, aggiornamenti dal server, podio
 - [x] `CommercioNotary` via API commercio.app (porting di `@mvl/commercio-network`, ARCHITECTURE §6), anticipato il 14/10: provato contro un finto commercio.app
@@ -77,7 +77,7 @@ Lo sviluppo è di **Claude Code**; review, test su telefoni e asset sono di **Si
 - [ ] (facoltativo) ritocco in Aseprite dei layer avatar e delle icone delle scarpe
 
 ### M6 — Messa in produzione (gio 22/10)
-- [ ] Deploy (PM2 fork, nginx, HTTPS) su **civitek.upthere.it** (D3), con `RECOVERY_SECRET` e `CN_*` nel `.env` di produzione
+- [ ] Deploy (PM2 fork, nginx, HTTPS) su **civitek.upthere.it** (D3), con `CN_*` e `HEALTH_TOKEN` nel `.env` di produzione
   - 14/10: pronto da lanciare: `ecosystem.config.js`, `deploy/nginx/civitek.upthere.it.conf`, runbook `deploy/README.md`, `/api/health`. Avvio di produzione provato in locale
 - [ ] Reset del DB di produzione con script SQL a mano (non via MCP) + seed
   - 14/10: `npm run db:bundle` → `deploy/out/civitek_completo_<data>.sql`, provato su un DB vuoto (11 migrazioni, 31 routine, tesoreria 5000, invarianti verdi, `db:migrate` lo vede aggiornato; rilanciato si ferma con `DB_NOT_EMPTY`)
@@ -267,3 +267,7 @@ _(Claude Code: aggiungi qui una riga per sessione con data, milestone, cosa è s
   - **Fatto**: `/api/health` (con `ChainNotary.health()`: Mock ok, Commercio login + `/wallet/balance`), `ecosystem.config.js`, config nginx, `npm run db:bundle`, QR definitivo (`tools/make_qr.py`), runbook `deploy/README.md` con l'elenco alfabetico degli oggetti del DB per la task di rilascio, `HOST` nel server per il bind su 127.0.0.1.
   - **Test**: 30 di shared + 148 del server (`health.spec`, saldo sul finto commercio.app); script SQL provato su un DB vuoto; avvio con `NODE_ENV=production` provato in locale (senza `CN_*` si ferma con un messaggio chiaro).
   - **Aperto**: DNS e TLS (D3), deploy, credito commercio.app, stampa del QR, prova generale con 5+ telefoni, revisione del testo privacy (D5). nginx non è installato qui: `nginx -t` va lanciato sul server.
+- **16/10 — Codice di recupero tolto del tutto (Simone: non serve).**
+  - Via `RECOVERY_SECRET`, `player.recovery_code` in config, il recupero nell'handshake, i limiti per IP, `recoveryCode` in `state.init` e i relativi test. `sp_player_get_or_create` riceve NULL come `recovery_hash` (la firma della SP non cambia).
+  - DB: nessuna migrazione. Restano inutilizzate `players.recovery_hash` (sempre NULL per i giocatori nuovi), `uq_players_recovery` e `sp_player_recover`: toglierle vuol dire un DROP, da decidere.
+  - Test: 30 di shared + 143 del server.

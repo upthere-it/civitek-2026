@@ -79,7 +79,7 @@ export class LeaderboardService implements OnModuleInit, OnModuleDestroy {
   private async compute(): Promise<LeaderboardRow[]> {
     const players = await this.db.select<PlayerRow>(
       `SELECT id, nickname, coins, avatar_body, avatar_skin, avatar_hair, avatar_hair_color, avatar_outfit,
-              NULL AS recovery_hash, NULL AS legend_ready_ms
+              NULL AS legend_ready_ms
          FROM players
         WHERE is_system = 0 AND anonymized_at IS NULL AND avatar_skin IS NOT NULL`,
     );
