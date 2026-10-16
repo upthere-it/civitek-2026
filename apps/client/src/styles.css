@@ -1,0 +1,1132 @@
+/* I colori --up-* vengono da game_config.json → brand.colors (impostati in main.ts). Contrasti: docs/ASSETS.md §7. */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--up-accent-900, #000);
+  color: #fff;
+  font-family: var(--up-font-body);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#game,
+#ui {
+  position: fixed;
+  inset: 0;
+}
+
+#ui {
+  pointer-events: none; /* le schermate e i controlli riattivano pointer-events */
+}
+
+canvas {
+  image-rendering: pixelated;
+}
+
+/* ---------------------------------------------------------------- bottoni (>= 44 px) */
+.btn {
+  min-height: 48px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--up-font-display);
+  font-weight: 600;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+}
+
+.btn-primary {
+  background: var(--up-primary);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: var(--up-accent-400);
+  color: var(--up-primary);
+}
+
+/* ---------------------------------------------------------------- schermate */
+.screen {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.title {
+  font-family: var(--up-font-display);
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+}
+
+.landing {
+  background: var(--up-primary);
+  justify-content: center;
+  gap: 32px;
+}
+
+.landing .logo {
+  width: min(56vw, 220px);
+}
+
+.landing .title {
+  font-size: clamp(26px, 7.5vw, 40px);
+  line-height: 1.15;
+  max-width: 14em;
+}
+
+.landing-privacy {
+  position: absolute;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  color: var(--up-accent-400);
+  font-size: 14px;
+}
+
+.progress {
+  width: min(60vw, 240px);
+  height: 4px;
+  border-radius: 2px;
+  background: var(--up-primary-700);
+  overflow: hidden;
+  transition: opacity 0.4s;
+}
+
+.progress.done {
+  opacity: 0;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--up-accent-400);
+  transition: width 0.2s;
+}
+
+/* avatar: titolo in alto, anteprima nel canvas al centro, controlli in un pannello in basso */
+.avatar {
+  justify-content: space-between;
+  pointer-events: none;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.avatar-title {
+  font-size: 24px;
+}
+
+.sheet {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 480px;
+  background: var(--up-primary);
+  border-radius: 24px;
+  padding: 14px 16px 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sheet h2 {
+  margin: 2px 0 0;
+  font-family: var(--up-font-display);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--up-accent-400);
+}
+
+.sheet .btn {
+  margin-top: 8px;
+  align-self: stretch;
+}
+
+.sheet .btn-primary {
+  background: var(--up-accent-400);
+  color: var(--up-primary);
+}
+
+.swatches,
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  background: var(--c);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 0.25);
+  cursor: pointer;
+}
+
+.swatch[aria-checked='true'],
+.chip[aria-checked='true'] {
+  border-color: var(--up-accent-400);
+}
+
+.chip {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background: var(--up-primary-700);
+  color: #fff;
+  font: 500 15px var(--up-font-body);
+  cursor: pointer;
+}
+
+/* nella creazione del personaggio ogni scelta sta su una riga che scorre di lato: su un telefono basso
+   resta spazio per l'anteprima */
+.avatar .swatches,
+.avatar .chips {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.avatar .swatches::-webkit-scrollbar,
+.avatar .chips::-webkit-scrollbar {
+  display: none;
+}
+
+.avatar .swatch,
+.avatar .chip {
+  flex-shrink: 0;
+}
+
+/* creazione del personaggio, passo 1: stile e nome */
+.avatar-step {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.avatar-step[hidden] {
+  display: none;
+}
+
+.avatar-step-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.avatar-step-actions .btn {
+  flex: 1;
+  padding: 0 12px;
+}
+
+.name-row {
+  display: flex;
+  gap: 8px;
+}
+
+.name-input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 14px;
+  border: 2px solid var(--up-accent);
+  border-radius: 14px;
+  background: var(--up-accent-900);
+  color: #fff;
+  font: 600 18px var(--up-font-display);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.name-input[aria-invalid='true'] {
+  border-color: var(--up-warn);
+}
+
+.dice {
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--up-primary-700);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.name-hint {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* errore: bianco in grassetto sul fondo primary, il rosso warn solo come bordo del campo (ASSETS.md §7) */
+.name-error {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.name-error:empty {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- HUD */
+.hud {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: max(10px, env(safe-area-inset-top)) 10px max(12px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.hud-top,
+.hud-bottom {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.hud-bottom {
+  position: relative;
+  justify-content: flex-end;
+}
+
+.hud-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 16px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--up-primary);
+  color: #fff;
+  font: 600 15px var(--up-font-display);
+  cursor: pointer;
+}
+
+.hud-btn span {
+  font-size: 22px;
+}
+
+button.pill {
+  border: 0;
+  color: #fff;
+  font-family: var(--up-font-body);
+  cursor: pointer;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.pill {
+  pointer-events: auto;
+  flex-shrink: 0;
+  background: var(--up-accent-900);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.pill.name {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--up-font-display);
+  color: var(--up-accent-400);
+}
+
+.hud-top .spacer {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.emote-toggle,
+.emote {
+  pointer-events: auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--up-primary);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.emote-bar {
+  position: absolute; /* sopra la riga in basso: su un telefono stretto non spinge via il bottone Armadio */
+  right: 0;
+  bottom: 56px;
+  max-width: calc(100vw - 20px);
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 28px;
+  background: var(--up-accent-900);
+}
+
+.emote-bar[hidden] {
+  display: none;
+}
+
+/* 6 emote da 44 px + spazi = 296 px: stanno su una riga anche a 320 px di larghezza */
+.emote {
+  width: 44px;
+  height: 44px;
+  background: transparent;
+}
+
+/* ---------------------------------------------------------------- pannelli (negozio, bacheca, armadio, passaporto) */
+.panel-layer {
+  z-index: 9; /* sopra i banner (drop, beat): la testata del pannello resta toccabile */
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.panel-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.45);
+}
+
+.panel {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: min(88dvh, 88vh);
+  display: flex;
+  flex-direction: column;
+  background: var(--up-primary);
+  border-radius: 24px 24px 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 0.35);
+  animation: panel-in 0.18s ease-out;
+}
+
+@keyframes panel-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px 6px 18px;
+  border-bottom: 1px solid var(--up-primary-700);
+}
+
+.panel-title {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 20px var(--up-font-display);
+}
+
+.panel-close {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.panel-body {
+  flex: 1;
+  min-height: 80px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.panel-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px 14px;
+  border-top: 1px solid var(--up-primary-700);
+}
+
+.panel-foot:empty {
+  display: none;
+}
+
+.panel-summary,
+.muted {
+  margin: 0;
+  font-size: 14px;
+  color: var(--up-accent-400);
+}
+
+.npc-line {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--up-accent-900);
+  font-style: italic;
+}
+
+/* righe: contenuto (tap → passaporto) a sinistra, azioni a destra */
+.row-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 6px;
+  border-radius: 16px;
+  background: var(--up-primary-700);
+}
+
+.row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* su 320 px nome e dettagli vanno a capo invece di troncarsi */
+.row-name {
+  font: 600 15px var(--up-font-display);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.row-sub {
+  font-size: 13px;
+  line-height: 1.3;
+  opacity: 0.85;
+  overflow-wrap: anywhere;
+}
+
+.row-side {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row-badge {
+  font-size: 13px;
+  color: var(--up-accent-400);
+  font-weight: 600;
+  text-align: right;
+  max-width: 6em;
+}
+
+.row-price {
+  font: 600 15px var(--up-font-display);
+  white-space: nowrap;
+}
+
+.row-go {
+  font-size: 24px;
+  opacity: 0.7;
+}
+
+.shoe-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  image-rendering: pixelated;
+  border-radius: 10px;
+  background: var(--up-accent-900);
+}
+
+.shoe-icon.big {
+  width: 64px;
+  height: 64px;
+  padding: 8px;
+  border-radius: 14px;
+}
+
+.btn-small {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  font: 600 14px var(--up-font-display);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn-small:disabled,
+.btn:disabled {
+  opacity: 0.6;
+}
+
+/* nei pannelli (fondo primary) il bottone primario è accent-400 con testo primary: 6,3:1 */
+.panel .btn-primary {
+  background: var(--up-accent-400);
+  color: var(--up-primary);
+}
+
+.panel .btn-secondary {
+  background: var(--up-accent-900);
+  color: #fff;
+}
+
+/* selettore di prezzo */
+.price-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 16px;
+  background: var(--up-accent-900);
+}
+
+.price-picker[hidden] {
+  display: none;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.step {
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--up-primary-700);
+  color: #fff;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.price-input {
+  width: 96px;
+  height: 48px;
+  border: 2px solid var(--up-accent);
+  border-radius: 14px;
+  background: var(--up-primary);
+  color: #fff;
+  font: 600 22px var(--up-font-display);
+  text-align: center;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.price-picker .chips {
+  justify-content: center;
+}
+
+.price-hint {
+  margin: 0;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* passaporto (GAME_DESIGN §7) */
+.pp-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pp-id {
+  min-width: 0;
+}
+
+.pp-name {
+  margin: 0;
+  font: 600 20px var(--up-font-display);
+}
+
+.pp-sub,
+.pp-value,
+.pp-owner {
+  margin: 2px 0 0;
+  font-size: 14px;
+}
+
+.pp-value {
+  font-weight: 600;
+}
+
+.pp-owner {
+  color: var(--up-accent-400);
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.badge-ok {
+  background: #fff;
+  color: var(--up-primary);
+}
+
+.badge-fake {
+  background: #fff;
+  color: var(--up-warn);
+  border: 2px solid var(--up-warn);
+}
+
+.chain {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+
+.ring {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 14px;
+}
+
+/* il filo che lega un anello al precedente */
+.ring:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 20px;
+  bottom: 0;
+  width: 2px;
+  background: var(--up-accent);
+}
+
+.ring-dot {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border-radius: 50%;
+  background: var(--up-accent-400);
+  box-shadow: 0 0 0 3px var(--up-primary);
+}
+
+.ring-pending .ring-dot,
+.ring-sending .ring-dot {
+  background: var(--up-primary-700);
+  border: 2px dashed var(--up-accent-400);
+  box-sizing: border-box;
+}
+
+.ring-unknown .ring-dot,
+.ring-failed .ring-dot {
+  background: var(--up-warn);
+}
+
+.ring-body {
+  min-width: 0;
+}
+
+.ring-text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.ring-meta,
+.ring-hash {
+  margin: 2px 0 0;
+  font-size: 13px;
+}
+
+.ring-hash {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  opacity: 0.75;
+  overflow-wrap: anywhere;
+}
+
+.cert-ok {
+  color: #fff;
+  font-weight: 600;
+}
+
+a.cert-ok {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cert-warn {
+  font-weight: 600; /* testo bianco: il rosso warn su primary non ha contrasto, l'icona ⚠️ basta */
+}
+
+.cert-pending {
+  color: var(--up-accent-400);
+}
+
+.just-certified .ring-body {
+  animation: certified 1.2s ease-out;
+}
+
+@keyframes certified {
+  0% {
+    background: var(--up-accent-400);
+    color: var(--up-primary);
+  }
+}
+
+.pp-footer {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* timbro della Dott.ssa Hash sull'icona (GAME_DESIGN §9) */
+.shoe-stamp {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+}
+
+.shoe-stamp .stamp {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.stamp-fake .shoe-icon {
+  box-shadow: inset 0 0 0 2px var(--up-warn);
+}
+
+/* verdetto: fondo bianco, così il rosso warn resta leggibile (ASSETS.md §7) */
+.verdict {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--up-primary);
+  border-left: 6px solid var(--up-accent);
+}
+
+.verdict-fake {
+  border-left-color: var(--up-warn);
+}
+
+.verdict-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.btn-dim {
+  opacity: 0.7;
+}
+
+/* banner del drop, in alto sotto l'HUD */
+.banners {
+  z-index: 8;
+  position: absolute;
+  left: 50%;
+  top: calc(84px + env(safe-area-inset-top));
+  transform: translateX(-50%);
+  width: min(94vw, 480px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.drop-banner,
+.beat-banner {
+  box-sizing: border-box;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px 8px 10px;
+  border-radius: 18px;
+  background: var(--up-accent-900);
+  border: 2px solid var(--up-accent-400);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.35);
+  animation: panel-in 0.2s ease-out;
+}
+
+.drop-banner-text {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- avvisi */
+.toasts {
+  z-index: 10; /* sopra i pannelli */
+  position: absolute;
+  left: 50%;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 86vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast {
+  max-width: 86vw;
+  background: #fff;
+  color: var(--up-primary);
+  border-left: 4px solid var(--up-warn);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-weight: 600;
+  transition: opacity 0.4s;
+}
+
+.toast.out {
+  opacity: 0;
+}
+
+.blocker {
+  background: var(--up-accent-900);
+  justify-content: center;
+  gap: 20px;
+  text-align: center;
+  font-size: 18px;
+}
+
+/* ---------------------------------------------------------------- M4: suggerimenti, classifica live, enoteca */
+.hud-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hud-run {
+  display: flex;
+  justify-content: center;
+}
+
+.rank-pill {
+  font: 600 15px var(--up-font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.rank-pill[hidden] {
+  display: none;
+}
+
+/* la posizione cambia: sale (accent-400, testo primary) o scende, un impulso solo */
+.rank-pill.up {
+  animation: rank-up 1.2s ease-out;
+}
+
+.rank-pill.down {
+  animation: rank-down 1.2s ease-out;
+}
+
+@keyframes rank-up {
+  0%,
+  40% {
+    transform: scale(1.25);
+    background: var(--up-accent-400);
+    color: var(--up-primary);
+  }
+}
+
+@keyframes rank-down {
+  0%,
+  40% {
+    transform: scale(0.9);
+    background: var(--up-primary-700);
+  }
+}
+
+.beat-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px 8px 12px;
+  border-radius: 18px;
+  background: #fff;
+  color: var(--up-primary);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.35);
+  animation: panel-in 0.2s ease-out;
+}
+
+.beat-text {
+  flex: 1;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.beat-banner .panel-close {
+  color: var(--up-primary);
+}
+
+.panel-foot a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 2px 10px;
+  border-radius: 14px;
+  background: var(--up-accent-900);
+}
+
+.lb-me {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+
+.lb-rank {
+  width: 2ch;
+  text-align: right;
+  font: 600 16px var(--up-font-display);
+  color: var(--up-accent-400);
+}
+
+.lb-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.lb-you {
+  font-weight: 400;
+  color: var(--up-accent-400);
+}
+
+.lb-value {
+  font: 600 16px var(--up-font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.lb-podium {
+  min-height: 60px;
+  border: 2px solid var(--up-accent-400);
+}
+
+.lb-podium .lb-rank {
+  font-size: 26px;
+  width: 1.4em;
+  text-align: center;
+}
+
+.lb-1 {
+  background: var(--up-primary-700);
+}
+
+.lb-1 .lb-name,
+.lb-1 .lb-value {
+  font-size: 18px;
+}
+
+.lb-gap {
+  text-align: center;
+  color: var(--up-accent-400);
+}
+
+.avatar-thumb {
+  width: 36px;
+  height: 48px;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
+.wine-icon {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  font-size: 40px;
+  border-radius: 14px;
+  background: var(--up-accent-900);
+  flex-shrink: 0;
+}
+
+.badge-demo {
+  background: var(--up-accent-400);
+  color: var(--up-primary);
+}
+
+/* logo Upthere nell'HUD (CLAUDE.md regola 10): piccolo, su una pillola scura per leggersi sopra la mappa */
+.hud-brand {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.hud-logo {
+  width: 64px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--up-accent-900);
+}

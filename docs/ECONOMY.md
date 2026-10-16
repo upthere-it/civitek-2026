@@ -63,7 +63,9 @@ Cosa fa un bot quando agisce:
   - inventario del bot < `max_inventory_per_bot` (6).
 - **Rifornimento**: se l'inventario scende sotto 2, il bot conia 2 item `base` o `trend` a caso. È un `MINT` di sistema: non muove monete, ma viene certificato on-chain come ogni `MINT` autentico. Così, se poi la scarpa arriva a un umano, la sua origine risulta certificata.
 
-Lo stile in `npcs.json` (`compra_sottoprezzo`, `vende_trend`, …) pesa le scelte. All'avvio ogni bot parte con 3 item.
+Lo stile in `npcs.json` (`compra_sottoprezzo`, `vende_trend`, …) pesa le scelte: `economy.bots.styles` dice per ogni stile con che probabilità il bot prova prima a comprare (`buy_first`) e da quali tier si rifornisce. All'avvio ogni bot parte con `start_stock` (3) item; soglie e quantità di rifornimento sono `restock_below` / `restock_count`, gli annunci aperti al massimo `max_open_listings`.
+
+I bot non comprano falsi (nemmeno quelli non smascherati) né scarpe in prestito a MC Suola. "Umani online" = giocatori nel villaggio.
 
 I bot non comprano mai da altri bot né da Tony Affari, e non fanno annunci di falsi.
 
@@ -109,15 +111,16 @@ WHERE ev.to_id <> a.owner_id;
 
 L'output deve mostrare:
 - l'andamento della tesoreria nel tempo;
-- il valore medio dell'armadio a 5 minuti, per tarare `first_run.objective.multiplier`;
-- la percentuale di giocatori che raggiunge l'obiettivo (target indicativo: 30–50%);
+- il valore medio dell'armadio a 5 e a 10 minuti, e la distanza fra primo e decimo in classifica (se il primo scappa via, la gara finisce);
 - nessuna violazione di I1–I6.
 
 ## 8. Leve di taratura
 
 | Sintomo | Leva |
 |---|---|
-| Obiettivo raggiunto da quasi tutti / da nessuno | `first_run.objective.multiplier` |
+| MC Suola non conviene sulle scarpe economiche (sim 14/10: chi la usa chiude sotto la media) | `economy.legend.cost` (D13: da 15 a 6) |
+| Mercato fermo dopo 10–18 minuti: monete tutte in tesoreria | `economy.bots.buy_pct`, `economy.bots.min_activity` (i bot sono l'unica liquidità); un'entrata di monete non è nel design |
+| Il primo in classifica scappa via | `valuation.legend_max_counted`, `drops.quantity`, `economy.listing_max_multiplier` |
 | Prezzi in bacheca che crollano | alzare `bots.buy_pct` (es. 0,75) |
 | Tesoreria che si svuota | i bot si fermano già da soli; eventualmente abbassare `bots.buy_pct` |
 | Tesoreria che si gonfia troppo | abbassare `market_fee_pct` o `auth_cost` |

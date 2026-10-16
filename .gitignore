@@ -4,6 +4,9 @@ dist/
 coverage/
 *.tsbuildinfo
 
+# script SQL generati per la produzione (npm run db:bundle)
+deploy/out/
+
 # ambiente e log
 .env
 .env.*

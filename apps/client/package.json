@@ -1,0 +1,20 @@
+{
+  "name": "@sp/client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Client mobile-first: Vite + Phaser 3, UI in overlay HTML/CSS",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "phaser": "3.90.0",
+    "socket.io-client": "^4.8.4"
+  },
+  "devDependencies": {
+    "vite": "8.3.4"
+  }
+}

@@ -332,6 +332,336 @@
    "bytes": 1190
   },
   {
+   "key": "skinf_0_idle_down",
+   "path": "assets/avatar/body/skinf_0_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 948
+  },
+  {
+   "key": "skinf_0_idle_side",
+   "path": "assets/avatar/body/skinf_0_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 898
+  },
+  {
+   "key": "skinf_0_idle_up",
+   "path": "assets/avatar/body/skinf_0_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 684
+  },
+  {
+   "key": "skinf_0_walk_down",
+   "path": "assets/avatar/body/skinf_0_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1247
+  },
+  {
+   "key": "skinf_0_walk_side",
+   "path": "assets/avatar/body/skinf_0_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1177
+  },
+  {
+   "key": "skinf_0_walk_up",
+   "path": "assets/avatar/body/skinf_0_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7344,
+   "group": "avatar_body",
+   "bytes": 1048
+  },
+  {
+   "key": "skinf_1_idle_down",
+   "path": "assets/avatar/body/skinf_1_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 945
+  },
+  {
+   "key": "skinf_1_idle_side",
+   "path": "assets/avatar/body/skinf_1_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 921
+  },
+  {
+   "key": "skinf_1_idle_up",
+   "path": "assets/avatar/body/skinf_1_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 711
+  },
+  {
+   "key": "skinf_1_walk_down",
+   "path": "assets/avatar/body/skinf_1_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1208
+  },
+  {
+   "key": "skinf_1_walk_side",
+   "path": "assets/avatar/body/skinf_1_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1187
+  },
+  {
+   "key": "skinf_1_walk_up",
+   "path": "assets/avatar/body/skinf_1_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7344,
+   "group": "avatar_body",
+   "bytes": 1041
+  },
+  {
+   "key": "skinf_2_idle_down",
+   "path": "assets/avatar/body/skinf_2_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 953
+  },
+  {
+   "key": "skinf_2_idle_side",
+   "path": "assets/avatar/body/skinf_2_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 929
+  },
+  {
+   "key": "skinf_2_idle_up",
+   "path": "assets/avatar/body/skinf_2_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 712
+  },
+  {
+   "key": "skinf_2_walk_down",
+   "path": "assets/avatar/body/skinf_2_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1216
+  },
+  {
+   "key": "skinf_2_walk_side",
+   "path": "assets/avatar/body/skinf_2_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1221
+  },
+  {
+   "key": "skinf_2_walk_up",
+   "path": "assets/avatar/body/skinf_2_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7344,
+   "group": "avatar_body",
+   "bytes": 1060
+  },
+  {
+   "key": "skinf_3_idle_down",
+   "path": "assets/avatar/body/skinf_3_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 946
+  },
+  {
+   "key": "skinf_3_idle_side",
+   "path": "assets/avatar/body/skinf_3_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 935
+  },
+  {
+   "key": "skinf_3_idle_up",
+   "path": "assets/avatar/body/skinf_3_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 712
+  },
+  {
+   "key": "skinf_3_walk_down",
+   "path": "assets/avatar/body/skinf_3_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1211
+  },
+  {
+   "key": "skinf_3_walk_side",
+   "path": "assets/avatar/body/skinf_3_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1222
+  },
+  {
+   "key": "skinf_3_walk_up",
+   "path": "assets/avatar/body/skinf_3_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7344,
+   "group": "avatar_body",
+   "bytes": 1048
+  },
+  {
+   "key": "skinf_4_idle_down",
+   "path": "assets/avatar/body/skinf_4_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 917
+  },
+  {
+   "key": "skinf_4_idle_side",
+   "path": "assets/avatar/body/skinf_4_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 933
+  },
+  {
+   "key": "skinf_4_idle_up",
+   "path": "assets/avatar/body/skinf_4_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 709
+  },
+  {
+   "key": "skinf_4_walk_down",
+   "path": "assets/avatar/body/skinf_4_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1208
+  },
+  {
+   "key": "skinf_4_walk_side",
+   "path": "assets/avatar/body/skinf_4_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.75,
+   "group": "avatar_body",
+   "bytes": 1225
+  },
+  {
+   "key": "skinf_4_walk_up",
+   "path": "assets/avatar/body/skinf_4_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7344,
+   "group": "avatar_body",
+   "bytes": 1047
+  },
+  {
    "key": "hair_cappellino_idle_down",
    "path": "assets/avatar/layers/hair_cappellino_idle_down.png",
    "frameWidth": 64,
@@ -396,6 +726,204 @@
    "originY": 0.4844,
    "group": "avatar_layer",
    "bytes": 369
+  },
+  {
+   "key": "hair_caschetto_idle_down",
+   "path": "assets/avatar/layers/hair_caschetto_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 390
+  },
+  {
+   "key": "hair_caschetto_idle_side",
+   "path": "assets/avatar/layers/hair_caschetto_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 365
+  },
+  {
+   "key": "hair_caschetto_idle_up",
+   "path": "assets/avatar/layers/hair_caschetto_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 293
+  },
+  {
+   "key": "hair_caschetto_walk_down",
+   "path": "assets/avatar/layers/hair_caschetto_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 431
+  },
+  {
+   "key": "hair_caschetto_walk_side",
+   "path": "assets/avatar/layers/hair_caschetto_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 419
+  },
+  {
+   "key": "hair_caschetto_walk_up",
+   "path": "assets/avatar/layers/hair_caschetto_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 333
+  },
+  {
+   "key": "hair_coda_idle_down",
+   "path": "assets/avatar/layers/hair_coda_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.4844,
+   "group": "avatar_layer",
+   "bytes": 377
+  },
+  {
+   "key": "hair_coda_idle_side",
+   "path": "assets/avatar/layers/hair_coda_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5156,
+   "group": "avatar_layer",
+   "bytes": 381
+  },
+  {
+   "key": "hair_coda_idle_up",
+   "path": "assets/avatar/layers/hair_coda_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.6094,
+   "group": "avatar_layer",
+   "bytes": 368
+  },
+  {
+   "key": "hair_coda_walk_down",
+   "path": "assets/avatar/layers/hair_coda_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.4844,
+   "group": "avatar_layer",
+   "bytes": 403
+  },
+  {
+   "key": "hair_coda_walk_side",
+   "path": "assets/avatar/layers/hair_coda_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5156,
+   "group": "avatar_layer",
+   "bytes": 442
+  },
+  {
+   "key": "hair_coda_walk_up",
+   "path": "assets/avatar/layers/hair_coda_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.6094,
+   "group": "avatar_layer",
+   "bytes": 416
+  },
+  {
+   "key": "hair_codini_idle_down",
+   "path": "assets/avatar/layers/hair_codini_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 391
+  },
+  {
+   "key": "hair_codini_idle_side",
+   "path": "assets/avatar/layers/hair_codini_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 369
+  },
+  {
+   "key": "hair_codini_idle_up",
+   "path": "assets/avatar/layers/hair_codini_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 359
+  },
+  {
+   "key": "hair_codini_walk_down",
+   "path": "assets/avatar/layers/hair_codini_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 432
+  },
+  {
+   "key": "hair_codini_walk_side",
+   "path": "assets/avatar/layers/hair_codini_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 425
+  },
+  {
+   "key": "hair_codini_walk_up",
+   "path": "assets/avatar/layers/hair_codini_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.5,
+   "group": "avatar_layer",
+   "bytes": 389
   },
   {
    "key": "hair_corti_idle_down",
@@ -728,6 +1256,72 @@
    "bytes": 313
   },
   {
+   "key": "skirt_idle_down",
+   "path": "assets/avatar/layers/skirt_idle_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.7031,
+   "group": "avatar_layer",
+   "bytes": 290
+  },
+  {
+   "key": "skirt_idle_side",
+   "path": "assets/avatar/layers/skirt_idle_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.7031,
+   "group": "avatar_layer",
+   "bytes": 297
+  },
+  {
+   "key": "skirt_idle_up",
+   "path": "assets/avatar/layers/skirt_idle_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 4,
+   "originX": 0.5,
+   "originY": 0.7031,
+   "group": "avatar_layer",
+   "bytes": 291
+  },
+  {
+   "key": "skirt_walk_down",
+   "path": "assets/avatar/layers/skirt_walk_down.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7031,
+   "group": "avatar_layer",
+   "bytes": 324
+  },
+  {
+   "key": "skirt_walk_side",
+   "path": "assets/avatar/layers/skirt_walk_side.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7031,
+   "group": "avatar_layer",
+   "bytes": 340
+  },
+  {
+   "key": "skirt_walk_up",
+   "path": "assets/avatar/layers/skirt_walk_up.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "frames": 6,
+   "originX": 0.5,
+   "originY": 0.7031,
+   "group": "avatar_layer",
+   "bytes": 319
+  },
+  {
    "key": "npc_rogue_idle",
    "path": "assets/vendor/pixel-crawler/npc/rogue_idle.png",
    "frameWidth": 32,
@@ -988,6 +1582,13 @@
    "bytes": 10735
   }
  ],
+ "tilemaps": [
+  {
+   "key": "village",
+   "path": "assets/maps/village.json",
+   "bytes": 46050
+  }
+ ],
  "excluded_from_boot": [
   "assets/avatar/avatar_manifest.json (metadati)",
   "assets/shoes/items/*.png (icone singole: usare l'atlas)",
@@ -996,5 +1597,5 @@
   "assets/vendor/pixel-crawler/characters/* (sorgenti per rigenerare l'avatar)",
   "assets/vendor/pixel-crawler/buildings/roofs.png (sorgente: in gioco roofs_upthere.png)"
  ],
- "total_boot_bytes": 334953
+ "total_boot_bytes": 420066
 }

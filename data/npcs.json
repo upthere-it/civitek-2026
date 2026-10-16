@@ -88,7 +88,7 @@
         "shoes_color": "#c8102e",
         "note": "costruito con i layer dell'avatar: stesso stile dei giocatori, ma riconoscibile"
       },
-      "purpose": "Per 15 monete indossa la scarpa per 10 secondi: due anelli nel passaporto (LEGEND_IN/LEGEND_OUT) e +40% di valore.",
+      "purpose": "Per 6 monete indossa la scarpa per 10 secondi: due anelli nel passaporto (LEGEND_IN/LEGEND_OUT) e +40% di valore.",
       "lines": {
         "idle": [
           "Le indosso dieci secondi e la tua scarpa entra nella storia.",

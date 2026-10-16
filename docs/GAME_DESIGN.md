@@ -17,23 +17,33 @@ Il gioco funziona **in autonomia** e resta **aperto** dopo la conferenza: nessun
 
 ## 2. Flusso del giocatore
 
-1. **QR → landing `/`**: fondo primary, logo Upthere bianco (SVG), titolo in Chillax e il bottone "Entra nel mercato" (accent-400 con testo primary). Sotto, un link piccolo: "Hai già giocato? Inserisci il codice".
-2. **device_id**: il client genera `crypto.randomUUID()`, lo salva in localStorage e lo manda nell'handshake socket. Il server crea il giocatore con un nickname generato (es. `Lince42`), 100 monete e una scarpa base regalata.
+1. **QR → landing `/`**: fondo primary, logo Upthere bianco (SVG), titolo in Chillax e il bottone "Entra nel mercato" (accent-400 con testo primary).
+2. **device_id**: il client genera `crypto.randomUUID()`, lo salva in localStorage e lo manda nell'handshake socket. Il server crea il giocatore con un nickname proposto (es. `Lince42`), 100 monete e una scarpa base regalata. Il giocatore può cambiare il nome solo nella creazione del personaggio (§3).
 3. **Avatar**: tre scelte in una sola schermata, con anteprima live, poi "Entra".
-4. **Villaggio**: parte la **prima run** di 5 minuti (§5).
-5. **Reveal** a fine prima run (§12). Dopo il reveal il mondo resta aperto e si continua a giocare senza timer.
+4. **Villaggio**: arrivano i suggerimenti dei primi minuti (§5) e nell'HUD c'è la propria posizione in **classifica live** (§13). Nessun timer: il mondo resta aperto.
 
 Obiettivo di tempo: dalla scansione al villaggio in meno di 45 secondi.
 
 ## 3. Avatar
 
-Tre tratti, scelti con swatch o frecce in una sola schermata. Niente testo libero.
+Due passi, con l'anteprima live sempre visibile.
+
+**1. Chi sei**
+- **Stile**: Ragazzo o Ragazza (`avatar.body_types`). È un tratto grafico, come i capelli: il gioco non chiede né salva il genere del giocatore.
+- **Nome**: il gioco ne propone uno (pattern di `player.nickname`, es. `Lince42`) e un 🎲 ne propone altri. Il giocatore può scriverne uno suo, **solo qui**: poi resta fisso (D12).
+  - Regole: da `min_length` a `max_length` caratteri (3–14), lettere e numeri più `.`, `_` e `-`, niente spazi, unico nel villaggio (maiuscole e accenti non contano).
+  - Il server rifiuta parolacce, marchi reali e nomi riservati (Upthere, NPC, admin…) con `data/nickname_blocklist.json`, anche scritti con numeri al posto delle lettere.
+  - Sotto il campo: "Non usare il tuo vero nome."
+
+**2. Il tuo look**
 
 | Tratto | Opzioni |
 |---|---|
 | Pelle | 5 toni (`avatar.skin_tones`) |
-| Capelli | 3 stili (corti, lunghi, cappellino) × 6 colori (`avatar.hair_styles`, `avatar.hair_colors`) |
-| Felpa | 8 colori (`avatar.outfit_colors`) |
+| Capelli | ragazzo: corti, lunghi, cappellino · ragazza: lunghi, coda, codini, caschetto (`avatar.hair_by_body`) × 6 colori (`avatar.hair_colors`) |
+| Felpa | 8 colori (`avatar.outfit_colors`). Per la ragazza anche la gonna prende quel colore: insieme si leggono come un vestito |
+
+Lo stile si deve capire al primo sguardo anche a 64 px: per la ragazza contano il vestito, le acconciature dedicate, la bocca e le ciglia (corpo `skinf_*`), non i dettagli fini.
 
 L'avatar è composto da layer sovrapposti, tutti in frame da 64×64. I dettagli e il codice Phaser sono in `docs/ASSETS.md`.
 - **Base**: il corpo di Pixel Crawler, ricolorato nei 5 toni di pelle (palette swap, occhi intatti).
@@ -64,27 +74,26 @@ Mappa piccola, circa 2 schermate di telefono in verticale, disegnata con una til
 - **NPC ed edifici**: con un tap l'avatar cammina fino all'NPC e il pannello si apre all'arrivo. Così il gioco resta un gioco, ma senza far perdere tempo.
 - **Altri giocatori**: appaiono come avatar con il nickname sopra; si vedono solo quelli entro `world.visible_radius_px`. Si possono mandare **emote** (👋 🔥 😂 👟 💸 🤝). Niente chat libera.
 
-## 5. La prima run (5 minuti)
+## 5. I primi minuti: suggerimenti, nessun timer
 
-Gli eventi sono scanditi da `first_run.beats`. Ogni beat è un tooltip o un banner che non blocca il gioco e si chiude con un tap.
+**Cambiato il 14/10** (Simone): niente run a tempo, niente obiettivo personale né reveal. La sfida è la **classifica live** (§13), sempre visibile nell'HUD.
+
+Dal primo ingresso nel villaggio arrivano i suggerimenti di `first_run.beats`. Ogni beat è un banner che non blocca il gioco e si chiude con un tap; quelli su un posto hanno un bottone che porta lì. A una riconnessione quelli già passati non si ripetono.
 
 | t | Beat | Cosa vede il giocatore |
 |---|---|---|
 | 0:00 | `welcome` | "Benvenuto al villaggio! Hai 100 monete e il tuo primo paio." |
 | 0:15 | `tooltip_move` | "Tocca dove vuoi andare." |
-| 0:30 | `tooltip_passport` | "Apri il passaporto della tua scarpa: per ora c'è solo il tuo nome." |
-| 0:45 | `objective` | "Obiettivo: fai crescere del 30% il valore del tuo armadio prima che chiuda il mercato." |
-| 1:30 | `hint_stall` | "Da Tony Affari i prezzi sono bassi. Troppo bassi?" |
-| 2:30 | `hint_legend` | "MC Suola può far entrare la tua scarpa nella storia." |
-| 3:30 | `hint_market` | "Guarda la bacheca: qualcuno svende?" |
-| 4:30 | `closing_warning` | "Il mercato della tua prima giornata chiude tra 30 secondi." |
-| 5:00 | `reveal` | Schermata reveal (§12) |
+| 0:30 | `tooltip_passport` | "Apri il passaporto della tua scarpa: per ora c'è solo il tuo nome." (Apri) |
+| 1:00 | `hint_leaderboard` | "Guarda la classifica: chi ha l'armadio che vale di più?" (Apri) |
+| 1:30 | `hint_stall` | "Da Tony Affari i prezzi sono bassi. Troppo bassi?" (Vai) |
+| 2:00 | `hint_enoteca` | "Le scarpe hanno un passaporto. Anche il vino: passa dall'Enoteca DOP Digital." (Vai): è il ponte verso DOP Digital, dopo che il reveal è stato tolto |
+| 2:30 | `hint_legend` | "MC Suola può far entrare la tua scarpa nella storia." (Vai) |
+| 3:30 | `hint_market` | "Guarda la bacheca: qualcuno svende?" (Vai) |
 
-Nel frattempo partono anche i **drop di mondo** ogni 3 minuti (§11), quindi in una run se ne vedono 1 o 2.
+Nel frattempo partono anche i **drop di mondo** ogni 3 minuti (§11).
 
-**Obiettivo della run**: valore armadio finale ≥ valore iniziale × `first_run.objective.multiplier` (1,3, da tarare in playtest).
-- Valore armadio = monete + somma dei valori percepiti delle scarpe possedute.
-- Chi lo raggiunge riceve il badge "Mercante" nel reveal. Chi non lo raggiunge non perde nulla.
+Valore armadio = monete + somma dei valori percepiti delle scarpe possedute: è il numero della classifica.
 
 Come si fa crescere il valore (nessuna di queste strade viene spiegata a parole, si scoprono giocando):
 - comprando ai **drop**: la scarpa ha Upthere come primo proprietario e vale subito +25%;
@@ -96,7 +105,7 @@ Come si fa crescere il valore (nessuna di queste strade viene spiegata a parole,
 
 Dopo la prima run il timer sparisce e restano tutte le meccaniche: negozio, bacheca, drop ogni 3', Tony Affari, Dott.ssa Hash, MC Suola, classifica.
 
-Chi torna giorni dopo ritrova tutto: con lo stesso telefono basta riaprire il link, da un altro dispositivo serve il codice di recupero (§14).
+Chi torna giorni dopo ritrova tutto riaprendo il link dallo stesso telefono e dallo stesso browser. Da un altro dispositivo si ricomincia da capo (il codice di recupero è stato tolto, §14).
 
 ## 7. Il passaporto digitale
 
@@ -186,9 +195,10 @@ I falsi si possono rivendere in bacheca, come succede nel mondo reale. Il passap
 
 ## 10. MC Suola (la Leggenda)
 
-- Costo: `economy.legend.cost` (15 monete).
+- Costo: `economy.legend.cost` (6 monete: con 15 sulle scarpe economiche si perdeva, vedi D13).
 - La scarpa resta "in prestito" per `wear_duration_sec` (10 s). In quel tempo è bloccata, non vendibile, e mostra l'etichetta "in prestito a MC Suola".
 - Nel passaporto si aggiungono due eventi certificati, `LEGEND_IN` e `LEGEND_OUT`, e `legend_count` sale di 1.
+- È un **prestito**, non una vendita: la scarpa resta del giocatore (nell'armadio con l'etichetta "In prestito a MC Suola"), la catena registra la custodia.
 - Il bonus +40% conta al massimo `legend_max_counted` (2) volte per scarpa.
 - Cooldown per giocatore: `cooldown_sec` (60 s).
 - La battuta chiave di MC Suola: "Non conta che le ho messe. Conta che si può dimostrare."
@@ -196,35 +206,28 @@ I falsi si possono rivendere in bacheca, come succede nel mondo reale. Il passap
 ## 11. Drop di mondo
 
 - **Frequenza**: ogni `drops.interval_sec` (180 s) su un orologio di mondo, uguale per tutti.
-- **Annuncio**: banner e suono, per esempio "Drop alla Banca Upthere: 4 paia di Shiro 66 a 64 monete. Hai 60 secondi."
+- **Annuncio**: banner e suono, per esempio "Drop alla Banca Upthere: 8 paia di Shiro 66 a 64 monete. Hai 60 secondi."
 - **Item**: estratto a caso tra i tier `hype`, `limited` e `upthere`, pesato con `drop_weight`.
 - **Quantità**: `quantity` (4). Chi arriva prima compra, al massimo 1 paio per giocatore per drop.
 - **Prezzo**: `base_value`, pagato alla tesoreria.
 - **Mint**: la scarpa viene coniata dalla **Banca Upthere** (`minted_by = 1`) direttamente al compratore. Nel passaporto il primo anello è "Creata da Upthere", quindi vale subito +25%.
 - **Numero di serie**: "n. X di 4".
 
-## 12. Reveal di fine prima run
+## 12. Reveal di fine prima run (tolto)
 
-È il momento da mostrare anche sul palco. Una schermata scrollabile:
+Tolto il 14/10 insieme al timer della prima run: la competizione passa dalla classifica live (§13). Il ponte verso DOP Digital resta nell'Enoteca (§15).
 
-1. **"La tua giornata al mercato"**: valore armadio iniziale → finale, badge "Mercante" se l'obiettivo è raggiunto, numero di scambi, falsi evitati o presi.
-2. **Il passaporto della tua scarpa più preziosa**, con timeline completa e badge on-chain.
-3. **Il ponte**: "Questa scarpa ha avuto {N} proprietari. Ogni passaggio è certificato su blockchain. DOP Digital fa la stessa cosa con le bottiglie di vino: inquadri il QR e vedi tutta la storia, dal vigneto al tavolo." Bottone **"Scopri DOP Digital"** → https://dopdigital.it/
-4. **Codice di recupero**, grande, con "Salvalo: ti serve per rientrare da un altro telefono".
-5. Bottoni: **"Continua a giocare"** e **"Condividi"** (§16, tagliabile).
+## 13. Classifica live
 
-## 13. Classifica
+- Top 10 per valore armadio (`leaderboard`), con nickname e avatar. Bot e account di sistema non ci sono.
+- **Sempre aggiornata**: il server la ricalcola ogni `leaderboard.cache_sec` mentre c'è qualcuno nel villaggio e la manda a tutti quando cambia. La classifica aperta si ridisegna da sola.
+- **Posizione nell'HUD** sempre visibile (`🏆 4°`): pulsa quando si sale o si scende; un tap apre la classifica.
+- **Podio**: 🥇🥈🥉 al posto del numero, righe evidenziate; il primo un po' più grande.
+- È sempre visibile anche la propria riga, anche fuori dalla top 10.
 
-- Top 10 per valore armadio (`leaderboard`), con nickname e avatar.
-- Si apre da un'icona nell'HUD.
-- È sempre visibile anche la propria posizione.
+## 14. Codice di recupero (tolto)
 
-## 14. Codice di recupero
-
-- 6 caratteri dall'alfabeto senza caratteri ambigui (`player.recovery_code`), mostrati come `XXX-XXX`.
-- Si genera alla creazione del giocatore e si mostra nel reveal e nel profilo.
-- Nel DB si salva solo l'hash SHA-256.
-- Inserendo il codice sulla landing, il `device_id` corrente viene associato al giocatore esistente. Il vecchio device resta valido.
+Tolto il 16/10 (Simone): non serve per l'evento. Il gioco riconosce il ragazzo solo dal `device_id` salvato nel browser; chi cambia telefono o browser (per esempio apre il QR nel browser della fotocamera e poi in Safari) ricomincia con un personaggio nuovo. Nel DB restano, inutilizzate, la colonna `players.recovery_hash` (sempre NULL) e la SP `sp_player_recover`.
 
 ## 15. Enoteca DOP Digital
 
@@ -249,9 +252,12 @@ Pagina `/schermo` per il proiettore. Mostra un ticker live degli eventi appena c
 |---|---|
 | landing.title | Ogni scarpa ha una storia. La tua inizia adesso. |
 | landing.cta | Entra nel mercato |
-| landing.recover | Hai già giocato? Inserisci il codice |
 | avatar.title | Crea il tuo personaggio |
-| avatar.labels | Pelle · Capelli · Felpa |
+| avatar.who | Chi sei nel villaggio |
+| avatar.name_hint | Te ne proponiamo uno: puoi cambiarlo adesso, poi resta quello. Non usare il tuo vero nome. |
+| avatar.labels | Stile · Nome · Pelle · Capelli · Felpa |
+| error.NICKNAME_TAKEN | Questo nome è già preso: provane un altro. |
+| error.NICKNAME_BLOCKED | Questo nome non si può usare. Scegline un altro. |
 | avatar.cta | Entra |
 | hud.coins | {n} monete |
 | hud.wardrobe | Armadio: {n} |
@@ -267,10 +273,6 @@ Pagina `/schermo` per il proiettore. Mostra un ticker live degli eventi appena c
 | error.DROP_SOLDOUT | Finite! Al prossimo drop. |
 | error.INVENTORY_FULL | Armadio pieno: vendi qualcosa prima. |
 | error.BUSY | Il mercato è affollato, riprova. |
-| reveal.bridge | Questa scarpa ha avuto {N} proprietari. Ogni passaggio è certificato su blockchain. DOP Digital fa la stessa cosa con le bottiglie di vino: inquadri il QR e vedi tutta la storia, dal vigneto al tavolo. |
-| reveal.cta_dop | Scopri DOP Digital |
-| reveal.code | Il tuo codice: {CODE}. Salvalo: ti serve per rientrare da un altro telefono. |
-| reveal.continue | Continua a giocare |
 
 ## 19. Fuori scope
 

@@ -26,6 +26,7 @@ DOP Digital fa la stessa cosa con le bottiglie di vino. Il gioco funziona **in a
 | `data/game_config.json` | **Tutti** i numeri del gioco |
 | `data/game_items.json` | Catalogo in gioco (29 item, marchi fittizi, 16 silhouette) |
 | `data/npcs.json` | NPC, ruoli, battute, bottiglia demo DOP |
+| `data/nickname_blocklist.json` | Parole vietate nei nomi scelti dai giocatori. **Solo server**, mai nel bundle del client |
 | `data/catalog_reference.json` | Catalogo reale di riferimento (prezzi e rarità). **Uso interno, mai mostrato nel gioco** |
 | `apps/client/public/assets/` | Asset pronti: `manifest.json` per il loader, avatar a layer, atlas delle scarpe, pixel art curata |
 | `tools/` | Script Python che rigenerano dati e asset placeholder |
@@ -35,13 +36,14 @@ DOP Digital fa la stessa cosa con le bottiglie di vino. Il gioco funziona **in a
 
 1. **Server autoritativo.** Il client invia intenzioni (`listing.buy`), mai stati (saldi, prezzi, proprietari, valori).
 2. **Monete solo via ledger.** Ogni movimento passa da `coin_ledger`. Invariante: monete in circolazione = monete emesse. Il test `economy.invariants.spec` è obbligatorio e deve restare verde.
-3. **Proprietà e monete solo in stored procedure**, dentro una transazione, con l'ordine di lock definito in ARCHITECTURE: `market_listings` → `players` (id crescente) → `assets`.
+3. **Proprietà e monete solo in stored procedure**, dentro una transazione, con l'ordine di lock definito in ARCHITECTURE: `market_listings` / `drops` → `players` (id crescente) → `assets`.
 4. **La blockchain non sta mai nel percorso critico.** Lo scambio è valido al COMMIT; la certificazione arriva dopo, dal worker, con il pattern outbox. Mai chiamare la chain dentro una transazione DB.
 5. **Nessun marchio reale** nel gioco: nomi, loghi e silhouette sono fittizi. Gli sprite non devono riprodurre swoosh, tre strisce, jazz stripe o altri segni distintivi. Gli asset fantasy del pack (armi, orchi, scheletri, dungeon) sono esclusi apposta: non reintrodurli.
 6. **Gli utenti sono minorenni.**
    - Nessun dato personale: niente nome, email, telefono, posizione o foto.
    - Niente chat libera, solo emote predefinite.
-   - Nickname generati e non modificabili.
+   - Nickname proposto dal gioco; il giocatore può cambiarlo **solo alla creazione del personaggio**, poi resta fisso (D12). Il server applica lunghezza e caratteri da config (niente spazi) e il filtro di `data/nickname_blocklist.json`. La schermata invita a non usare il proprio vero nome.
+   - Lo stile ragazzo/ragazza è un tratto grafico dell'avatar, come i capelli: non è un dato del giocatore.
    - `device_id` = UUID v4 casuale generato dal client. **Niente fingerprinting.**
    - Anonimizzazione dopo 30 giorni di inattività.
    - Nessun analytics né tracker di terze parti.
@@ -66,8 +68,9 @@ DOP Digital fa la stessa cosa con le bottiglie di vino. Il gioco funziona **in a
   - PM2 in **fork mode, 1 istanza**: lo stato socket è in memoria, quindi niente cluster mode.
 - **client**: Vite + TypeScript + Phaser 3 (`pixelArt: true`). L'UI è un overlay HTML/CSS sopra il canvas.
 - **shared**: tipi, nomi degli eventi socket, `perceivedValue()`. È la sorgente unica per server e client.
-- **chain**: interfaccia `ChainNotary`, con `MockNotary` per lo sviluppo (default) e un'implementazione testnet (decisione D1).
-- **test**: Jest + ts-jest su server e shared. Lo script di load test usa Artillery con il motore socket.io.
+- **chain**: interfaccia `ChainNotary`, con `CommercioNotary` per **Commercio.network testnet** (D1, `chain.notary = "commercio"`) tramite le API commercio.app, come `@mvl/commercio-network` nel repo `microservices` (vedi ARCHITECTURE §6), e `MockNotary`. Senza `CN_*` nel `.env` si ripiega sul Mock con un avviso, tranne in produzione, dove il server non parte.
+- **dominio**: https://civitek.upthere.it (D3).
+- **test**: Jest + ts-jest su server e shared. Load test e simulazione dell'economia usano giocatori simulati con `socket.io-client` (`tools/lib/sim-clients.ts`), non Artillery: misurano ogni ack e usano i tipi del protocollo.
 
 ### ESM / CommonJS
 Ci sono già stati problemi con Jest + ESM, quindi il server resta **CommonJS**.
@@ -78,15 +81,26 @@ Ci sono già stati problemi con Jest + ESM, quindi il server resta **CommonJS**.
 ## Convenzioni
 
 - Le stored procedure pubbliche `sp_*` gestiscono la transazione. Quelle interne `_sp_*` **non** aprono transazioni: in MySQL uno `START TRANSACTION` annidato fa un commit implicito.
-- Per leggere un valore che può mancare usa `SET v = (SELECT … LIMIT 1)`, non `SELECT … INTO`, così eviti i warning "no data".
+- Letture dentro le SP (MySQL 8, verificato sui lock reali; dettagli in testa a `sql/003_procedures.sql`):
+  - `SET v = (SELECT …)` è una lettura **con lock condiviso**, anche con binlog ROW. Su un range o su una riga che manca prende i gap lock, e due transazioni che poi inseriscono nello stesso gap vanno in deadlock. Usala solo per PK/unique su righe che esistono, meglio se già bloccate;
+  - per valori che possono mancare, conteggi e range usa `SELECT MAX(…)/COUNT(*) … INTO v`: nessun lock e sempre una riga, quindi niente warning "no data". Fallo dopo aver preso i lock, perché lo snapshot nasce alla prima lettura consistente della transazione;
+  - la testa della catena di un asset sta in `assets.head_hash`: non si legge l'ultimo evento da `asset_events`.
 - Errori delle SP: `SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'UPPER_SNAKE'` (es. `NOT_OWNER`, `NO_FUNDS`). Ogni codice corrisponde 1:1 a un codice errore del gateway e a un messaggio UI in italiano.
-- Deadlock (errore 1213): il gateway riprova una volta, poi restituisce `BUSY`.
+- Deadlock (errore 1213): `DbService.call` riprova una volta, poi lancia `SpError('BUSY')`. Lo stesso vale per il timeout dei lock (1205).
 - Eventi socket nel formato `dominio.azione` (es. `listing.buy`), con payload validati lato server.
-- Migrazioni SQL numerate in `sql/` (`001_schema.sql`, `002_procedures.sql`, …). Il seed in `sql/seed/` è generato da `data/*.json` con uno script.
+- Migrazioni SQL numerate in `sql/` (`001_schema.sql`, `002_functions.sql`, …). Una migrazione già applicata non si modifica: se ne aggiunge una nuova (il runner controlla il checksum). I file girano sia con `npm run db:migrate` sia a mano con il client `mysql`.
+- Il seed `sql/seed/001_seed.sql` è generato da `data/*.json` (`tools/seed-from-json.ts`) ed è idempotente. All'avvio il server riallinea comunque `game_settings` a `game_config.json`.
+- `fn_setting` è una FUNCTION: con il binlog attivo crearla richiede SUPER oppure `log_bin_trust_function_creators = 1` (vedi `sql/002_functions.sql`).
 
-## Comandi da creare
+## Comandi
 
-`npm run dev:server` · `npm run dev:client` · `npm test` · `npm run db:migrate` · `npm run db:seed` · `npm run db:reset` (solo dev/staging) · `npm run loadtest` · `npm run sim:economy`
+`npm run dev` (server e client insieme, senza toccare il DB) · `npm run dev:server` · `npm run dev:client` · `npm test` · `npm run typecheck` · `npm run build` · `npm run db:migrate` · `npm run db:seed` · `npm run db:reset` (solo database `*_dev`, `*_test`, `*_staging`) · `npm run db:bundle` (script SQL unico per la produzione in `deploy/out/`, da lanciare a mano; `-- --from NNN` per un aggiornamento). Deploy: `deploy/README.md`
+
+`npm run loadtest` (150 client per 10 min, p95 degli ack < 300 ms) · `npm run sim:economy` (100 giocatori per 30 min, tesoreria, distacco in classifica, invarianti). Entrambi vogliono un server acceso; fuori da localhost serve `--yes`, perché i giocatori finti finiscono nel DB e in classifica.
+
+`npm test` azzera e ricrea il database di test (`DB_TEST_NAME`, default `sneaker_passport_test`): serve un MySQL 8 raggiungibile con le credenziali di `.env` (vedi `.env.example`).
+
+Versioni bloccate per CommonJS: NestJS **11** (la 12 è solo ESM), TypeScript **6.0** (ts-jest non supporta la 7), Phaser **3.90**.
 
 ## Definition of Done (per ogni milestone)
 
@@ -107,3 +121,10 @@ Ci sono già stati problemi con Jest + ESM, quindi il server resta **CommonJS**.
 ## Database
 
 L'MCP MySQL disponibile punta all'ambiente di **test**. Per la produzione prepara script SQL da lanciare a mano, non usare l'MCP.
+
+**DB `civitek` sul server di test: si allinea in autonomia** (autorizzazione di Simone, 14/10). Ogni migrazione nuova in `sql/` si applica anche lì via MCP, senza chiedere conferma, nella stessa sessione in cui nasce:
+- uno statement per chiamata, senza `DELIMITER`; una SP che c'era già si ridefinisce con `CREATE OR REPLACE PROCEDURE`;
+- poi la riga in `schema_migrations` con lo sha256 del file, così `npm run db:migrate` la vede già applicata;
+- se la migrazione usa chiavi nuove di `game_settings` con `fn_setting`, si allineano anche quelle (upsert dal seed rigenerato): il server le riallinea solo quando riparte su quel DB;
+- il connettore MCP rifiuta ogni statement che contiene la parola `GRANT`, anche dentro una stringa: si scrive `'GR\ANT'`, che per MySQL è la stessa stringa;
+- alla fine, la lista secca degli oggetti modificati nella risposta.

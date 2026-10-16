@@ -53,7 +53,8 @@
     }
   },
   "links": {
-    "dop_digital": "https://dopdigital.it/"
+    "dop_digital": "https://dopdigital.it/",
+    "game": "https://civitek.upthere.it"
   },
   "player": {
     "start_coins": 100,
@@ -90,14 +91,14 @@
         "Tasso",
         "Scoiattolo"
       ],
-      "editable": false
-    },
-    "recovery_code": {
-      "length": 6,
-      "alphabet": "ABCDEFGHJKMNPQRSTUVWXYZ23456789",
-      "display_format": "XXX-XXX"
+      "editable": "solo_alla_creazione",
+      "min_length": 3,
+      "max_length": 14,
+      "allowed_pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}._-]*$"
     },
     "inactivity_anonymize_days": 30,
+    "anonymize_every_min": 60,
+    "anonymize_batch": 200,
     "rate_limit_actions_per_sec": 8
   },
   "avatar": {
@@ -107,7 +108,11 @@
       "origin_x": 0.5,
       "origin_y": 0.75
     },
-    "traits": "3 tratti: pelle (5 toni) · capelli (3 stili x 6 colori) · felpa (8 colori)",
+    "traits": "stile (ragazzo/ragazza) + 3 tratti: pelle (5 toni) · capelli (3 stili per il ragazzo, 4 per la ragazza, x 6 colori) · felpa (8 colori; per la ragazza anche la gonna: un vestito)",
+    "body_types": [
+      "ragazzo",
+      "ragazza"
+    ],
     "skin_tones": [
       "#f6d3b8",
       "#e3b08b",
@@ -118,8 +123,24 @@
     "hair_styles": [
       "corti",
       "lunghi",
-      "cappellino"
+      "cappellino",
+      "coda",
+      "codini",
+      "caschetto"
     ],
+    "hair_by_body": {
+      "ragazzo": [
+        0,
+        1,
+        2
+      ],
+      "ragazza": [
+        1,
+        3,
+        4,
+        5
+      ]
+    },
     "hair_colors": [
       "#2b1d14",
       "#1a1a1a",
@@ -166,12 +187,6 @@
     "side_left": "flipX dello sheet side"
   },
   "first_run": {
-    "duration_sec": 300,
-    "objective": {
-      "type": "wardrobe_value_growth",
-      "multiplier": 1.3,
-      "_note": "da tarare in playtest"
-    },
     "beats": [
       {
         "at_sec": 0,
@@ -186,12 +201,16 @@
         "id": "tooltip_passport"
       },
       {
-        "at_sec": 45,
-        "id": "objective"
+        "at_sec": 60,
+        "id": "hint_leaderboard"
       },
       {
         "at_sec": 90,
         "id": "hint_stall"
+      },
+      {
+        "at_sec": 120,
+        "id": "hint_enoteca"
       },
       {
         "at_sec": 150,
@@ -200,14 +219,6 @@
       {
         "at_sec": 210,
         "id": "hint_market"
-      },
-      {
-        "at_sec": 270,
-        "id": "closing_warning"
-      },
-      {
-        "at_sec": 300,
-        "id": "reveal"
       }
     ]
   },
@@ -224,23 +235,56 @@
     "market_fee_min": 1,
     "listing_min_price": 2,
     "listing_max_multiplier": 5,
+    "market_page_size": 50,
     "shop_price": "base_value",
     "auth_cost": 3,
     "legend": {
-      "cost": 15,
+      "cost": 6,
       "wear_duration_sec": 10,
       "cooldown_sec": 60
     },
     "bots": {
       "count": 8,
-      "buy_pct": 0.7,
+      "buy_pct": 0.85,
       "sell_pct": 1.15,
       "min_treasury_pct_to_buy": 0.2,
       "tick_sec": 5,
       "max_inventory_per_bot": 6,
       "full_activity_below_humans_online": 10,
       "min_activity_at_humans_online": 40,
-      "min_activity": 0.2
+      "min_activity": 0.5,
+      "start_stock": 3,
+      "restock_below": 2,
+      "restock_count": 2,
+      "max_open_listings": 2,
+      "styles": {
+        "compra_sottoprezzo": {
+          "buy_first": 0.8,
+          "restock_tiers": [
+            "base",
+            "trend"
+          ]
+        },
+        "vende_trend": {
+          "buy_first": 0.3,
+          "restock_tiers": [
+            "trend"
+          ]
+        },
+        "vende_base": {
+          "buy_first": 0.3,
+          "restock_tiers": [
+            "base"
+          ]
+        },
+        "collezionista_hype": {
+          "buy_first": 0.7,
+          "restock_tiers": [
+            "base",
+            "trend"
+          ]
+        }
+      }
     },
     "stall": {
       "price_pct_of_base": 0.5,
@@ -266,7 +310,7 @@
   },
   "drops": {
     "interval_sec": 180,
-    "quantity": 4,
+    "quantity": 8,
     "window_sec": 60,
     "max_per_player": 1,
     "price": "base_value",
@@ -289,24 +333,42 @@
       "💸",
       "🤝"
     ],
-    "tap_npc_behaviour": "l'avatar cammina fino all'NPC e il pannello si apre all'arrivo"
+    "tap_npc_behaviour": "l'avatar cammina fino all'NPC e il pannello si apre all'arrivo",
+    "map": "assets/maps/village.json",
+    "walk_speed_px_s": 72,
+    "camera_zoom": 2,
+    "emote_duration_ms": 2500,
+    "reconcile_px": 24
   },
   "chain": {
     "enabled": true,
-    "notary": "mock",
-    "network": "TODO-D1",
+    "notary": "commercio",
+    "network": "commercio-testnet11k",
     "batch_interval_ms": 2000,
     "max_items_per_batch": 20,
     "max_attempts": 5,
-    "explorer_tx_url": "TODO-D1",
+    "health_max_pending_sec": 120,
+    "explorer_tx_url": "https://testnet.commercio.network/transactions/detail/{txHash}",
     "certify": "MINT (tranne FAKE_MINT) + ogni evento con almeno un giocatore umano",
     "mock": {
       "min_delay_ms": 1500,
       "max_delay_ms": 4000
+    },
+    "commercio": {
+      "_note": "API commercio.app come @mvl/commercio-network (repo microservices). Ambiente dev = testnet. Credenziali solo in .env: CN_USERNAME, CN_PASSWORD, CN_RECIPIENT_ADDRESS",
+      "auth_token_url": "https://devlogin.commercio.app/auth/realms/commercio/protocol/openid-connect/token",
+      "client_id": "dev.commercio.app",
+      "api_url": "https://dev-api.commercio.app/v1",
+      "schema_uri": "https://civitek.upthere.it/schema/sneaker-passport-batch",
+      "schema_version": "1",
+      "poll_interval_ms": 2000,
+      "poll_timeout_ms": 90000,
+      "http_timeout_ms": 10000
     }
   },
   "leaderboard": {
     "metric": "wardrobe_value",
-    "size": 10
+    "size": 10,
+    "cache_sec": 3
   }
 }

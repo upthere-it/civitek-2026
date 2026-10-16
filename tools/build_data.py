@@ -252,7 +252,7 @@ game_config = {
             "warn": "bianco su warn = 4,47:1: usare solo testo bold >= 14 px oppure warn come bordo/icona su fondo chiaro",
         },
     },
-    "links": {"dop_digital": "https://dopdigital.it/"},
+    "links": {"dop_digital": "https://dopdigital.it/", "game": "https://civitek.upthere.it"},
     "player": {
         "start_coins": 100,
         "starter_item_pool": starter_pool,
@@ -262,17 +262,27 @@ game_config = {
             "number_digits": 2,
             "animals": ["Volpe", "Lince", "Gufo", "Lupo", "Orso", "Riccio", "Lontra", "Corvo", "Geco", "Delfino",
                         "Koala", "Panda", "Castoro", "Fenicottero", "Camaleonte", "Pinguino", "Tasso", "Scoiattolo"],
-            "editable": False,
+            # il gioco propone un nome generato; il giocatore può cambiarlo SOLO alla creazione del personaggio,
+            # poi resta fisso. Il server applica anche data/nickname_blocklist.json (D12 in PLAN.md)
+            "editable": "solo_alla_creazione",
+            "min_length": 3,
+            "max_length": 14,
+            "allowed_pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}._-]*$",
         },
-        "recovery_code": {"length": 6, "alphabet": "ABCDEFGHJKMNPQRSTUVWXYZ23456789", "display_format": "XXX-XXX"},
         "inactivity_anonymize_days": 30,
+        # job di anonimizzazione: ogni quanto gira e quanti giocatori per transazione
+        "anonymize_every_min": 60,
+        "anonymize_batch": 200,
         "rate_limit_actions_per_sec": 8,
     },
     "avatar": {
         "frame": {"width": 64, "height": 64, "origin_x": 0.5, "origin_y": 0.75},
-        "traits": "3 tratti: pelle (5 toni) · capelli (3 stili x 6 colori) · felpa (8 colori)",
+        "traits": "stile (ragazzo/ragazza) + 3 tratti: pelle (5 toni) · capelli (3 stili per il ragazzo, 4 per la ragazza, x 6 colori) · felpa (8 colori; per la ragazza anche la gonna: un vestito)",
+        "body_types": ["ragazzo", "ragazza"],
         "skin_tones": ["#f6d3b8", "#e3b08b", "#c68863", "#8d5a3c", "#5c3a26"],
-        "hair_styles": ["corti", "lunghi", "cappellino"],
+        "hair_styles": ["corti", "lunghi", "cappellino", "coda", "codini", "caschetto"],
+        # acconciature proposte per ciascuno stile (indici in hair_styles): la ragazza si riconosce anche dai capelli
+        "hair_by_body": {"ragazzo": [0, 1, 2], "ragazza": [1, 3, 4, 5]},
         "hair_colors": ["#2b1d14", "#1a1a1a", "#8a5a2b", "#d9b45a", "#c8102e", "#2f6fdb"],
         "outfit_colors": ["#1d1d1f", "#f4f4f4", "#c8102e", "#2f6fdb", "#B26998", "#f2c230", "#7b4fd6", "#3a8f4f"],
         "pants_color": "#2d3a5a",
@@ -284,18 +294,17 @@ game_config = {
         "side_left": "flipX dello sheet side",
     },
     "first_run": {
-        "duration_sec": 300,
-        "objective": {"type": "wardrobe_value_growth", "multiplier": 1.3, "_note": "da tarare in playtest"},
+        # suggerimenti dei primi minuti (GAME_DESIGN §5), dal momento in cui si entra nel villaggio.
+        # Niente timer né obiettivo (14/10): la sfida è la classifica live.
         "beats": [
             {"at_sec": 0, "id": "welcome"},
             {"at_sec": 15, "id": "tooltip_move"},
             {"at_sec": 30, "id": "tooltip_passport"},
-            {"at_sec": 45, "id": "objective"},
+            {"at_sec": 60, "id": "hint_leaderboard"},
             {"at_sec": 90, "id": "hint_stall"},
+            {"at_sec": 120, "id": "hint_enoteca"},
             {"at_sec": 150, "id": "hint_legend"},
             {"at_sec": 210, "id": "hint_market"},
-            {"at_sec": 270, "id": "closing_warning"},
-            {"at_sec": 300, "id": "reveal"},
         ],
     },
     "economy": {
@@ -305,19 +314,31 @@ game_config = {
         "market_fee_min": 1,
         "listing_min_price": 2,
         "listing_max_multiplier": 5,
+        "market_page_size": 50,
         "shop_price": "base_value",
         "auth_cost": 3,
-        "legend": {"cost": 15, "wear_duration_sec": 10, "cooldown_sec": 60},
+        # D13 (14/10): 6 e non 15, così MC Suola conviene anche sulle scarpe economiche (sim:economy)
+        "legend": {"cost": 6, "wear_duration_sec": 10, "cooldown_sec": 60},
         "bots": {
             "count": 8,
-            "buy_pct": 0.70,
+            "buy_pct": 0.85,  # D13: i bot sono la liquidità quando i giocatori finiscono le monete
             "sell_pct": 1.15,
             "min_treasury_pct_to_buy": 0.20,
             "tick_sec": 5,
             "max_inventory_per_bot": 6,
             "full_activity_below_humans_online": 10,
             "min_activity_at_humans_online": 40,
-            "min_activity": 0.2,
+            "min_activity": 0.5,  # D13: con tanti giocatori i bot restano attivi
+            "start_stock": 3,
+            "restock_below": 2,
+            "restock_count": 2,
+            "max_open_listings": 2,
+            "styles": {
+                "compra_sottoprezzo": {"buy_first": 0.8, "restock_tiers": ["base", "trend"]},
+                "vende_trend": {"buy_first": 0.3, "restock_tiers": ["trend"]},
+                "vende_base": {"buy_first": 0.3, "restock_tiers": ["base"]},
+                "collezionista_hype": {"buy_first": 0.7, "restock_tiers": ["base", "trend"]},
+            },
         },
         "stall": {"price_pct_of_base": 0.50, "max_fakes_on_sale": 3, "restock_sec": 90, "fake_tiers": ["hype", "limited", "upthere"]},
     },
@@ -334,7 +355,7 @@ game_config = {
     },
     "drops": {
         "interval_sec": 180,
-        "quantity": 4,
+        "quantity": 8,  # D13: per 100 ragazzi
         "window_sec": 60,
         "max_per_player": 1,
         "price": "base_value",
@@ -347,19 +368,37 @@ game_config = {
         "max_players_per_room": 150,
         "emotes": ["👋", "🔥", "😂", "👟", "💸", "🤝"],
         "tap_npc_behaviour": "l'avatar cammina fino all'NPC e il pannello si apre all'arrivo",
+        "map": "assets/maps/village.json",
+        "walk_speed_px_s": 72,
+        "camera_zoom": 2,
+        "emote_duration_ms": 2500,
+        "reconcile_px": 24,
     },
     "chain": {
         "enabled": True,
-        "notary": "mock",
-        "network": "TODO-D1",
+        "notary": "commercio",
+        "network": "commercio-testnet11k",
         "batch_interval_ms": 2000,
         "max_items_per_batch": 20,
         "max_attempts": 5,
-        "explorer_tx_url": "TODO-D1",
+        # /api/health: un evento in coda da più di così è un avviso (worker fermo o testnet lenta)
+        "health_max_pending_sec": 120,
+        "explorer_tx_url": "https://testnet.commercio.network/transactions/detail/{txHash}",
         "certify": "MINT (tranne FAKE_MINT) + ogni evento con almeno un giocatore umano",
         "mock": {"min_delay_ms": 1500, "max_delay_ms": 4000},
+        "commercio": {
+            "_note": "API commercio.app come @mvl/commercio-network (repo microservices). Ambiente dev = testnet. Credenziali solo in .env: CN_USERNAME, CN_PASSWORD, CN_RECIPIENT_ADDRESS",
+            "auth_token_url": "https://devlogin.commercio.app/auth/realms/commercio/protocol/openid-connect/token",
+            "client_id": "dev.commercio.app",
+            "api_url": "https://dev-api.commercio.app/v1",
+            "schema_uri": "https://civitek.upthere.it/schema/sneaker-passport-batch",
+            "schema_version": "1",
+            "poll_interval_ms": 2000,
+            "poll_timeout_ms": 90000,
+            "http_timeout_ms": 10000,
+        },
     },
-    "leaderboard": {"metric": "wardrobe_value", "size": 10},
+    "leaderboard": {"metric": "wardrobe_value", "size": 10, "cache_sec": 3},
 }
 
 # drop pool check
@@ -398,7 +437,7 @@ npcs = {
         },
         {
             "player_id": 4, "role": "LEGEND", "name": "MC Suola", "zone": "palco", "sprite_key": "avatar", "sprite": {"type": "avatar", "skin": 3, "hair_style": "cappellino", "hair_color": "#f2c230", "outfit_color": "#1d1d1f", "shoes_color": "#c8102e", "note": "costruito con i layer dell'avatar: stesso stile dei giocatori, ma riconoscibile"},
-            "purpose": "Per 15 monete indossa la scarpa per 10 secondi: due anelli nel passaporto (LEGEND_IN/LEGEND_OUT) e +40% di valore.",
+            "purpose": "Per 6 monete indossa la scarpa per 10 secondi: due anelli nel passaporto (LEGEND_IN/LEGEND_OUT) e +40% di valore.",
             "lines": {
                 "idle": ["Le indosso dieci secondi e la tua scarpa entra nella storia.", "Non conta che le ho messe. Conta che si può dimostrare."],
                 "wearing": ["Un attimo che faccio due foto…"],

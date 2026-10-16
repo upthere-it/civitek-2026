@@ -36,7 +36,9 @@ sneaker-passport/
 ├── sql/
 │   ├── 001_schema.sql
 │   ├── 002_functions.sql
-│   ├── 003_procedures.sql
+│   ├── 003_procedures.sql     procedure interne, giocatore, bacheca
+│   ├── 004_chain_procedures.sql
+│   ├── 005_economy_check.sql  invarianti I1–I6
 │   └── seed/                  generato da tools/seed-from-json.ts
 ├── packages/shared/src/       events.ts, types.ts, valuation.ts, config.ts
 ├── apps/server/src/
@@ -51,7 +53,7 @@ sneaker-passport/
 │   ├── src/main.ts, scenes/ (Boot, Avatar, Village), ui/ (overlay HTML), net/
 │   └── public/assets/         GIÀ PRESENTE: manifest.json, avatar/, shoes/, vendor/pixel-crawler/ (vedi ASSETS.md)
 │                              da aggiungere: tilemap Tiled del villaggio, suoni
-├── tools/                     seed-from-json.ts, sim-economy.ts, loadtest.yml (da creare)
+├── tools/                     seed-from-json.ts, loadtest.ts, sim-economy.ts (giocatori simulati in lib/sim-clients.ts)
 │   ├── build_data.py          rigenera data/*.json
 │   └── assets/                gen_avatar.py, gen_shoes.py, preview_avatar.py (rigenerano gli asset placeholder)
 ├── vendor/                    pack originale Pixel Crawler (zip, con i sorgenti .aseprite): non servito al client
@@ -95,9 +97,12 @@ CREATE TABLE players (
   avatar_hair_color TINYINT UNSIGNED NULL,         -- indice in avatar.hair_colors
   avatar_outfit TINYINT UNSIGNED NULL,
   coins         INT NOT NULL DEFAULT 0,
-  recovery_hash CHAR(64) NULL,
+  recovery_hash CHAR(64) NULL,                    -- non più usata: codice di recupero tolto il 16/10
   first_run_started_at   DATETIME(6) NULL,
   first_run_completed_at DATETIME(6) NULL,
+  first_run_start_value  INT NULL,                -- valore armadio al primo ingresso (010)
+  first_run_end_value    INT NULL,                -- non più usate (run a tempo tolta il 14/10)
+  first_run_merchant     TINYINT(1) NOT NULL DEFAULT 0,
   last_seen_at  DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   anonymized_at DATETIME(6) NULL,
   created_at    DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -108,7 +113,7 @@ CREATE TABLE players (
   KEY ix_players_last_seen (is_system, last_seen_at)
 ) ENGINE=InnoDB;
 
-CREATE TABLE player_devices (           -- un giocatore può avere più device (codice di recupero)
+CREATE TABLE player_devices (           -- device del giocatore (oggi uno: il recupero col codice è stato tolto)
   device_hash CHAR(64) NOT NULL PRIMARY KEY,
   player_id   BIGINT NOT NULL,
   created_at  DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -140,6 +145,7 @@ CREATE TABLE assets (
   auth_verified TINYINT(1) NOT NULL DEFAULT 0, -- badge ✅ Autentica
   legend_count  TINYINT UNSIGNED NOT NULL DEFAULT 0,
   locked_until  DATETIME(6) NULL,              -- prestito a MC Suola
+  head_hash     CHAR(64) NULL,                 -- hash dell'ultimo anello (vedi _sp_append_event)
   created_at    DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   UNIQUE KEY uq_assets_public (public_id),
   UNIQUE KEY uq_assets_item_serial (item_id, serial, is_fake),
@@ -246,9 +252,12 @@ BEGIN
   DECLARE v_now    DATETIME(6) DEFAULT NOW(6);
   DECLARE v_hash   CHAR(64);
   DECLARE v_status VARCHAR(10) DEFAULT 'NONE';
+  DECLARE v_humans INT;
 
-  SET v_prev = (SELECT hash FROM asset_events
-                 WHERE asset_id = p_asset_id ORDER BY id DESC LIMIT 1);
+  -- testa della catena dalla riga dell'asset, già bloccata dal chiamante: lock sulla PK, nessun range
+  -- su asset_events (con SET v_prev = (SELECT … ORDER BY id DESC LIMIT 1) i mint concorrenti andavano
+  -- in deadlock sul gap in fondo all'indice: vedi la nota sotto)
+  SELECT head_hash INTO v_prev FROM assets WHERE id = p_asset_id FOR UPDATE;
 
   SET v_hash = SHA2(CONCAT_WS('|', p_asset_id, p_event, IFNULL(p_from, ''), p_to, p_price,
                               IFNULL(v_prev, ''), DATE_FORMAT(v_now, '%Y-%m-%d %H:%i:%s.%f')), 256);
@@ -256,13 +265,14 @@ BEGIN
   -- regola: ogni MINT autentico + ogni evento (non FAKE_MINT) con almeno un umano
   IF p_event = 'MINT' THEN
     SET v_status = 'PENDING';
-  ELSEIF p_event <> 'FAKE_MINT'
-     AND EXISTS (SELECT 1 FROM players WHERE id IN (p_from, p_to) AND is_system = 0) THEN
-    SET v_status = 'PENDING';
+  ELSEIF p_event <> 'FAKE_MINT' THEN
+    SELECT COUNT(*) INTO v_humans FROM players WHERE id IN (p_from, p_to) AND is_system = 0;
+    IF v_humans > 0 THEN SET v_status = 'PENDING'; END IF;
   END IF;
 
   INSERT INTO asset_events (asset_id, event, from_id, to_id, price, prev_hash, hash, created_at, chain_status)
   VALUES (p_asset_id, p_event, p_from, p_to, p_price, v_prev, v_hash, v_now, v_status);
+  UPDATE assets SET head_hash = v_hash WHERE id = p_asset_id;
 END$$
 
 -- Sposta monete e scrive il ledger. Il CHECK coins >= 0 blocca i saldi negativi.
@@ -298,6 +308,13 @@ BEGIN
 END$$
 ```
 
+**Letture e lock nelle SP (MySQL 8).** `SET v = (SELECT …)` dentro una stored procedure è una lettura con lock condiviso, anche con binlog ROW (verificato con `performance_schema.data_locks`). Su un range o su una riga che non c'è prende anche i gap lock. In M0 i test di registrazione simultanea andavano in deadlock proprio così: due mint prendevano lo stesso gap in fondo a `ix_ev_asset` e poi ci inserivano. Per questo:
+- la testa della catena sta in `assets.head_hash`;
+- le letture che possono mancare, i conteggi e i range usano `SELECT agg(…) INTO`, senza lock, dopo aver preso i lock della transazione;
+- `SET v = (SELECT …)` resta solo per PK su righe esistenti e già bloccate.
+
+Lo stress test (200 registrazioni e 150 acquisti incrociati su 50 connessioni) chiude con 0 deadlock.
+
 Per i falsi il numero di serie viene dallo stesso contatore dell'originale: il falso "sembra" un numero valido. Il vincolo `UNIQUE (item_id, serial, is_fake)` lo permette.
 
 ### Procedura pubblica di riferimento: acquisto da bacheca
@@ -327,7 +344,7 @@ BEGIN
   SET v_coins = (SELECT coins FROM players WHERE id = p_buyer_id);
   IF v_coins < v_price THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'NO_FUNDS'; END IF;
 
-  SET v_inv = (SELECT COUNT(*) FROM assets WHERE owner_id = p_buyer_id);
+  SELECT COUNT(*) INTO v_inv FROM assets WHERE owner_id = p_buyer_id;  -- senza lock: niente gap su ix_assets_owner
   IF v_inv >= CAST(fn_setting('player.max_inventory') AS UNSIGNED) THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'INVENTORY_FULL';
   END IF;
@@ -362,41 +379,51 @@ DELIMITER ;
 
 | Procedura | Cosa fa | Errori |
 |---|---|---|
-| `sp_player_get_or_create(device_hash, nickname_candidate, recovery_hash)` | Trova il giocatore dal device o lo crea: `GRANT` di 100 monete + `_sp_mint` della scarpa regalo a prezzo 0 | `NICKNAME_TAKEN` (il server riprova con un altro nickname) |
-| `sp_player_set_avatar(player, skin, hair, hair_color, outfit)` | Solo se l'avatar non è ancora impostato. Gli indici sono validati contro `game_settings` | `AVATAR_ALREADY_SET`, `AVATAR_INVALID` |
-| `sp_player_recover(recovery_hash, device_hash)` | Associa il device al giocatore esistente | `CODE_NOT_FOUND` |
-| `sp_shop_buy(player, item)` | Item con `"shop"` tra le sources: `_sp_move_coins(player→1, SHOP)` + `_sp_mint(minted_by 2)` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
-| `sp_listing_create(player, asset, price)` | Prezzo tra `listing_min_price` e `valore percepito × listing_max_multiplier` (il valore lo passa il server, calcolato da `shared`) | `NOT_OWNER`, `ASSET_LOCKED`, `PRICE_OUT_OF_RANGE`, duplicato → `ALREADY_LISTED` |
-| `sp_listing_cancel(player, listing)` | | `NOT_OWNER`, `LISTING_CLOSED` |
-| `sp_listing_buy(listing, buyer)` | Vedi sopra | |
-| `sp_bot_buy(listing, bot)` | Come `listing_buy`, ma paga la tesoreria (`BOT_BUY`) e non c'è commissione. Controlla la soglia di tesoreria | `TREASURY_LOW` |
-| `sp_stall_restock(item)` | `_sp_mint(to 3, minted_by 3, is_fake 1)` | |
-| `sp_stall_buy(player, asset)` | `STALL` verso la tesoreria, `TRANSFER 3→player` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
-| `sp_auth_request(player, asset)` | `AUTH` verso la tesoreria. Se falso: `fake_revealed = 1`, altrimenti `auth_verified = 1`. Restituisce il verdetto | `NOT_OWNER`, `NO_FUNDS` |
-| `sp_legend_wear(player, asset)` | `LEGEND` verso la tesoreria, `TRANSFER player→4` come `LEGEND_IN`, `locked_until = now + 10 s` | `NOT_OWNER`, `ASSET_LOCKED`, `LEGEND_COOLDOWN`, `LEGEND_MAXED`, `NO_FUNDS` |
-| `sp_legend_return(asset)` | Chiamata dallo scheduler: `LEGEND_OUT 4→ex owner`, `legend_count + 1`, sblocco | |
-| `sp_drop_open(item, quantity, window_sec)` | Crea il drop | |
-| `sp_drop_claim(drop, player)` | `DROP` verso la tesoreria, `_sp_mint(minted_by 1, drop_id)`, `sold + 1`, `assets.drop_serial = sold` | `DROP_CLOSED`, `DROP_SOLDOUT`, `DROP_ALREADY_CLAIMED`, `NO_FUNDS`, `INVENTORY_FULL` |
-| `sp_bot_restock(bot, item)` | `_sp_mint(to bot, minted_by 2)` | |
-| `sp_chain_recover_sending()` | All'avvio: `SENDING` → `PENDING` (rischio accettato: un hash notarizzato due volte) | |
-| `sp_chain_claim_batch(limit, batch_id)` | `UPDATE … SET SENDING, chain_batch, attempts+1 WHERE PENDING ORDER BY id LIMIT n`, poi `SELECT` del batch | |
-| `sp_chain_mark_confirmed(batch_id, tx)` | `CONFIRMED` + `chain_tx`. Restituisce `asset_id`, `from_id`, `to_id` per le notifiche | |
-| `sp_chain_mark_failed(batch_id, error, max_attempts)` | Torna `PENDING`, oppure `FAILED` oltre `max_attempts` | |
-| `sp_economy_check()` | Esegue gli invarianti I1–I6 e restituisce le violazioni | |
-| `sp_anonymize_inactive(days)` | Per i giocatori inattivi: azzera `device_hash`, `recovery_hash` e avatar, cancella `player_devices`, imposta `anonymized_at`. Le catene restano integre | |
+| `sp_player_get_or_create(device_hash, nickname_candidate, recovery_hash)` ✅ M0 | Trova il giocatore dal device o lo crea: `GRANT` di 100 monete + `_sp_mint` della scarpa regalo a prezzo 0. Restituisce `player_id`, `created`, `gift_asset_id` | `NICKNAME_TAKEN` / `RECOVERY_TAKEN` (il server riprova con un altro valore), `DEVICE_TAKEN` (stesso device in parallelo: il server richiama la SP) |
+| `sp_player_set_avatar(player, skin, hair, hair_color, outfit)` | Solo se l'avatar non è ancora impostato. Gli indici sono validati contro `game_settings`. Resta per i chiamanti vecchi: la creazione del personaggio usa `sp_player_set_profile` | `AVATAR_ALREADY_SET`, `AVATAR_INVALID` |
+| `sp_player_set_profile(player, nickname, body, skin, hair, hair_color, outfit)` ✅ 009 | Creazione del personaggio (D12): stile, aspetto e nome, una volta sola. Ricontrolla la lunghezza del nome; il formato e le parole vietate li controlla il server prima. Un nome già usato (collation `_ai_ci`: maiuscole e accenti non contano) → 1062 → `NICKNAME_TAKEN` | `AVATAR_ALREADY_SET`, `AVATAR_INVALID`, `NICKNAME_INVALID`, `NICKNAME_TAKEN` |
+| `sp_player_recover(recovery_hash, device_hash)` (010, **non più usata**) | Associava un device al giocatore del codice di recupero, tolto il 16/10 | `CODE_NOT_FOUND` |
+| `sp_run_start(player, start_value)` ✅ M4 | Segna il primo ingresso nel villaggio (da lì si contano i suggerimenti) col valore armadio di quel momento. Idempotente. Restituisce `started_ms` | `PLAYER_NOT_FOUND` |
+| `sp_run_complete(player, end_value, merchant)` (010, **non più usata**) | Chiudeva la prima run a tempo, tolta il 14/10. Legge `first_run.duration_sec`, che non è più in config: non va chiamata | `RUN_NOT_STARTED`, `RUN_NOT_OVER` |
+| `sp_shop_buy(player, item)` ✅ M2 | Item con `"shop"` tra le sources: `_sp_move_coins(player→1, SHOP)` + `_sp_mint(minted_by 2)` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
+| `sp_listing_create(player, asset, price, perceived_value)` ✅ M0 | Prezzo tra `listing_min_price` e `perceived_value × listing_max_multiplier` (il valore lo passa il server, calcolato da `shared`) | `NOT_OWNER`, `ASSET_LOCKED`, `PRICE_OUT_OF_RANGE`, duplicato → `ALREADY_LISTED` |
+| `sp_listing_cancel(player, listing)` ✅ M2 | | `NOT_OWNER`, `LISTING_CLOSED` |
+| `sp_listing_buy(listing, buyer)` ✅ M0 | Vedi sopra | `LISTING_NOT_FOUND`, `LISTING_CLOSED`, `SELF_BUY`, `NOT_OWNER`, `ASSET_LOCKED`, `NO_FUNDS`, `INVENTORY_FULL`, `PLAYER_NOT_FOUND` |
+| `sp_treasury_seed(amount)` ✅ M0 | `GRANT` iniziale della tesoreria, una sola volta (il seed è rilanciabile) | |
+| `sp_bot_buy(listing, bot, max_price)` ✅ M3 | Come `listing_buy`, ma paga la tesoreria (`BOT_BUY`) e non c'è commissione. Ricontrolla `price ≤ max_price` (perceivedValue × buy_pct, dal server), la soglia di tesoreria e l'inventario del bot. Mai da account di sistema | `TREASURY_LOW`, `PRICE_OUT_OF_RANGE`, `NOT_FOR_SALE`, `INVENTORY_FULL` |
+| `sp_stall_restock(item)` ✅ M3 | `_sp_mint(to 3, minted_by 3, is_fake 1)` | |
+| `sp_stall_buy(player, asset)` ✅ M3 | `STALL` verso la tesoreria (`base_value × stall.price_pct_of_base`), `TRANSFER 3→player` | `NOT_FOR_SALE`, `NO_FUNDS`, `INVENTORY_FULL` |
+| `sp_auth_request(player, asset)` ✅ M3 | `AUTH` verso la tesoreria. Se falso: `fake_revealed = 1`, altrimenti `auth_verified = 1`. Restituisce il verdetto. Una scarpa già verificata non si paga due volte | `NOT_OWNER`, `ASSET_LOCKED`, `ALREADY_VERIFIED`, `NO_FUNDS` |
+| `sp_legend_wear(player, asset)` ✅ M3 | `LEGEND` verso la tesoreria, evento `LEGEND_IN` player→4, `locked_until = now + wear_duration_sec`, `players.legend_ready_at = now + cooldown_sec`. **È un prestito**: `owner_id` resta il giocatore (I3 lo sa) | `NOT_OWNER`, `ASSET_LOCKED`, `ALREADY_LISTED`, `LEGEND_COOLDOWN`, `LEGEND_MAXED`, `NO_FUNDS` |
+| `sp_legend_return(asset)` ✅ M3 | Chiamata dallo scheduler a prestito scaduto: `LEGEND_OUT` 4→proprietario, `legend_count + 1`, `locked_until = NULL`. Idempotente | |
+| `sp_drop_open(item, quantity, window_sec)` ✅ M3 | Crea il drop | |
+| `sp_drop_claim(drop, player)` ✅ M3 | `DROP` verso la tesoreria, `_sp_mint(minted_by 1, drop_id)`, `sold + 1`, `assets.drop_serial = sold` | `DROP_CLOSED`, `DROP_SOLDOUT`, `DROP_ALREADY_CLAIMED`, `NO_FUNDS`, `INVENTORY_FULL` |
+| `sp_bot_restock(bot, item)` ✅ M3 | `_sp_mint(to bot, minted_by 2)` | |
+| `sp_chain_recover_sending()` ✅ M0 | All'avvio: `SENDING` → `PENDING` (rischio accettato: un hash notarizzato due volte) | |
+| `sp_chain_claim_batch(limit, batch_id)` ✅ M0 | `UPDATE … SET SENDING, chain_batch, attempts+1 WHERE PENDING ORDER BY id LIMIT n`, poi `SELECT` del batch | |
+| `sp_chain_mark_confirmed(batch_id, tx)` ✅ M0 | `CONFIRMED` + `chain_tx`. Restituisce `asset_id`, `from_id`, `to_id` per le notifiche | |
+| `sp_chain_mark_failed(batch_id, error, max_attempts)` ✅ M0 | Torna `PENDING`, oppure `FAILED` oltre `max_attempts` | |
+| `sp_economy_check()` ✅ M0 | Esegue gli invarianti I1–I6 e restituisce le violazioni | |
+| `sp_anonymize_inactive(days)` | Per i giocatori inattivi: azzera `device_hash`, `recovery_hash` e avatar, **rimette un nickname generato al posto di quello scelto** (D12), cancella `player_devices`, imposta `anonymized_at`. Le catene restano integre | |
 
 Nota sul calcolo del valore. Il valore percepito si calcola in **TypeScript** (`shared/valuation.ts`), non in SQL, ed è l'unica implementazione. Le SP che ne hanno bisogno (limiti di prezzo, bot) lo ricevono dal server come parametro, già calcolato sugli stessi dati letti nella transazione.
 
 ## 5. Protocollo socket
 
-Handshake: `io(url, { auth: { deviceId } })`. Il server calcola `sha256(deviceId)` con `crypto` e risolve il giocatore.
+Handshake: `io(url, { auth: { deviceId } })` (`HandshakeAuth`). Il server calcola `sha256(deviceId)` con `crypto` e risolve il giocatore.
+
+- Una sessione rifiutata riceve `error` e il client chiude da sé; il server chiude comunque dopo 1 s (chiudere subito fa fallire con 400 il polling di socket.io già in volo).
+
+- `deviceId` deve essere un UUID v4, altrimenti `error DEVICE_INVALID` e disconnessione.
+- **Una sessione per giocatore**: una seconda scheda sostituisce la prima, che riceve `SESSION_REPLACED`.
+- Ogni richiesta client → server ha un ack `{ ok: true, data } | { ok: false, code, message }`, con il messaggio già in italiano (`packages/shared/src/errors.ts`).
+- I tipi degli eventi sono in `packages/shared/src/protocol.ts` (`ServerToClientEvents`, `ClientToServerEvents`) e tipizzano socket.io su entrambi i lati.
 
 **Client → server**
 
 | Evento | Payload |
 |---|---|
-| `session.recover` | `{ code }` |
-| `avatar.set` | `{ skin, hair, hairColor, outfit }` (indici) |
+| `avatar.set` | `{ body, skin, hair, hairColor, outfit, nickname }` (indici + nome). Ack `{ x, y, nickname }` con il nome salvato. Errori del nome: `NICKNAME_INVALID`, `NICKNAME_BLOCKED`, `NICKNAME_TAKEN` |
 | `move.to` | `{ x, y }` |
 | `emote.send` | `{ emote }` (solo emote da config) |
 | `shop.list` / `shop.buy` | `{}` / `{ itemId }` |
@@ -405,25 +432,33 @@ Handshake: `io(url, { auth: { deviceId } })`. Il server calcola `sha256(deviceId
 | `stall.list` / `stall.buy` | `{}` / `{ assetId }` |
 | `auth.request` | `{ assetId }` |
 | `legend.request` | `{ assetId }` |
-| `drop.claim` | `{ dropId }` |
+| `drop.claim` / `drop.state` | `{ dropId }` / `{}` |
 | `passport.get` | `{ assetId }` |
-| `leaderboard.get` | `{}` |
+| `leaderboard.get` | `{}` → `{ top, me }`: top `leaderboard.size` per valore armadio (monete + valori percepiti), solo giocatori veri con l'avatar, con aspetto; `me` anche fuori dalla top. Cache di `leaderboard.cache_sec` |
 
 **Server → client**
 
 | Evento | Payload |
 |---|---|
 | `state.init` | giocatore, inventario, saldo, valore armadio, stato prima run, config pubblica, NPC |
-| `world.players` | posizioni dei giocatori nel raggio (10 Hz, delta) |
+| `world.players` | cambi nel raggio: partenza (posizione + **percorso**), arrivo, ingresso/uscita dal raggio, profilo alla prima apparizione. Il server simula a `tick_hz` ma non manda una posizione a ogni tick: il client fa camminare gli altri lungo il percorso con la stessa `advance()` di `shared`. Con 100 giocatori nella piazza la banda scende di circa 4 volte rispetto ai delta a 10 Hz |
 | `world.emote` | `{ playerId, emote }` |
 | `wallet.updated` | `{ coins, wardrobeValue }` |
-| `asset.updated` | asset con valore percepito ricalcolato |
-| `asset.certified` | `{ assetId, eventId, txHash, explorerUrl }` |
-| `market.updated` | diff degli annunci aperti |
-| `drop.announce` / `drop.update` / `drop.closed` | `{ dropId, itemId, quantity, sold, closesAt }` |
-| `run.beat` | `{ beatId }` |
-| `run.end` | dati del reveal (§12 del GAME_DESIGN) |
+| `inventory.updated` | `{ coins, wardrobeValue, inventory }` dopo ogni azione economica, a chi l'ha fatta e alla controparte (il venditore riceve il suo appena qualcuno compra) |
+| `asset.updated` | `{ assetId }`: il passaporto ha un anello nuovo o un annuncio aperto/chiuso. Va alla room `asset:<id>` (chi ha il passaporto aperto), che ricarica con `passport.get` |
+| `asset.certified` | `{ assetId, eventId, txHash, explorerUrl }`, alla room `asset:<id>` e ai giocatori coinvolti nell'anello |
+| `market.updated` | `()`: la bacheca è cambiata; chi la sta guardando ricarica la prima pagina con `market.list` |
+| `drop.announce` | `{ dropId, itemId, quantity, sold, price, closesAt }` a tutti; `state.init.drop` dà lo stesso stato a chi entra dopo |
+| `drop.update` / `drop.closed` | `{ dropId, sold }` / `{ dropId, nextAt }` |
+| `stall.updated` | `()`: il banco di Tony è cambiato (rifornimento o vendita) |
+| `legend.returned` | `{ assetId }` al proprietario: MC Suola ha restituito la scarpa |
+| `run.beat` | `{ beatId }`: un suggerimento di `first_run.beats` al suo secondo, contato dal primo ingresso nel villaggio. A una riconnessione quelli passati non si ripetono |
+| `leaderboard.updated` | `{ top, me }` a ogni socket, personalizzato: il loop della classifica la ricalcola ogni `leaderboard.cache_sec` (solo con qualcuno nel villaggio) e la manda se è cambiata |
 | `error` | `{ code, message }` (messaggio in italiano da mappa codici) |
+
+`passport.get` fa entrare il socket nella room `asset:<id>` (e uscire da quella del passaporto precedente). Così gli avvisi di un asset vanno solo a chi lo sta guardando, non a tutti.
+
+Il passaporto non espone mai `is_fake`: `status` è `fake` solo se il falso è stato smascherato. Gli orari (`events[].at`, `lockedUntil`) viaggiano come epoch ms, calcolati con `UNIX_TIMESTAMP` lato DB. Così non dipendono dal fuso del server né da quello del telefono, e Safari non deve leggere date in formato MySQL.
 
 Rate limit: `player.rate_limit_actions_per_sec` per socket. Oltre la soglia il server risponde `BUSY` e scarta l'azione.
 
@@ -434,13 +469,14 @@ Rate limit: `player.rate_limit_actions_per_sec` per socket. Oltre la soglia il s
 export interface NotarizeItem { eventId: number; hash: string }
 export interface ChainNotary {
   readonly network: string;
-  notarizeBatch(items: NotarizeItem[]): Promise<{ txHash: string }>;
+  /** batchId = UUID del batch nell'outbox: per Commercio è anche il document_uuid. */
+  notarizeBatch(items: NotarizeItem[], batchId: string): Promise<{ txHash: string }>;
   explorerUrl(txHash: string): string;
 }
 export const CHAIN_NOTARY = Symbol('CHAIN_NOTARY');
 ```
 
-`MockNotary`, il default finché D1 non è chiusa: aspetta un ritardo casuale tra `chain.mock.min_delay_ms` e `max_delay_ms` e restituisce `mock-<sha256 del batch>`. Permette di sviluppare e provare tutta la UX senza testnet.
+`MockNotary`, il default in sviluppo e finché le credenziali commercio.app (D11) non sono nel `.env`: aspetta un ritardo casuale tra `chain.mock.min_delay_ms` e `max_delay_ms` e restituisce `mock-<sha256 del batch>`. Permette di sviluppare e provare tutta la UX senza testnet.
 
 ```ts
 // apps/server/src/chain/chain.worker.ts
@@ -470,7 +506,7 @@ export class ChainWorker implements OnModuleInit {
         'sp_chain_claim_batch', [this.cfg.chain.max_items_per_batch, batchId]);
       if (!rows.length) return;
       try {
-        const { txHash } = await this.notary.notarizeBatch(rows.map(r => ({ eventId: r.id, hash: r.hash })));
+        const { txHash } = await this.notary.notarizeBatch(rows.map(r => ({ eventId: r.id, hash: r.hash })), batchId);
         const done = await this.db.call<CertifiedRow>('sp_chain_mark_confirmed', [batchId, txHash]);
         this.gateway.notifyCertified(done, this.notary.explorerUrl(txHash));
       } catch (err) {
@@ -486,12 +522,23 @@ export class ChainWorker implements OnModuleInit {
 
 **Cosa va on-chain**: solo `{ v: 1, app: "sneaker-passport", events: [[eventId, hash], …] }`. Niente nickname, niente device, niente id giocatore. L'`eventId` è un numero interno senza significato fuori dal DB. Questo punto è importante perché la chain è immutabile e gli utenti sono minorenni.
 
-**Implementazione testnet (D1)**: in ordine di preferenza,
-1. Commercio.network testnet, se attiva: verificare endpoint, faucet e il tipo di messaggio per la notarizzazione;
-2. memo di una tx Cosmos;
-3. EVM testnet, con un evento da un contratto minimo.
+**Implementazione testnet: Commercio.network** (D1, chiusa il 14/10), tramite le **API di commercio.app**, come fa già `@mvl/commercio-network` nel repo `upthere-it/microservices` (es. `ms-carma-advisory`). Niente wallet, mnemonic o fee da gestire in proprio: firma e CCC li gestisce la piattaforma sull'account Upthere.
 
-Un solo wallet con la sequence/nonce gestita in serie dal worker, dato che non ci sono due batch in volo contemporaneamente. Se la chain lo permette, conviene inserire più messaggi nella stessa tx.
+| | |
+|---|---|
+| Ambiente | `dev-api.commercio.app/v1` scrive sulla **testnet** (`commercio-testnet11k`, nodo verificato il 14/10); `api.commercio.app/v1` scrive su mainnet |
+| Autenticazione | Keycloak `devlogin.commercio.app`, realm `commercio`, client `dev.commercio.app`, grant `password`. Variabili `CN_USERNAME` e `CN_PASSWORD`, solo nel `.env` |
+| Notarizzazione | `POST /sharedoc/process` con `hash` (sha-256 hex), `hash_algorithm`, `document_uuid`, `content_uri`, `metadata.{content_uri, schema.{uri, version}}`, `recipients` (`CN_RECIPIENT_ADDRESS`, prefisso `did:com:`) e `back_url` facoltativo. Risponde 202 con un `process_id` |
+| Esito | `GET /sharedoc/process/{process_id}` → `status` (`enqueued` … `success`/`failure`) e `doc_tx_hash`; oppure `POST` sul `back_url` quando ha finito. `GET /sharedoc/{document_uuid}` dà 404 finché la tx non è indicizzata |
+| Explorer | `https://testnet.commercio.network/transactions/detail/{txHash}`, lo stesso formato usato in `ms-carma-advisory` |
+
+**Uso nel gioco** (`apps/server/src/chain/commercio-notary.ts`, si attiva con `chain.notary = "commercio"`; i parametri sono in `chain.commercio`): porting minimo delle chiamate di `@mvl/commercio-network`, con `fetch` nativo e `crypto.randomUUID`, senza axios/qs/uuid. Le stesse variabili d'ambiente.
+- **Per batch** (D10, proposta): un `sharedoc` per batch con `hash = sha256(notaryPayload(batch))`, cioè il pattern "hash cumulativo" già usato in Carma. `content_uri = https://civitek.upthere.it/api/chain/batch/<document_uuid>` restituisce `{ v, app, events: [[eventId, hash], …] }`: chiunque può ricalcolare l'hash del batch e confrontarlo con il checksum on-chain. Rientra nell'interfaccia `ChainNotary` attuale (un `txHash` per batch) senza toccare il worker.
+- **Per evento** (alternativa): un `sharedoc` per anello, con checksum = hash dell'anello. È più diretto da mostrare ai ragazzi, ma fa 1–1,5 chiamate API/s al picco; limiti e costi dell'account vanno verificati con Commercio.
+- `notarizeBatch` invia il processo e poi interroga `/sharedoc/process/{id}` finché non arriva `doc_tx_hash`, con timeout. Un solo batch in volo alla volta: durante l'attesa gli eventi si accumulano nel batch successivo. In produzione si può aggiungere il `back_url` (`/api/chain/commercio-callback`) per non dipendere solo dal polling.
+- Latenza attesa ⏳ → ✅: coda di commercio.app + un blocco (~5 s) + indicizzazione. Va misurata alla prima prova.
+- `GET /api/chain/batch/:batchId` (pubblico) è il `content_uri`. Restituisce `{ v, app, batchId, events, sha256, network, txHash, explorerUrl }`: `sha256` è il checksum on-chain, ricalcolabile dagli `events`.
+- Il `batchId` del worker (UUID v4) è anche il `document_uuid` su Commercio.
 
 ## 7. Client
 
@@ -508,10 +555,19 @@ Un solo wallet con la sequence/nonce gestita in serie dal worker, dato che non c
 - **Phaser**:
   - scene `Boot` (carica tutto da `assets/manifest.json`: circa 330 KB), `Avatar`, `Village`;
   - camera che segue l'avatar, `pixelArt: true`;
-  - gli altri giocatori sono interpolati tra i tick.
+  - gli altri giocatori camminano lungo il percorso ricevuto (stessa `findPath`/`advance` del server); il proprio avatar parte subito in locale e si riallinea solo oltre `world.reconcile_px`.
 - **UI**:
-  - overlay HTML/CSS sopra il canvas: HUD, inventario, passaporto, bacheca, pannelli NPC, reveal;
+  - overlay HTML/CSS sopra il canvas: HUD, inventario, passaporto, bacheca, pannelli NPC, classifica;
   - font leggibili, bottoni da almeno 44 px.
+- **Pannelli del mercato** (M2, `apps/client/src/ui/`):
+  - fogli dal basso impilabili (`panel.ts`): il passaporto si apre sopra la bacheca o il negozio, si chiude con ×, tap fuori o Esc;
+  - `store.ts` tiene saldo e scarpe **come li manda il server** e avvisa i pannelli aperti (`inventory`, `market`, `asset`). Ogni pannello si disiscrive alla chiusura;
+  - in bacheca si compra **solo dal passaporto**, così la storia si guarda sempre prima di pagare (GAME_DESIGN §7);
+  - dopo un acquisto al Negozio si apre il passaporto, e l'anello passa da ⏳ a ✅ davanti al giocatore;
+  - i bottoni d'azione restano disabilitati finché il server non risponde: niente doppi acquisti col doppio tap;
+  - le icone scarpa sono solo a 32 o 64 px CSS, così la pixel art scala di un fattore intero.
+- **Loop di gioco** (M3, server): bot (`economy.bots.tick_sec`), rifornimento di Tony (`stall.restock_sec`), drop (orologio di mondo: multipli di `drops.interval_sec` dall'epoch, uguali per tutti), ritorno da MC Suola (ogni secondo), suggerimenti dei primi minuti (M4, ogni secondo, ai giocatori connessi), classifica live (M4, ogni `leaderboard.cache_sec` con qualcuno nel villaggio: `leaderboard.updated` se è cambiata). Partono subito all'avvio e poi a intervallo. Inoltrano ai client tramite `GameEventsService`. Nei test sono spenti (`GAME_LOOPS=off`) e si chiamano i loro `tick()`.
+- **Dati degli item**: il client importa `data/game_items.json` attraverso il plugin `sp-client-items` di `vite.config.ts`, che tiene solo i campi da mostrare. `reference_ids` (modelli reali), valori base e pesi dei drop non entrano nel bundle.
 - **Riconnessione**: socket.io con riconnessione automatica; a ogni riconnessione il server rimanda `state.init`.
 
 ## 8. API REST pubbliche
@@ -524,32 +580,17 @@ Un solo wallet con la sequence/nonce gestita in serie dal worker, dato che non c
 
 ## 9. Deploy
 
-```js
-// ecosystem.config.js
-module.exports = {
-  apps: [{
-    name: 'sneaker-passport',
-    cwd: './apps/server',
-    script: 'dist/main.js',
-    exec_mode: 'fork',     // NON cluster: stato socket in memoria
-    instances: 1,
-    max_memory_restart: '512M',
-    env: { NODE_ENV: 'production' },
-  }],
-};
-```
-
-nginx:
-- HTTPS obbligatorio (serve anche per `crypto.randomUUID`);
-- proxy di `/socket.io/` con gli header `Upgrade`/`Connection`;
-- gzip/brotli e cache lunga sugli asset con hash nel nome;
-- log di accesso con retention breve (7 giorni).
+Runbook completo in **`deploy/README.md`** (M6). In breve:
+- `ecosystem.config.js` (root): PM2, **una istanza in fork mode** (stato socket in memoria), `HOST=127.0.0.1`, `PORT=3000`, `NODE_ENV=production`, log in `logs/`;
+- `deploy/nginx/civitek.upthere.it.conf`: HTTPS (Let's Encrypt; serve anche per `crypto.randomUUID`), proxy di `/socket.io/` con `Upgrade`/`Connection` e di `/api/`, `X-Forwarded-For` con `$proxy_add_x_forwarded_for` (il server ne prende l'ultimo indirizzo), cache lunga su `/static/` (hash nel nome), breve su `/assets/`, `index.html` sempre rivalidato, IP troncati nei log di accesso;
+- DB di produzione a mano: `npm run db:bundle` genera `deploy/out/civitek_completo_<data>.sql` (migrazioni + `schema_migrations` con i checksum + seed; si ferma su un DB già in uso) oppure, per aggiornare, `-- --from NNN`;
+- in produzione il server non parte senza `CN_*`;
+- `GET /api/health`: DB, coda della certificazione (`pending`, `failed`, evento più vecchio in coda oltre `chain.health_max_pending_sec`), giocatori online; `?full=1` con l'header `x-health-token` = `HEALTH_TOKEN` aggiunge login e saldo commercio.app (`/wallet/balance`). 200 con `status` ok/warn, 503 se il DB non risponde.
 
 ## 10. Privacy (implementazione)
 
 - Nessun dato personale raccolto. Il `device_id` è salvato solo come hash.
-- Il codice di recupero è salvato solo come hash.
-- Job giornaliero `sp_anonymize_inactive(player.inactivity_anonymize_days)`.
+- Job `AnonymizeService`: ogni `player.anonymize_every_min` chiama `sp_anonymize_inactive(player.inactivity_anonymize_days, player.anonymize_batch)` finché ne trova (M5, `sql/011`). Nome al posto di quello scelto: `Anonimo <id>` (lo spazio non è ammesso nei nomi dei giocatori, quindi non si scontra).
 - Nessun analytics, cookie di terze parti, font o CDN esterni a runtime: tutto è servito dal nostro dominio.
-- Pagina `/privacy` con un testo breve da validare (D5).
+- Pagina `/privacy/` (`apps/client/privacy/index.html`, entry separata di Vite, linkata dalla landing): testo in bozza da validare (D5), giorni di anonimizzazione da config, crediti di pixel art e font.
 - On-chain solo hash (§6).
