@@ -81,10 +81,27 @@ MC Suola, classifica, anonimizzazione, worker della certificazione).
 ## 4. nginx e HTTPS
 
 ```bash
+# 1. certificato, se non c'è ancora: la config cita i file di Let's Encrypt e senza quelli nginx -t fallisce.
+#    Gli hook restano salvati, così anche i rinnovi automatici fermano e riavviano nginx da soli.
+sudo certbot certonly --standalone -d civitek.upthere.it \
+  --pre-hook "systemctl stop nginx" --post-hook "systemctl start nginx"
+
+# 2. config: se il repo non sta in /srv/civitek, correggere "root" prima di copiarla
 sudo cp deploy/nginx/civitek.upthere.it.conf /etc/nginx/conf.d/
-sudo certbot --nginx -d civitek.upthere.it      # oppure certonly --webroot -w /var/www/certbot
 sudo nginx -t && sudo systemctl reload nginx
 ```
+
+nginx serve **solo i file statici** di `apps/client/dist` e gira `/socket.io/` e `/api/` a Node: PM2 non serve il
+frontend. `listen 443 ssl http2` funziona da nginx 1.9.5 (Ubuntu 24.04 ha la 1.24); `http2 on;` esiste solo dalla
+1.25.1 e sulle versioni precedenti nginx non parte.
+
+| Sintomo | Causa | Rimedio |
+|---|---|---|
+| 404 su tutto il sito (prima della correzione: 500 con `rewrite or internal redirection cycle` nel log) | `root` non trova `index.html`: repo in un'altra cartella o build mancante | `ls <root>/index.html`; correggere `root`, oppure `npm run build` |
+| 403, `Permission denied (13)` nel log | l'utente di nginx (`www-data`) non attraversa il percorso, es. repo sotto `/root` o `/home/<utente>` | `namei -l <root>/index.html`; meglio spostare il repo in `/srv/civitek` |
+| 502 su `/api/` o `/socket.io/` | Node non risponde su `127.0.0.1:3000` | `pm2 logs civitek`, `curl -s http://127.0.0.1:3000/api/health` |
+
+Il log degli errori è `/var/log/nginx/civitek.error.log`.
 
 HTTPS è obbligatorio: senza, il browser non dà `crypto.randomUUID()` e il gioco non genera il `device_id`.
 I log di accesso hanno l'IP troncato (utenti minorenni) e vanno tenuti al massimo 7 giorni (logrotate:
